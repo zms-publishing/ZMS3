@@ -33,7 +33,7 @@ CKEDITOR.editorConfig = function( config ) {
 	config.removeButtons = 'Subscript,Superscript';
 
 	// Set the most common block elements.
-	config.format_tags = 'p;h2;h3';
+	config.format_tags = 'p;h2;h6';
 
 	// Make dialogs simpler.
 	config.removeDialogTabs = 'image:advanced;link:advanced';
