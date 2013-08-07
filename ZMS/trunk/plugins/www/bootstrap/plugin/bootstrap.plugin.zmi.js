@@ -908,6 +908,18 @@ function zmiActionButtonsRefresh(sender,evt) {
 		});
 }
 
+/**
+ * This method (un-)checks all id-checkboxes on page and refreshs the buttons.
+ *
+ * @param sender
+ * @param v		Boolean value for new (un-)checked state.
+ */
+function zmiToggleSelectionButtonClick(sender) 
+{
+	var fm = $(sender).parents('form');
+	selectCheckboxes(fm,!$('input[type=checkbox]',fm).attr('checked'));
+}
+
 // ############################################################################
 // ### Url-Input
 // ############################################################################
