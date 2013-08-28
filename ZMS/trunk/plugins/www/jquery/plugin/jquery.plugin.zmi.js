@@ -313,7 +313,7 @@ function zmiGetDescendantLanguages() {
  */
 function zmiConfirmAction(fm, target, label) {
 	var b = true;
-	var i = $("input[name='ids:list']:checkbox").length;
+	var i = $("input[name='ids:list']:checkbox:checked").length;
 	if (target.indexOf("../") == 0) {
 		i = 1;
 	}
