@@ -549,9 +549,8 @@ function zmiRelativateUrls(s,page_url) {
  * Open link in iframe (jQuery UI Dialog).
  */
 function zmiIframe(href, data, opt) {
-	if ($('#zmiIframe').length==0) {
-		$('body').append('<div id="zmiIframe"></div>');
-	}
+	$('#zmiIframe').remove();
+	$('body').append('<div id="zmiIframe"></div>');
 	// Debug
 	var url = href + "?";
 	for (var k in data) {
@@ -559,7 +558,7 @@ function zmiIframe(href, data, opt) {
 	}
 	var maxHeight = $(window).height()-$("#zmi-header").outerHeight()-$("#zmi-footer").outerHeight();
 	// Iframe
-	if (typeof opt['iframe'] != 'undefined' && $('#zmiIframe').length==0) {
+	if (typeof opt['iframe'] != 'undefined') {
 		$('#zmiIframe').append('<iframe src="' + url + '" width="' + opt['width'] + '" height="' + opt['height'] + '" frameBorder="0"></iframe>');
 		opt["modal"] = true;
 		opt['maxHeight'] = maxHeight;
