@@ -50,6 +50,7 @@ $(function(){
 <div class="ui-helper-hidden" tal:condition="python:request.get('id') in map(lambda x: x.getId(),formats)">
 	<div id="editObj" class="inner" tal:define="global format python:filter(lambda x: x.getId()==request['id'],formats)[0]">
 		<form class="form-horizontal" name="importConfForm" action="manage_changeTextformat" method="post" enctype="multipart/form-data">
+			<input type="hidden" name="id" tal:attributes="value request/id"/>
 			<input type="hidden" name="lang" tal:attributes="value request/lang">
 			<div class="control-group">
 				<label for="new_id" class="control-label mandatory"><span tal:content="python:here.getZMILangStr('ATTR_ID')">Id</span></label>
@@ -74,6 +75,17 @@ $(function(){
 			<div class="control-group">
 				<label for="new_attrs" class="control-label"><span tal:content="python:here.getZMILangStr('ATTR_ATTRS')">Attributes</span></label>
 				<div class="controls"><input type="text" id="new_attrs" name="new_attrs" tal:attributes="value python:format.getAttrs()"></div><!-- .controls -->
+			</div><!-- .control-group -->
+			<div class="control-group">
+				<label for="new_richedit" class="control-label"><span tal:content="python:here.getZMILangStr('ATTR_RICHEDIT')">Richedit</span></label>
+				<div class="controls">
+					<select class="form-control input-sm" id="new_richedit" name="new_richedit">
+						<option value=""></option>
+						<tal:block tal:repeat="rteId python:here.getRichtextFormatIds()">
+							<option tal:attributes="value rteId; selected python:['','selected'][int(rteId==format.getRichedit())]" tal:content="rteId">the rte-id</option>
+						</tal:block>
+					</select>
+				</div><!-- .controls -->
 			</div><!-- .control-group -->
 			<div class="control-group">
 				<div class="controls">
