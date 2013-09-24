@@ -3047,8 +3047,18 @@ function onZMSTableFormSubmit() {
 	return onFormSubmit(fmName);
 }
 
-$("form[name="+fmName+"]").submit( onZMSTableFormSubmit);
-$()
+$(function() {
+		$("form[name="+fmName+"]").submit( onZMSTableFormSubmit);
+		$('input[name="type:int"]:radio').change(function() {
+				if ($(this).val() == 1) {
+					$('#tr_sortable').show();
+				}
+				else {
+					$('#tr_sortable').hide();
+					$('#sortable').attr("checked", false);
+				}
+			});
+	});
 
 </script>
 
@@ -3297,6 +3307,12 @@ var table_type = parseInt($('#table_type').text());
 var table_cell_uid = $('#table_cell_uid').text();
 var table_cell_id = '';
 var table_cell_offs = 2;
+
+$(function() {
+		if (table_type != 1) {
+			$('#tr_sortable').hide();
+		}
+	});
 
 function onZMSTableFormSubmit() {
 	var xml = '';
@@ -4059,7 +4075,7 @@ if key.startswith('table_'):
           <item key="id"><![CDATA[ZMSTable]]></item>
           <item key="name"><![CDATA[ZMSTable]]></item>
           <item key="package"><![CDATA[com.zms.foundation]]></item>
-          <item key="revision"><![CDATA[1.8.11]]></item>
+          <item key="revision"><![CDATA[1.8.12]]></item>
           <item key="type"><![CDATA[ZMSObject]]></item>
         </dictionary>
       </item>
@@ -4397,6 +4413,100 @@ return unicode(printed).encode('utf-8')
                   <item key="type"><![CDATA[zpt]]></item>
                 </dictionary>
               </item>
+              <item type="dictionary">
+                <dictionary>
+                  <item key="id"><![CDATA[interface]]></item>
+                  <item key="mandatory" type="int">0</item>
+                  <item key="multilang" type="int">0</item>
+                  <item key="name"><![CDATA[<dtml-let
+  teaserCntnr="this()"
+  bgcolor_border="teaserCntnr.getObjProperty('attr_bgcolor_border',REQUEST)"
+  bgcolor_title="teaserCntnr.getObjProperty('attr_bgcolor_title',REQUEST)"
+  bgcolor_text="teaserCntnr.getObjProperty('attr_bgcolor_text',REQUEST)"
+  element="[]">
+
+<dtml-call "element.append('<div class=\'ZMSTeaserElement\' style=\'width:30px;\'>')">
+<dtml-call "element.append('<div align=\'center\' class=\'title\'')">
+<dtml-if bgcolor_title><dtml-call "element.append(' style=\'background-color:%s\''%get_colormap().get(bgcolor_title,'transparent'))"></dtml-if>
+<dtml-call "element.append('><img src=\'%s\' title=\'%s\' border=\'0\' width=\'24\' height=\'4\'></div>'%(spacer_gif,getZMILangStr('ATTR_TITLE')))">
+<dtml-call "element.append('<div align=\'center\' class=\'text\'')">
+<dtml-if bgcolor_text><dtml-call "element.append(' style=\'background-color:%s\''%get_colormap().get(bgcolor_text,'transparent'))"></dtml-if>
+<dtml-call "element.append('><img src=\'%s\' title=\'%s\' border=\'0\' width=\'24\' height=\'4\'></div>'%(spacer_gif,getZMILangStr('ATTR_TEXT')))">
+<dtml-call "element.append('</div>')">
+<dtml-let element_icon="''.join(element)">
+
+<dtml-var "f_headline(_,_,headline=getZMILangStr('ATTR_BORDERSTYLE'))">
+
+<table cellspacing="2" cellpadding="1" border="0">
+<tr valign="top">
+
+<dtml-comment> ##### Border-Style 1=SOLID ##### </dtml-comment>
+   <td>
+    <div class="form-element">
+     <input class="form-radio" type="radio" name="attr_borderstyle:int" value="1"<dtml-if "getObjProperty('attr_borderstyle',REQUEST)==1"> checked="checked"</dtml-if>/>
+     <dtml-var "getZMILangStr('OPT_AB_SOLID')">&nbsp;
+    </div>
+   </td>
+   <td>
+    <div id="Teaser" style="width:30px;">
+     <div class="ZMSTeaserContainer" style="width:30px;margin-bottom:4px;<dtml-if bgcolor_border>background-color: <dtml-var "get_colormap().get(bgcolor_border,'black')">;</dtml-if>">
+      <dtml-var element_icon>
+      <dtml-var element_icon>
+      <dtml-var element_icon>
+     </div>
+    </div>
+   </td>
+
+<dtml-comment> ##### Border-Style 2=SINGLE ##### </dtml-comment>
+   <td>
+    <div class="form-element">
+     <input class="form-radio" type="radio" name="attr_borderstyle:int" value="2"<dtml-if "getObjProperty('attr_borderstyle',REQUEST)==2"> checked="checked"</dtml-if>/>
+     <dtml-var "getZMILangStr('OPT_AB_SINGLE')">&nbsp;
+    </div>
+   </td>
+   <td>
+    <div id="Teaser" style="width:30px;">
+     <div class="ZMSTeaserContainer" style="width:30px;margin-bottom:4px;<dtml-if bgcolor_border>background-color: <dtml-var "get_colormap().get(bgcolor_border,'black')">;</dtml-if>">
+      <dtml-var element_icon>
+     </div>
+     <div class="ZMSTeaserContainer" style="width:30px;margin-bottom:4px;<dtml-if bgcolor_border>background-color: <dtml-var "get_colormap().get(bgcolor_border,'black')">;</dtml-if>">
+      <dtml-var element_icon>
+     </div>
+     <div class="ZMSTeaserContainer" style="width:30px;margin-bottom:4px;<dtml-if bgcolor_border>background-color: <dtml-var "get_colormap().get(bgcolor_border,'black')">;</dtml-if>">
+      <dtml-var element_icon>
+     </div>
+    </div>
+   </td>
+
+<dtml-comment> ##### Border-Style 3=NONE ##### </dtml-comment>
+   <td>
+    <div class="form-element">
+     <input class="form-radio" type="radio" name="attr_borderstyle:int" value="3"<dtml-if "getObjProperty('attr_borderstyle',REQUEST)==3"> checked="checked"</dtml-if>/>
+     <dtml-var "getZMILangStr('OPT_AB_NONE')">&nbsp;
+    </div>
+   </td>
+   <td>
+    <div id="Teaser" style="width:30px;">
+     <dtml-var element_icon>
+     <dtml-var element_icon>
+     <dtml-var element_icon>
+    </div>
+   </td>
+
+</tr>
+</table>
+
+<dtml-call "REQUEST.set('ZMS_HIDE_ELEMENTS',REQUEST.get('ZMS_HIDE_ELEMENTS',[])+['attr_borderstyle'])">
+
+<dtml-var "f_headline(_,_,headline=getZMILangStr('ATTR_BGCOLORS'))">
+
+</dtml-let>
+</dtml-let>]]>
+                  </item>
+                  <item key="repetitive" type="int">0</item>
+                  <item key="type"><![CDATA[interface]]></item>
+                </dictionary>
+              </item>
             </list>
           </item>
           <item key="access" type="dictionary">
@@ -4423,7 +4533,7 @@ return unicode(printed).encode('utf-8')
           <item key="id"><![CDATA[ZMSTeaserContainer]]></item>
           <item key="name"><![CDATA[ZMSTeaserContainer]]></item>
           <item key="package"><![CDATA[com.zms.foundation]]></item>
-          <item key="revision"><![CDATA[1.8.1]]></item>
+          <item key="revision"><![CDATA[1.4.0]]></item>
           <item key="type"><![CDATA[ZMSObject]]></item>
         </dictionary>
       </item>
@@ -4962,7 +5072,7 @@ $(function() {
           <item key="id"><![CDATA[com.zms.foundation]]></item>
           <item key="name"><![CDATA[com.zms.foundation]]></item>
           <item key="package"></item>
-          <item key="revision"><![CDATA[2.0.0]]></item>
+          <item key="revision"><![CDATA[1.4.0]]></item>
           <item key="type"><![CDATA[ZMSPackage]]></item>
         </dictionary>
       </item>
