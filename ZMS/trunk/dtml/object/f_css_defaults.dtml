@@ -265,11 +265,13 @@ div.ZMSTeaserElement div.text
 	{
 	}
 
+/* f_css_defaults */
 <dtml-in "getMetaobjIds(sort=0)"
 ><dtml-let metaObjId=sequence-item metaObj="getMetaobj(metaObjId)"
 ><dtml-in "filter(lambda x: x['type']=='css' or x['id']=='f_css_defaults', metaObj['attrs'])" mapping
 ><dtml-try
-><dtml-var "attr(id)"
+>/* f_css_defaults.<dtml-var metaObjId>.<dtml-var id> */
+<dtml-var "attr('%s.%s'%(metaObjId,id))"
 ><dtml-except
 >/* >>>>>>>>>> ERROR in <dtml-var metaObjId> - <dtml-var error_type>: <dtml-var error_value> <<<<<<<<<< */</dtml-try
 ></dtml-in
