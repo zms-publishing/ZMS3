@@ -186,6 +186,8 @@ CKEDITOR.config.toolbar_ZMSConfigToolbar = <dtml-var "str_json(REQUEST.get('CKED
 				toolbar: 'ZMSCustomToolbar',
 			<dtml-elif "REQUEST.get('CKEDITOR_config_toolbar')">
 				toolbar: 'ZMSConfigToolbar',
+                        <dtml-elif "REQUEST.get('ZMS_INSERT')">
+	                        toolbar: 'ZMSBasicInsertToolbar',
 			<dtml-else>
 				toolbar: 'ZMSBasicToolbar',
 			</dtml-if>

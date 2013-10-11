@@ -33,7 +33,7 @@ CKEDITOR.editorConfig = function( config ) {
 	config.removeButtons = 'Subscript,Superscript';
 
 	// Set the most common block elements.
-	config.format_tags = 'p;h2;h3';
+        config.format_tags = 'p;h2;h6';
 
 	// Make dialogs simpler.
 	config.removeDialogTabs = 'image:advanced;link:advanced';
@@ -55,6 +55,14 @@ CKEDITOR.editorConfig = function( config ) {
      ['Find','linkbutton','Link','Unlink'],
      ['Image','Anchor','Table'],
      ['Source','ShowBlocks','Maximize','About']
+  ];
+  config.toolbar_ZMSBasicInsertToolbar =[
+     ['Format'],
+     ['Bold','Italic','Underline','NumberedList','BulletedList'],
+     ['Undo','Redo'],
+     [],
+     [],
+     ['ShowBlocks','Maximize','About']
   ];
 };
 
