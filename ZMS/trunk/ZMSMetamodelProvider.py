@@ -19,7 +19,6 @@
 
 # Imports.
 from App.special_dtml import HTMLFile
-from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 import copy
 import zope.interface
 # Product Imports.
@@ -65,8 +64,6 @@ class ZMSMetamodelProvider(
     # ---------------------
     manage = HTMLFile('dtml/ZMSMetamodelProvider/manage_main',globals())
     manage_main = HTMLFile('dtml/ZMSMetamodelProvider/manage_main',globals())
-    manage_main_import = HTMLFile('dtml/ZMSMetamodelProvider/manage_main_import',globals())
-    manage_main_acquire = HTMLFile('dtml/ZMSMetamodelProvider/manage_main_acquire',globals())
     manage_bigpicture = HTMLFile('dtml/ZMSMetamodelProvider/manage_bigpicture', globals())
     manage_analyze = HTMLFile('dtml/ZMSMetamodelProvider/manage_analyze', globals())
     manage_metas = HTMLFile('dtml/ZMSMetamodelProvider/manage_metas',globals())

@@ -18,7 +18,6 @@
 
 
 # Imports.
-from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 import copy
 import zope.interface
 # Product Imports.
@@ -62,10 +61,10 @@ class ZMSFormatProvider(
 
     # Management Interface.
     # ---------------------
-    manage = PageTemplateFile('zpt/ZMSFormatProvider/manage_textformats',globals())
-    manage_main = PageTemplateFile('zpt/ZMSFormatProvider/manage_textformats',globals())
-    manage_textformats = PageTemplateFile('zpt/ZMSFormatProvider/manage_textformats',globals())
-    manage_charformats = PageTemplateFile('zpt/ZMSFormatProvider/manage_charformats',globals())
+    manage = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats')
+    manage_main = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
+    manage_textformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
+    manage_charformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_charformats')
 
     # Management Permissions.
     # -----------------------

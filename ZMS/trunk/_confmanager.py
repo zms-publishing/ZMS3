@@ -201,11 +201,12 @@ class ConfManager(
     addZMSCustomForm = ConfDict.template('addzmscustomform') 
     addZMSLinkElementForm = ConfDict.template('addzmslinkelementform') 
     addZMSSqlDbForm = ConfDict.template('addzmssqldbform') 
-    manage_customize = PageTemplateFile('zpt/ZMS/manage_customize',globals())
-    manage_customizeLanguagesForm = PageTemplateFile('zpt/ZMS/manage_customizelanguagesform',globals())
-    manage_customizeMetacmdForm = PageTemplateFile('zpt/metacmd/manage_customizeform',globals()) 
-    manage_customizeFilterForm = PageTemplateFile('zpt/ZMS/manage_customizefilterform',globals())
-    manage_customizeDesignForm = PageTemplateFile('zpt/ZMS/manage_customizedesignform',globals())
+    manage_customize = HTMLFile('dtml/ZMS/manage_customize',globals())
+    manage_customizeLanguagesForm = HTMLFile('dtml/ZMS/manage_customizelanguagesform',globals())
+    manage_customizeMetacmdForm = HTMLFile('dtml/metacmd/manage_customizeform',globals()) 
+    manage_customizeFilterForm = HTMLFile('dtml/ZMS/manage_customizefilterform',globals())
+    manage_customizeDesignForm = HTMLFile('dtml/ZMS/manage_customizedesignform',globals())
+    manage_editorForm = HTMLFile('dtml/ZMS/manage_editorform',globals())
 
 
     # --------------------------------------------------------------------------

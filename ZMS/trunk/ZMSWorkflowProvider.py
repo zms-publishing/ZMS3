@@ -17,7 +17,7 @@
 ################################################################################
 
 # Imports.
-from Products.PageTemplates.PageTemplateFile import PageTemplateFile
+from App.special_dtml import HTMLFile
 import copy
 import time
 import urllib
@@ -95,9 +95,7 @@ def importXml(self, xml, REQUEST):
   for li in range(len(l)/2):
     id = l[li*2]
     i = l[li*2+1]
-    newDtml = i.get('dtml','')
-    newType = i.get('type',['','DTML Method'][int(len(dtml)>0)])
-    self.setTransition(id=None,newId=id,newName=i['name'],newType=newType,newFrom=i.get('from',[]),newTo=i.get('to',[]),newPerformer=i.get('performer',[]),newDtml=newDtml)
+    self.setTransition(id=None,newId=id,newName=i['name'],newFrom=i.get('from',[]),newTo=i.get('to',[]),newPerformer=i.get('performer',[]),newDtml=i.get('dtml',''))
   # Roles.
   roles = []
   for transition in self.getTransitions():
@@ -164,8 +162,8 @@ class ZMSWorkflowProvider(
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Interface
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    manage = PageTemplateFile('zpt/ZMSWorkflowProvider/manage_main',globals())
-    manage_main = PageTemplateFile('zpt/ZMSWorkflowProvider/manage_main',globals())
+    manage = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main')
+    manage_main = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main') # -"-
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Permissions
@@ -201,9 +199,7 @@ class ZMSWorkflowProvider(
       for li in range(len(l)/2):
         id = l[li*2]
         i = l[li*2+1]
-        newDtml = i.get('dtml','')
-        newType = i.get('type',['','DTML Method'][int(len(dtml)>0)])
-        self.setTransition(id=None,newId=id,newName=i['name'],newType=newType,newFrom=i.get('from',[]),newTo=i.get('to',[]),newPerformer=i.get('performer',[]),newDtml=newDtml)
+        self.setTransition(id=None,newId=id,newName=i['name'],newFrom=i.get('from',[]),newTo=i.get('to',[]),newPerformer=i.get('performer',[]),newDtml=i.get('dtml',''))
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -296,15 +292,6 @@ class ZMSWorkflowProvider(
           self.doAutocommit(lang,REQUEST)
         message = self.getZMILangStr('MSG_CHANGED')
       
-      # Clear.
-      # ------
-      elif key == 'clear' and btn == self.getZMILangStr('BTN_CLEAR'):
-        self.doAutocommit(lang,REQUEST)
-        self.autocommit = 1
-        self.activities = []
-        self.transitions = []
-        message = self.getZMILangStr('MSG_CHANGED')
-     
       # Export.
       # -------
       elif key == 'export' and btn == self.getZMILangStr('BTN_EXPORT'):

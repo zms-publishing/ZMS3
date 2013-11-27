@@ -17,7 +17,7 @@
 ################################################################################
 
 # Imports.
-from Products.PageTemplates.PageTemplateFile import PageTemplateFile
+from App.special_dtml import HTMLFile
 import copy
 import logging
 import os
@@ -54,7 +54,6 @@ class ZMSLog(ZMSItem.ZMSItem):
     # -----------
     meta_type = 'ZMSLog'
     icon = "misc_/zms/ZMSLog.gif"
-    icon_clazz = "icon-ambulance"
 
     # Management Options.
     # -------------------
@@ -64,8 +63,8 @@ class ZMSLog(ZMSItem.ZMSItem):
 
     # Management Interface.
     # ---------------------
-    manage_main = PageTemplateFile( 'zpt/ZMSLog/manage_main', globals())
-    manage_remote = PageTemplateFile( 'zpt/ZMSLog/manage_remote', globals())
+    manage_main = HTMLFile( 'dtml/ZMSLog/manage_main', globals())
+    manage_remote = HTMLFile( 'dtml/ZMSLog/manage_remote', globals())
 
     LOGGER = logging.getLogger("ZMS")
 
