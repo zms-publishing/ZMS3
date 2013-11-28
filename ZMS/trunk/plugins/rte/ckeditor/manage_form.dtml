@@ -113,6 +113,13 @@ function zmiRichtextResize(id) {
 		$(".cke_contents").css("height",newHeight);
 		// Ticket #132: hide image-button
 		$('.cke_button__image').hide();
+		// INSERT HINT
+		<dtml-if "REQUEST.get('ZMS_INSERT') and REQUEST.get('lang','ger')=='ger'">
+			$('#cke_20').after('<a class="cke_button cke_button_off hint" style="opacity: 0.6;margin-top: auto;height: 1em;padding-top: 0.4em;">Hinweis: Weitere Funktionen nach dem Einf&uuml;gen.</a>')
+		<dtml-elif "REQUEST.get('ZMS_INSERT')">
+			$('#cke_20').after('<a class="cke_button cke_button_off hint" style="opacity: 0.6;margin-top: auto;height: 1em;padding-top: 0.4em;">Hint: Further Functions after Inserting.</a>')
+		</dtml-if>
+		
 	}
 }
 
@@ -186,8 +193,8 @@ CKEDITOR.config.toolbar_ZMSConfigToolbar = <dtml-var "str_json(REQUEST.get('CKED
 				toolbar: 'ZMSCustomToolbar',
 			<dtml-elif "REQUEST.get('CKEDITOR_config_toolbar')">
 				toolbar: 'ZMSConfigToolbar',
-                        <dtml-elif "REQUEST.get('ZMS_INSERT')">
-	                        toolbar: 'ZMSBasicInsertToolbar',
+			<dtml-elif "REQUEST.get('ZMS_INSERT')">
+				toolbar: 'ZMSBasicInsertToolbar',
 			<dtml-else>
 				toolbar: 'ZMSBasicToolbar',
 			</dtml-if>
@@ -208,18 +215,12 @@ function zmiRichtextSyncDataToView(id) {
 	var instance = CKEDITOR.instances['editor_'+id];
 	if (instance){
 		instance.setData(data,function() {
-				instance.focus();
-			});
+			instance.focus();
+		});
 	}
 }
 
 $(function() {
-	// To be externalized
-	ZMI = function() { this.readyFn = []};
-	ZMI.prototype.registerReady = function(fn) {this.readyFn.push(fn)};
-	ZMI.prototype.runReady = function() {while (this.readyFn.length > 0) this.readyFn.pop()()};
-	var $ZMI = new ZMI();
-
 	zmiRichtextInit('<dtml-var "REQUEST.get('elName')">');
 });
 
