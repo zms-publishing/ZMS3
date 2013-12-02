@@ -124,6 +124,18 @@ class ZMSWorkflowProviderAcquired(
       return self.getPortalMaster().workflow_manager.getTransitions()
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    @see IZMSWorkflowProvider.getTransitionIds()
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    def getTransitionIds(self):
+      return self.getPortalMaster().workflow_manager.getTransitionIds()
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    @see IZMSWorkflowProvider.getTransition()
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    def getTransition(self, id, for_export=False):
+      return self.getPortalMaster().workflow_manager.getTransition(id,for_export) 
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     ZMSWorkflowProviderAcquired.manage_changeWorkflow:
     
     Chang workflow.
