@@ -256,9 +256,15 @@ CKEDITOR.dialog.add( 'linkbuttonDlg', function( editor )
 					selection.selectRanges( ranges );
 				}
 				// Apply style.
-				var style = new CKEDITOR.style( { element : 'a', attributes : attributes } );
-				style.type = CKEDITOR.STYLE_INLINE;		// need to override... dunno why.
-				style.apply( editor.document );
+				// var style = new CKEDITOR.style( { element : 'a', attributes : attributes } );
+				// style.type = CKEDITOR.STYLE_INLINE;		// need to override... dunno why.
+				// style.apply( editor.document );
+		                // Apply style.
+		                var style = new CKEDITOR.style({ element: 'a', attributes: attributes } );
+		                style.type = CKEDITOR.STYLE_INLINE; // need to override... dunno why.
+		                style.applyToRange( ranges[0] );
+                                ranges[0].select(); 
+
 			}
 		}
 	};
