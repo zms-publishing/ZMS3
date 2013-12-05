@@ -23,6 +23,9 @@ body.zmi {
 }
 .zmi-manage-main-change {
 	display:none;
+	color: #888;
+	font-size: 11px;
+	margin: 2px 0 0 8px;
 }
 .zmi-helper-hidden, .ui-helper-hidden {
 	display:none;
@@ -825,17 +828,17 @@ div.right span.form-small {
 }
 div.right .version_object_state {
 	float: left;
-	margin: 1px 9px;
+	margin: 1px 8px 1px 1px;
 }
 div.right a:hover, 
 div.right a:focus {
 	text-decoration:none;
 }
 ul.zmi-container > li.zmi-item > div.center .zmiRenderShort {
-border-left:none !important;
-border-right:none !important;
-border-bottom:none !important;
-border-top:1px dotted #ccc !important;
+	border-left:none !important;
+	border-right:none !important;
+	border-bottom:none !important;
+	border-top:1px dotted #ccc !important;
 }
 ul.zmi-container > li.zmi-item > div.center .zmiRenderShort div.form-label {
 min-height:35px;

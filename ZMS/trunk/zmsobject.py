@@ -477,9 +477,8 @@ class ZMSObject(ZMSItem.ZMSItem,
     # --------------------------------------------------------------------------
     def display_icon(self, REQUEST, meta_type=None, key='icon', zpt=None):
       icon_title = self.display_type(REQUEST,meta_type)
-      zpt = False
-      #if zpt is None:
-      #  zpt = False # self.getConfProperty('zmi.theme','dtml')=='zpt'
+      if zpt is None:
+        zpt = False
       pattern = '%s'
       if zpt:
         pattern = '<img src="%s" title="'+icon_title+'"/>'

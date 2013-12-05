@@ -123,7 +123,7 @@ $(function() {
 	<div tal:attributes="class python:['inactive','active'][childNode.isActive(request)]"><!-- img class="grippy" src="/misc_/zms/spacer.gif" / -->
 		<i class="toggle icon-caret-right" title="+" onclick="zmiToggleClick(this)"></i><a 
 			tal:attributes="href python:'%s/manage_main?lang=%s'%(childNode.absolute_url(),request['lang'])" 
-			onclick="return zmiFollowHref(this)"><tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+			onclick="return zmiFollowHref(this)"><tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 			<span tal:content="python:childNode.getTitlealt(request)">the titlealt</span>
 		</a>
 	</div>

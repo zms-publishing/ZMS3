@@ -31,11 +31,11 @@
 									<div class="btn-group zmi-action">
 										<span class="zmi-helper-hidden zmi-sort-id">0</span>
 										<button class="btn split-left">
-											<tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+											<tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 											<tal:block tal:content="python:childNode.display_type(request)">the child-node</tal:block>
 										</button>
 										<button class="btn split-right dropdown-toggle" data-toggle="dropdown">
-											<tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+											<tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 										</button>
 									</div><!-- .btn-group -->
 									<span class="zmi-ids">
@@ -60,11 +60,11 @@
 											<div class="btn-group zmi-action">
 												<span class="zmi-helper-hidden zmi-sort-id" tal:content="python:childNode.getSortId()">the sort-id</span>
 												<button class="btn split-left">
-													<tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+													<tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 													<tal:block tal:content="python:childNode.display_type(request)">the child-node</tal:block>
 												</button>
 												<button class="btn split-right dropdown-toggle" data-toggle="dropdown">
-													<tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+													<tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 												</button>
 											</div><!-- .btn-group -->
 											<span class="zmi-ids">
@@ -92,7 +92,7 @@
 					<div class="right">
 						<div class="zmi-action">
 							<a class="btn split-left" tal:attributes="href python:'%s/manage_main?lang=%s'%(childNode.absolute_url(),request['lang'])">
-								<tal:block tal:content="structure python:childNode.display_icon(request)">the icon</tal:block>
+								<tal:block tal:content="structure python:childNode.display_icon(request,zpt=True)">the icon</tal:block>
 								<tal:block tal:content="python:childNode.display_type(request)">the child-node</tal:block>
 							</a>
 						</div><!-- .zmi-action -->
