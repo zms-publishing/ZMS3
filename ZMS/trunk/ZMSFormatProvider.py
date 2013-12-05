@@ -18,6 +18,7 @@
 
 
 # Imports.
+from App.special_dtml import HTMLFile
 import copy
 import zope.interface
 # Product Imports.
@@ -61,10 +62,14 @@ class ZMSFormatProvider(
 
     # Management Interface.
     # ---------------------
-    manage = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats')
-    manage_main = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
-    manage_textformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
-    manage_charformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_charformats')
+    # manage = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats')
+    # manage_main = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
+    # manage_textformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_textformats') # -"-
+    # manage_charformats = _confmanager.ConfDict.template('ZMSFormatProvider/manage_charformats')
+    manage = HTMLFile('dtml/ZMSFormatProvider/manage_textformats',globals())
+    manage_main = HTMLFile('dtml/ZMSFormatProvider/manage_textformats',globals())
+    manage_textformats = HTMLFile('dtml/ZMSFormatProvider/manage_textformats',globals())
+    manage_charformats = HTMLFile('dtml/ZMSFormatProvider/manage_charformats',globals())
 
     # Management Permissions.
     # -----------------------

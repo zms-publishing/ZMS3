@@ -164,8 +164,10 @@ class ZMSWorkflowProvider(
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Interface
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    manage = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main')
-    manage_main = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main') # -"-
+    # manage = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main')
+    # manage_main = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main') # -"-
+    manage = HTMLFile('dtml/ZMSWorkflowProvider/manage_main',globals())
+    manage_main = HTMLFile('dtml/ZMSWorkflowProvider/manage_main',globals())
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Permissions

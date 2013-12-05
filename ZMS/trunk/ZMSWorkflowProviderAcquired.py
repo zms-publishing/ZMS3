@@ -55,8 +55,10 @@ class ZMSWorkflowProviderAcquired(
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Interface
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    manage = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main_acquired')
-    manage_main = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main_acquired') # -"-
+    # manage = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main_acquired')
+    # manage_main = _confmanager.ConfDict.template('ZMSWorkflowProvider/manage_main_acquired') # -"-
+    manage = HTMLFile('dtml/ZMSWorkflowProvider/manage_main_acquired',globals())
+    manage_main = HTMLFile('dtml/ZMSWorkflowProvider/manage_main_acquired',globals())
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
