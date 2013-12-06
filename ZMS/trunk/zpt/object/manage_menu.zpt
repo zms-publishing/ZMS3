@@ -54,7 +54,8 @@ function zmiToggleClick(toggle, callback) {
 						html += '<' +'/i>';
 						// html += '<!-- img class="grippy" src="/misc_/zms/spacer.gif" / -->';
 						html += '<a href="'+page_absolute_url+'/manage_main?lang='+getZMILang()+'" onclick="return zmiFollowHref(this)">';
-						html += page_display_icon+' ';
+						// html += page_display_icon+' ';
+						// html += '<img src="'+page_display_icon+'" /> ';
 						html += page_titlealt;
 						html += '<'+'/a>';
 						html += '<'+'/div>';
