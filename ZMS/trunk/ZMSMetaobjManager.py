@@ -1164,7 +1164,19 @@ class ZMSMetaobjManager:
                 tmpltCustom = ''.join(tmpltCustom)
                 message += self.setMetaobjAttr(id,None,tmpltId,tmpltName,0,0,0,'zpt',[],tmpltCustom)
               message += self.getZMILangStr('MSG_INSERTED')%id
-          
+            # Insert Attribute. 
+            if key == 'attr': 
+              attr_id = REQUEST['attr_id'].strip() 
+              newName = REQUEST['attr_name'].strip() 
+              newMandatory = REQUEST.get('_mandatory',0) 
+              newMultilang = REQUEST.get('_multilang',0) 
+              newRepetitive = REQUEST.get('_repetitive',0) 
+              newType = REQUEST.get('_type','string') 
+              newKeys = REQUEST.get('_keys',[]) 
+              newCustom = REQUEST.get('_custom','') 
+              newDefault = REQUEST.get('_default','') 
+              message += self.setMetaobjAttr( id, None, attr_id, newName, newMandatory, newMultilang, newRepetitive, newType, newKeys, newCustom, newDefault) 
+              message += self.getZMILangStr('MSG_INSERTED')%attr_id
           # Acquire.
           # --------
           elif btn == self.getZMILangStr('BTN_ACQUIRE'):
