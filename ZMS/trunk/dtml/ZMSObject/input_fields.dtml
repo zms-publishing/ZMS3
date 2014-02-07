@@ -1,4 +1,4 @@
-<dtml-call "REQUEST.set('ZMS_HIDE_ELEMENTS',['attr_cacheable'])">
+<dtml-call "REQUEST.set('ZMS_HIDE_ELEMENTS',[])">
 <dtml-let metaobjAttrIds="getMetaobjAttrIds(metaObj['id'])"
 ><dtml-in metaobjAttrIds
 ><dtml-let sx=sequence-index
