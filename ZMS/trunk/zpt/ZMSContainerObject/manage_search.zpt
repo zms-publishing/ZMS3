@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<tal:block tal:content="structure python:here.zmi_html_head(here,request)">zmi_html_head</tal:block>
+<body tal:attributes="class python:' '.join(['zmi',request['lang'],'search',here.meta_id])">
+<tal:block tal:content="structure python:here.zmi_body_header(here,request)">zmi_body_header</tal:block>
+<div id="zmi-tab">
+<tal:block tal:content="structure python:here.zmi_breadcrumbs(here,request)">zmi_breadcrumbs</tal:block>
+
+<form class="form-horizontal" method="get">
+	<input type="hidden" name="lang" tal:attributes="value python:request['lang']" />
+	<input type="hidden" name="preview" tal:attributes="value python:request['preview']" />
+	<legend tal:content="python:here.getZMILangStr('SEARCH_HEADER')">Search header</legend>
+	<div class="form-group">
+		<label class="col-sm-3 col-md-2 control-label" for="raw" tal:content="python:here.getZMILangStr('ATTR_SEARCHTERM')">searchterm</label>
+		<div class="col-sm-6 col-md-4" tal:content="structure python:here.getTextInput(fmName='searchform',elName='raw',value=request.get('raw',''))">the value</div>
+	</div><!-- .form-group -->
+	<div class="form-group" tal:define="global optpl python:map(lambda x: [x,here.getZMILangStr(x)], ['AND','OR'])">
+		<label class="col-sm-3 col-md-2 control-label" for="option" tal:content="python:here.getZMILangStr('ATTR_OPTION')">option</label>
+		<div class="col-sm-6 col-md-4" tal:content="structure python:here.zmi_input_select(here,name='option',value=request.get('option','AND'),type='select',lang_str='ATTR_OPTION',options=optpl)">the control</div>
+	</div><!-- .form-group -->
+	<div class="form-group" tal:define="global optpl python:map(lambda x: [x,here.display_type(request,x)], here.getMetaobjIds(excl_ids=['ZMS']))">
+		<label class="col-sm-3 col-md-2 control-label" for="search_meta_types:list" tal:content="python:here.getZMILangStr('ATTR_TYPE')">type</label>
+		<div class="col-sm-9 col-md-10" tal:content="structure python:here.zmi_input_multiselect(here,name='search_meta_types',value=request.get('search_meta_types',[]),type='multiselect',lang_str='ATTR_TYPE',options=optpl)">the control</div>
+	</div><!-- .form-group -->
+	<div class="form-group">
+		<label class="col-sm-3 col-md-2 control-label">&nbsp;</label>
+		<div class="col-sm-6 col-md-4">
+			<button type="submit" class="btn btn-primary">
+				<tal:block tal:content="structure python:here.zmi_icon(name='icon-search')"></tal:block>
+				<tal:block tal:content="python:here.getZMILangStr('BTN_SEARCH')">Search</tal:block>
+			</button>
+		</div>
+	</div>
+</form>
+
+<tal:block tal:condition="python:request.has_key('raw') or request.get('search_meta_types')" tal:define="global
+			qs python:here.getCatalogQueryString(request.get('raw',''),request.get('option',''));
+			qres python:[]">
+	<tal:block tal:condition="python:request.get('raw') and not request.get('search_meta_types')">
+		<tal:block tal:define="global dummy0 python:qres.extend(here.submitCatalogQuery(qs,request.get('search_order_by',1),request.get('search_meta_types',[]),request.get('search_clients',1),request))"></tal:block>
+	</tal:block>
+	<tal:block tal:condition="python:not request.get('raw') and request.get('search_meta_types')">
+		<tal:block tal:define="global dummy0 python:qres.extend(map(lambda x: {
+				'ob':x,
+				'title':x.getTitle(request),
+				'raw':x.renderShort(request),
+				'score':1,
+				'time':x.attr('change_dt'),
+				'url':'%s/manage_main'%x.absolute_url(),
+				},here.getTreeNodes(request,request.get('search_meta_types'))))"></tal:block>
+	</tal:block>
+	<tal:block tal:define="global obs python:map(lambda x:x['ob'],qres)">
+
+	<form class="form-horizontal" method="get">
+		<h4 tal:content="python:here.getZMILangStr('SEARCH_HEADERRESULT')">Result</h4>
+		<p tal:content="structure python:here.getZMILangStr('SEARCH_YOURQUERY')%('<b>%s</b>'%qs)+' '+here.getZMILangStr('SEARCH_RETURNEDRESULTS')+':'"></p>
+		<tal:block tal:content="structure python:here.zmi_manage_main_grid(obs=obs)">
+			zmi_manage_main_grid
+		</tal:block>
+	</form>
+
+</tal:block>
+</tal:block>
+
+<div style="clear:both;">&nbsp;</div>
+</div><!-- #zmi-tab -->
+<tal:block tal:content="structure python:here.zmi_body_footer(here,request)">zmi_body_footer</tal:block>
+</body>
+</html>

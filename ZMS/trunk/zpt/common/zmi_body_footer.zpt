@@ -1,0 +1,16 @@
+<!-- common/zmi_body_footer -->
+
+<div id="zmi-footer">
+	<div class="pull-left">
+		&#169; <tal:block tal:content="python:here.ZopeTime().year()">the year</tal:block> 
+		<a href="http://www.hoffmannliebenberg.de" target="_blank">HOFFMANN+LIEBENBERG</a>
+	</div><!-- .pull-left -->
+	<div class="pull-right">
+		<a href="#top" tal:attributes="title python:'%.2fsecs.'%(int((DateTime().timeTime()-request['ZMI_TIME'])*100.0)/100.0)" tal:content="python:here.getZMILangStr('PAGETOP')">pagetop</a>
+	</div><!-- .pull-right -->
+	<div class="clearfix"></div><!-- .clearfix -->
+</div><!-- #zmi-footer -->
+
+<tal:block tal:content="structure python:here.zmi_html_foot(here,request)">zmi_html_foot</tal:block>
+
+<!-- /common/zmi_body_footer -->

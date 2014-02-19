@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dictionary>
+  <item key="custom"/>
+  <item key="data"><![CDATA[# Import a standard function, and get the HTML request and response objects.
+from Products.PythonScripts.standard import html_quote
+request = container.REQUEST
+RESPONSE =  request.RESPONSE
+
+print context.manage_page_header(context,request)
+print context.manage_tabs(context,request)
+print context.f_headline(context,headline='<big><img src="%swand.png" align="absmiddle" border="0"/> Multi-Upload...</big>'%context.MISC_ZMS)
+print '<form action="%s" method="post" enctype="multipart/form-data">'%request['URL']
+print '<input type="hidden" name="form_id:string" value="manage_addMultiUpload"/>'
+print '<input type="hidden" name="lang:string" value="%s"/>'%request['lang']
+print '<input type="hidden" name="id_prefix:string" value="%s"/>'%request.get('id_prefix','e')
+print context.zmi_form_section_begin(context,request)
+
+# --- Display contents of zip-file.
+# ---------------------------------
+if request.form.get('btn')==context.getZMILangStr('BTN_IMPORT') and request.form.get('file'):
+	file = request['file']
+	temp_id = str(request.SESSION.getId())+'_'+str(request['form_id'])
+	temp_folder = context.temp_folder
+	files = context.getZipArchive(file)
+	containers = []
+	print '<input type="hidden" name="temp_id:string" value="%s"/>'%temp_id
+	print '<input type="hidden" name="temp_filename:string" value="%s"/>'%file.filename
+	if temp_id in context.temp_folder.objectIds():
+		getattr(temp_folder,temp_id).manage_upload(file)
+	else:
+		temp_folder.manage_addFile(id=temp_id,title=file.filename,file=file)
+	print '<tr valign="top">'
+	print '<td class="form-label"><strong><img src="%smime_type.application_zip.gif" alt="" border="0" align="absmiddle"/> %s</strong><br/>(%s, %i %s)</td>'%(context.MISC_ZMS,file.filename,context.getDataSizeStr(getattr(temp_folder,temp_id).size),len(files),context.getZMILangStr('ATTR_OBJECTS'))
+	print '<td class="form-small neutralColorWhite">'
+	root = None
+	for file in context.sort_list(files,'local_filename'):
+		base = file['local_filename'][:-len(file['filename'])-1]
+		if root is None:
+			root = file['local_filename'][:max(file['local_filename'].rfind('/'),file['local_filename'].rfind('\\'))]
+		if file['isdir']:
+			containers.append(file['local_filename'])
+			print '<div><input type="checkbox" name="ids:list" value="%s" checked="checked"/><img src="%s" alt="" border="0" align="absmiddle"/> %s</div>'%(file['local_filename'][len(root):],context.display_icon(request,'ZMSFolder'),file['filename'])
+			print '<div style="margin-left:20px;">'
+		else:
+			if containers:
+				if base != containers[-1]:
+					containers.remove(containers[-1])
+					print '</div>'
+			meta_id = 'ZMSFile'
+			if file['content_type'] == 'text/html':
+				meta_id = 'ZMSTextarea'
+			elif file['content_type'].startswith('image/'):
+				meta_id = 'ZMSGraphic'
+			print '<div><input type="checkbox" name="ids:list" value="%s" checked="checked"/><img src="%s" alt="" border="0" align="absmiddle"/> %s (%s)</div>'%(file['local_filename'][len(root):],context.display_icon(request,meta_id),file['filename'],context.getDataSizeStr(file['size']))
+	for base in containers:
+		print '</div>'
+	print '</tr>'
+	print '<tr valign="middle">'
+	print '<td>&nbsp;</td>'
+	print '<td>'
+	print '<input class="ui-button ui-state-default ui-corner-all" name="btn" type="submit" value="%s">'%context.getZMILangStr('BTN_IMPORT')
+	print '<input class="ui-button ui-state-default ui-corner-all" name="btn" type="submit" value="%s">'%context.getZMILangStr('BTN_CANCEL')
+	print '</td>'
+	print '</tr>'
+
+# --- Import contents of zip-file.
+# ---------------------------------
+elif request.form.get('btn')==context.getZMILangStr('BTN_IMPORT') and request.form.get('temp_id'):
+	temp_id = request['temp_id']
+	temp_filename = request['temp_filename']
+	temp_folder = context.temp_folder
+	message = []
+	files = context.getZipArchive(str(getattr(temp_folder,temp_id).data))
+	containers = {}
+	root = None
+	c = 0
+	for file in context.sort_list(files,'local_filename'):
+		base = file['local_filename'][:-len(file['filename'])-1]
+		if root is None:
+			root = file['local_filename'][:max(file['local_filename'].rfind('/'),file['local_filename'].rfind('\\'))]
+		id_prefix = 'e'
+		if len(containers.keys()) == 0:
+			id_prefix = request['id_prefix']
+		if file['local_filename'][len(root):] in request.form.get('ids',[]):
+			container = containers.get(base,context)
+			if file['isdir']:
+				containers[file['local_filename']] = \
+												container.manage_addZMSCustom('ZMSFolder',{ \
+														'id_prefix':id_prefix, \
+														'title':file['filename'], \
+														'titlealt':file['filename'], \
+													},request)
+			elif file['content_type'] == 'text/html':
+				text = str(file['data'])
+				i = text.lower().find('<body')
+				if i >= 0:
+					text = text[i:]
+					text = text[text.find('>')+1:]
+					i = text.lower().find('</body')
+					if i >= 0:
+						text = text[:i]
+				text = unicode(text,'latin-1').encode('utf-8')
+				container.manage_addZMSCustom('ZMSTextarea',{ \
+														'id_prefix':id_prefix, \
+														'text':text, \
+														'format':'plain_html', \
+													},request)
+			elif file['content_type'].startswith('image/'):
+				request.set('generate_preview_imghires_%s'%request['lang'],True)
+				container.manage_addZMSCustom('ZMSGraphic',{ \
+														'id_prefix':id_prefix, \
+														'imghires':file, \
+													},request)
+			else:
+				container.manage_addZMSCustom('ZMSFile',{ \
+														'id_prefix':id_prefix, \
+														'title':file['filename'], \
+														'titlealt':file['filename'], \
+														'file':file, \
+														'align':'LEFT', \
+													},request)
+			c += 1
+	message.append(context.getZMILangStr('MSG_IMPORTED')%temp_filename+' [%i/%i]'%(c,len(files)))
+	request.response.redirect(context.url_append_params('%s/manage_main'%context.absolute_url(),{'lang':request['lang'],'manage_tabs_message':'<br/>'.join(message)}))
+
+# --- Display initial import form.
+# ---------------------------------
+else:
+	print '<tr valign="middle">'
+	print '<td class="form-label"><img src="%smime_type.application_zip.gif" alt="" border="0" align="absmiddle"/> %s</td>'%(context.MISC_ZMS,context.getZMILangStr('ATTR_FILE'))
+	print '<td class="form-element"><input class="form-element" name="file" type="file" size="25"></td>'
+	print '</tr>'
+	print '<tr valign="middle">'
+	print '<td>&nbsp;</td>'
+	print '<td>'
+	print '<input class="ui-button ui-state-default ui-corner-all" name="btn" type="submit" value="%s">'%context.getZMILangStr('BTN_IMPORT')
+	print '<input class="ui-button ui-state-default ui-corner-all" name="btn" type="submit" value="%s">'%context.getZMILangStr('BTN_CANCEL')
+	print '</td>'
+	print '</tr>'
+
+# ---------------------------------
+
+print context.zmi_form_section_end(context,request)
+print '</form>'
+print context.manage_page_footer(context,request)
+
+return printed
+]]>
+  </item>
+  <item key="description"/>
+  <item key="exec" type="int">0</item>
+  <item key="id"><![CDATA[manage_addMultiUpload]]></item>
+  <item key="meta_type"><![CDATA[Script (Python)]]></item>
+  <item key="meta_types" type="list">
+    <list>
+      <item><![CDATA[ZMSDocument]]></item>
+      <item><![CDATA[ZMSFolder]]></item>
+      <item><![CDATA[ZMS]]></item>
+    </list>
+  </item>
+  <item key="name"><![CDATA[Multi-Upload...]]></item>
+  <item key="roles" type="list">
+    <list>
+      <item><![CDATA[ZMSAdministrator]]></item>
+      <item><![CDATA[ZMSAuthor]]></item>
+      <item><![CDATA[ZMSEditor]]></item>
+    </list>
+  </item>
+</dictionary>
