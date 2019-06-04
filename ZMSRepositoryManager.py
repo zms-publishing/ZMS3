@@ -22,6 +22,7 @@ from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from distutils.version import LooseVersion
 import copy
 import inspect
+import json
 import os
 import re
 import stat
@@ -240,7 +241,7 @@ class ZMSRepositoryManager(
           v = o.get(k)
           if v:
             py.append('\t# %s'%k.capitalize())
-            py.append('\t%s = %s'%(standard.id_quote(k),self.str_json(v,encoding="utf-8",formatted=True,level=2)))
+            py.append('\t%s = %s'%(standard.id_quote(k),json.dumps(v,indent=2*4,sort_keys=True)))
             py.append('')
         for k in e:
           v = o.get(k)
@@ -265,7 +266,7 @@ class ZMSRepositoryManager(
                   l[d['filename']] = d
                 if i.has_key('ob'):
                   del i['ob']
-                py.append('\t\t%s = %s'%(self.id_quote(i['id']),self.str_json(i,encoding="utf-8",formatted=True,level=3)))
+                py.append('\t\t%s = %s'%(self.id_quote(i['id']),json.dumps(i,indent=3*4,sort_keys=True)))
                 py.append('')
         d = {}
         d['id'] = id
@@ -296,38 +297,41 @@ class ZMSRepositoryManager(
               py = f.read()
               f.close()
               # Analyze python-representation of repository-object
-              c = get_class(py)
-              d = c.__dict__
-              id = d["id"]
-              rd = {}
-              rd['id'] = id
-              rd['filename'] = filepath[len(base)+1:]
-              rd['data'] = py
-              rd['version'] = d.get("revision",self.getLangFmtDate(os.path.getmtime(filepath),'eng'))
-              r[rd['filename']] = rd
-              for k in filter(lambda x:not x.startswith('__'),d.keys()):
-                v = d[k]
-                if inspect.isclass(v):
-                  dd = v.__dict__
-                  v = []
-                  for kk in filter(lambda x:x in ['__impl__'] or not x.startswith("__"),dd.keys()):
-                    vv = dd[kk]
-                    # Try to read artefact.
-                    if vv.has_key('id'):
-                      fileprefix = vv['id'].split('/')[-1]
-                      for file in filter(lambda x: x==fileprefix or x.startswith('%s.'%fileprefix),names):
-                        artefact = os.path.join(path,file)
-                        self.writeLog("[remoteFiles]: read artefact %s"%artefact)
-                        f = open(artefact,"rb")
-                        data = f.read()
-                        f.close()
-                        rd = {}
-                        rd['id'] = id
-                        rd['filename'] = artefact[len(base)+1:]
-                        rd['data'] = data
-                        rd['version'] = self.getLangFmtDate(os.path.getmtime(artefact),'eng')
-                        r[rd['filename']] = rd
-                        break
+              try:
+                c = get_class(py)
+                d = c.__dict__
+                id = d["id"]
+                rd = {}
+                rd['id'] = id
+                rd['filename'] = filepath[len(base)+1:]
+                rd['data'] = py
+                rd['version'] = d.get("revision",self.getLangFmtDate(os.path.getmtime(filepath),'eng'))
+                r[rd['filename']] = rd
+                for k in filter(lambda x:not x.startswith('__'),d.keys()):
+                  v = d[k]
+                  if inspect.isclass(v):
+                    dd = v.__dict__
+                    v = []
+                    for kk in filter(lambda x:x in ['__impl__'] or not x.startswith("__"),dd.keys()):
+                      vv = dd[kk]
+                      # Try to read artefact.
+                      if vv.has_key('id'):
+                        fileprefix = vv['id'].split('/')[-1]
+                        for file in filter(lambda x: x==fileprefix or x.startswith('%s.'%fileprefix),names):
+                          artefact = os.path.join(path,file)
+                          self.writeLog("[remoteFiles]: read artefact %s"%artefact)
+                          f = open(artefact,"rb")
+                          data = f.read()
+                          f.close()
+                          rd = {}
+                          rd['id'] = id
+                          rd['filename'] = artefact[len(base)+1:]
+                          rd['data'] = data
+                          rd['version'] = self.getLangFmtDate(os.path.getmtime(artefact),'eng')
+                          r[rd['filename']] = rd
+                          break
+              except:
+                standard.writeError(base,"[traverse]: can't process filepath=%s"%filepath)
         traverse(basepath,basepath)
       return r
 
