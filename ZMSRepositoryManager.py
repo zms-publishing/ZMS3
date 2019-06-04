@@ -390,40 +390,48 @@ class ZMSRepositoryManager(
       self.writeBlock("[commitChanges]: ids=%s"%str(ids))
       standard.triggerEvent(self,'beforeCommitRepositoryEvt')
       success = []
+      failure = []
       for provider_id in list(set(map(lambda x:x.split(':')[0],ids))):
         provider = getattr(self,provider_id)
         for id in list(set(map(lambda x:x.split(':')[1],filter(lambda x:x.split(':')[0]==provider_id,ids)))):
-          # Read local-files from provider.
-          files = self.localFiles(provider,[id])
-          # Recreate folder.
-          basepath = self.get_conf_basepath(provider.id)
-          if os.path.exists(basepath):
-            for name in os.listdir(basepath):
-              filepath = os.path.join(basepath,name)
-              mode = os.stat(filepath)[stat.ST_MODE]
-              if stat.S_ISDIR(mode) and name == id:
-                self.writeBlock("[commitChanges]: clear dir %s"%filepath)
-                dir = map(lambda x:os.path.join(filepath,x),os.listdir(filepath))
-                dir = filter(lambda x:not stat.S_ISDIR(os.stat(x)[stat.ST_MODE]),dir)
-                map(lambda x:_fileutil.remove(x),dir)
-              elif not stat.S_ISDIR(mode) and name == '%s.py'%id:
-                self.writeBlock("[commitChanges]: remove file %s"%filepath)
-                _fileutil.remove(filepath)
-          # Write files.
-          for file in files.keys():
-            filepath = os.path.join(basepath,file)
-            folder = filepath[:filepath.rfind(os.path.sep)]
-            if not os.path.exists(folder):
-              self.writeBlock("[commitChanges]: create folder %s"%folder)
-              _fileutil.mkDir(folder)
-            self.writeBlock("[commitChanges]: write %s"%filepath)
-            data = files[file]['data']
-            f = open(filepath,"wb")
-            f.write(data)
-            f.close()
-          success.append(id)
+          try:
+            # Read local-files from provider.
+            files = self.localFiles(provider,[id])
+            # Recreate folder.
+            basepath = self.get_conf_basepath(provider.id)
+            if os.path.exists(basepath):
+              for name in os.listdir(basepath):
+                filepath = os.path.join(basepath,name)
+                mode = os.stat(filepath)[stat.ST_MODE]
+                if stat.S_ISDIR(mode) and name == id:
+                  self.writeBlock("[commitChanges]: clear dir %s"%filepath)
+                  dir = map(lambda x:os.path.join(filepath,x),os.listdir(filepath))
+                  dir = filter(lambda x:not stat.S_ISDIR(os.stat(x)[stat.ST_MODE]),dir)
+                  map(lambda x:_fileutil.remove(x),dir)
+                elif not stat.S_ISDIR(mode) and name == '%s.py'%id:
+                  self.writeBlock("[commitChanges]: remove file %s"%filepath)
+                  _fileutil.remove(filepath)
+            # Write files.
+            for file in files:
+              filepath = os.path.join(basepath,file)
+              folder = filepath[:filepath.rfind(os.path.sep)]
+              if not os.path.exists(folder):
+                self.writeBlock("[commitChanges]: create folder %s"%folder)
+                _fileutil.mkDir(folder)
+              self.writeBlock("[commitChanges]: write %s"%filepath)
+              data = files[file]['data']
+              if data is not None:
+                f = open(filepath,"wb")
+                f.write(data)
+                f.close()
+              else:
+                failure.append('%s is None'%file)
+            success.append(id)
+          except:
+            standard.writeError(self,"[commitChanges]: can't %s"%id)
+            failure.append(id)
       standard.triggerEvent(self,'afterCommitRepositoryEvt')
-      return success
+      return success,failure
 
     """
     Update ZODB from repository.
@@ -432,6 +440,7 @@ class ZMSRepositoryManager(
       self.writeBlock("[updateChanges]: ids=%s"%str(ids))
       standard.triggerEvent(self,'beforeUpdateRepositoryEvt')
       success = []
+      failure = []
       repositories = {}
       for i in ids:
         # Initialize.
@@ -443,11 +452,15 @@ class ZMSRepositoryManager(
           repositories[provider_id] = self.readRepository(provider)
         repository = repositories[provider_id]
         # Update.
-        r = repository[id]
-        provider.updateRepository(r)
-        success.append(id)
+        try:
+          r = repository[id]
+          provider.updateRepository(r)
+          success.append(id)
+        except:
+          standard.writeError(self,"[updateChanges]: can't %s"%id)
+          failure.append(id)
       standard.triggerEvent(self,'afterUpdateRepositoryEvt')
-      return success
+      return success,failure
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -458,22 +471,32 @@ class ZMSRepositoryManager(
     def manage_change(self, btn, lang, REQUEST=None, RESPONSE=None):
       """ ZMSRepositoryManager.manage_change """
       message = ''
+      error_message = ''
       
       if btn == 'save':
         self.auto_update = REQUEST.get('auto_update','')!=''
         self.last_update = self.parseLangFmtDate(REQUEST.get('last_update',''))
         self.setConfProperty('ZMS.conf.path',REQUEST.get('basepath',''))
+        message = self.getZMILangStr('MSG_CHANGED')
       
-      if btn == 'commit':
-        success = self.commitChanges(REQUEST.get('ids',[]))
-        message = self.getZMILangStr('MSG_EXPORTED')%('<em>%s</em>'%' '.join(success))
+      elif btn == 'commit':
+        success,failure = self.commitChanges(REQUEST.get('ids',[]))
+        message = self.getZMILangStr('MSG_EXPORTED')%('<em>%s</em>'%', '.join(success))
+        if failure:
+          error_message = '<em>%s</em>'%', '.join(failure)
       
-      if btn in ['override','update']:
-        success = self.updateChanges(REQUEST.get('ids',[]),btn=='override')
-        message = self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success))
+      elif btn in ['override','update']:
+        success,failure = self.updateChanges(REQUEST.get('ids',[]),btn=='override')
+        message = self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%', '.join(success))
+        if failure:
+          error_message = '<em>%s</em>'%', '.join(failure)
       
       # Return with message.
-      message = urllib.quote(message)
-      return RESPONSE.redirect('manage_main?lang=%s&manage_tabs_message=%s'%(lang,message))
+      target = standard.url_append_params('manage_main',{'lang':lang})
+      if message:
+        target = standard.url_append_params(target,{'manage_tabs_message':message})
+      if error_message:
+        target = standard.url_append_params(target,{'manage_tabs_error_message':error_message})
+      return RESPONSE.redirect(target)
 
 ################################################################################
