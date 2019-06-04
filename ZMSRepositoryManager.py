@@ -22,7 +22,6 @@ from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from distutils.version import LooseVersion
 import copy
 import inspect
-import json
 import os
 import re
 import stat
@@ -241,7 +240,7 @@ class ZMSRepositoryManager(
           v = o.get(k)
           if v:
             py.append('\t# %s'%k.capitalize())
-            py.append('\t%s = %s'%(standard.id_quote(k),json.dumps(v,indent=2*4,sort_keys=True)))
+            py.append('\t%s = %s'%(standard.id_quote(k),standard.str_json(v,encoding="utf-8",formatted=True,level=2,allow_booleans=False)))
             py.append('')
         for k in e:
           v = o.get(k)
@@ -266,7 +265,7 @@ class ZMSRepositoryManager(
                   l[d['filename']] = d
                 if i.has_key('ob'):
                   del i['ob']
-                py.append('\t\t%s = %s'%(self.id_quote(i['id']),json.dumps(i,indent=3*4,sort_keys=True)))
+                py.append('\t\t%s = %s'%(self.id_quote(i['id']),standard.str_json(i,encoding="utf-8",formatted=True,level=3,allow_booleans=False)))
                 py.append('')
         d = {}
         d['id'] = id
@@ -331,7 +330,7 @@ class ZMSRepositoryManager(
                           r[rd['filename']] = rd
                           break
               except:
-                standard.writeError(base,"[traverse]: can't process filepath=%s"%filepath)
+                self.writeError("[traverse]: can't process filepath=%s"%filepath)
         traverse(basepath,basepath)
       return r
 

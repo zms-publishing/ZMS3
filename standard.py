@@ -1481,19 +1481,21 @@ def is_equal(x, y):
 
 
 security.declarePublic('str_json')
-def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, level=0):
+def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, level=0, allow_booleans=True, sort_keys=True):
   """
   Returns a json-string representation of the object.
   @rtype: C{str}
   """
   if type(i) is list or type(i) is tuple:
     return '[' \
-        + (['','\n'][formatted]+(['','\t'][formatted]*level)+',').join(map(lambda x: str_json(x,encoding,errors,formatted,level+1),i)) \
+        + (['','\n'][formatted]+(['','\t'][formatted]*level)+',').join(map(lambda x: str_json(x,encoding,errors,formatted,level+1,allow_booleans,sort_keys),i)) \
         + ']'
   elif type(i) is dict:
-    k = sorted(i)
+    k = list(i)
+    if sort_keys:
+      k = sorted(i)
     return '{' \
-        + (['','\n'][formatted]+(['','\t'][formatted]*level)+',').join(map(lambda x: '"%s":%s'%(x,str_json(i[x],encoding,errors,formatted,level+1)),k)) \
+        + (['','\n'][formatted]+(['','\t'][formatted]*level)+',').join(map(lambda x: '"%s":%s'%(x,str_json(i[x],encoding,errors,formatted,level+1,allow_booleans,sort_keys)),k)) \
         + '}'
   elif type(i) is time.struct_time:
     try:
@@ -1513,7 +1515,7 @@ def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, l
         i = i.encode(encoding, errors)
     else:
       i = str(i)
-    if i in ['true','false']:
+    if allow_booleans and i in ['true','false']:
       return i
     else:
       return '"%s"'%(i.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n').replace('\r','\\r'))
