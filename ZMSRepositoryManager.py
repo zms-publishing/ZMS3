@@ -255,7 +255,7 @@ class ZMSRepositoryManager(
                   fileprefix = i['id'].split('/')[-1]
                   data = zopeutil.readData(ob)
                   if type(data) is unicode:
-                    data = unicode(ob.read()).encode('utf-8')
+                    data = data.encode('utf-8')
                   d = {}
                   d['id'] = id
                   d['filename'] = os.path.sep.join(filename[:-1]+['%s%s'%(fileprefix,fileexts.get(ob.meta_type,''))])
@@ -368,11 +368,11 @@ class ZMSRepositoryManager(
                       for file in [x for x in names if x==fileprefix or x.startswith('%s.'%fileprefix)]:
                         artefact = os.path.join(path, file)
                         self.writeBlock("[readRepository]: read artefact %s"%artefact)
-                        f = open(artefact, "r")
+                        f = open(artefact, "rb")
                         data = f.read()
                         f.close()
-                        if artefact.endswith('.zpt'):
-                          data = data.decode('utf-8')
+                        if artefact.endswith('.zpt') and type(data) is str:
+                          data = unicode(data,'utf-8')
                         vv['data'] = data
                         break
                     v.append((py.find('\t\t%s ='%kk), vv))
