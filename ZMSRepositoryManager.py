@@ -347,9 +347,13 @@ class ZMSRepositoryManager(
               py = f.read()
               f.close()
               # Analyze python-representation of repository-object
-              c = get_class(py)
-              d = c.__dict__
-              id = d["id"]
+              d = {}
+              try:
+                c = get_class(py)
+                d = c.__dict__
+              except:
+                d['revision'] = self.writeError("[readRepository]: ")
+              id = d.get('id',name)
               r[id] = {}
               for k in [x for x in d if not x.startswith('__')]:
                 v = d[k]
