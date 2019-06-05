@@ -289,48 +289,41 @@ class ZMSRepositoryManager(
             mode = os.stat(filepath)[stat.ST_MODE]
             if stat.S_ISDIR(mode):
               traverse(base,filepath)
-            elif not name in ['__impl__.py'] and name.startswith('__') and name.endswith('__.py'):
+            elif name.startswith('__') and name.endswith('__.py'):
               # Read python-representation of repository-object
               self.writeLog("[remoteFiles]: read %s"%filepath)
               f = open(filepath,"rb")
               py = f.read()
               f.close()
               # Analyze python-representation of repository-object
+              d = {}
               try:
                 c = get_class(py)
                 d = c.__dict__
-                id = d["id"]
-                rd = {}
-                rd['id'] = id
-                rd['filename'] = filepath[len(base)+1:]
-                rd['data'] = py
-                rd['version'] = d.get("revision",self.getLangFmtDate(os.path.getmtime(filepath),'eng'))
-                r[rd['filename']] = rd
-                for k in filter(lambda x:not x.startswith('__'),d.keys()):
-                  v = d[k]
-                  if inspect.isclass(v):
-                    dd = v.__dict__
-                    v = []
-                    for kk in filter(lambda x:x in ['__impl__'] or not x.startswith("__"),dd.keys()):
-                      vv = dd[kk]
-                      # Try to read artefact.
-                      if vv.has_key('id'):
-                        fileprefix = vv['id'].split('/')[-1]
-                        for file in filter(lambda x: x==fileprefix or x.startswith('%s.'%fileprefix),names):
-                          artefact = os.path.join(path,file)
-                          self.writeLog("[remoteFiles]: read artefact %s"%artefact)
-                          f = open(artefact,"rb")
-                          data = f.read()
-                          f.close()
-                          rd = {}
-                          rd['id'] = id
-                          rd['filename'] = artefact[len(base)+1:]
-                          rd['data'] = data
-                          rd['version'] = self.getLangFmtDate(os.path.getmtime(artefact),'eng')
-                          r[rd['filename']] = rd
-                          break
               except:
-                self.writeError("[traverse]: can't process filepath=%s"%filepath)
+                d['revision'] = self.writeError("[traverse]: can't analyze filepath=%s"%filepath)
+              id = d.get('id',name)
+              rd = {}
+              rd['id'] = id
+              rd['filename'] = filepath[len(base)+1:]
+              rd['data'] = py
+              rd['version'] = d.get("revision",self.getLangFmtDate(os.path.getmtime(filepath),'eng'))
+              r[rd['filename']] = rd
+              # Read artefacts
+              for file in [x for x in names if x != name]:
+                artefact = os.path.join(path,file)
+                mode = os.stat(artefact)[stat.ST_MODE]
+                if not stat.S_ISDIR(mode):
+                  self.writeLog("[remoteFiles]: read artefact %s"%artefact)
+                  f = open(artefact,"rb")
+                  data = f.read()
+                  f.close()
+                  rd = {}
+                  rd['id'] = id
+                  rd['filename'] = artefact[len(base)+1:]
+                  rd['data'] = data
+                  rd['version'] = self.getLangFmtDate(os.path.getmtime(artefact),'eng')
+                  r[rd['filename']] = rd
         traverse(basepath,basepath)
       return r
 
