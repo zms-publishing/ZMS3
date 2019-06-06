@@ -9,10 +9,10 @@
 <div id="zmi-tab">
 <tal:block tal:define="
 		metaObjIds python:here.getMetaobjIds(sort=True);
-		metaObjs python:map(lambda x: here.getMetaobj(x,aq_attrs=['enabled']), metaObjIds);
-		metaObjPackages python:here.sort_list(['']+map(lambda x: x['id'],filter(lambda x: x['type']=='ZMSPackage', metaObjs)));
-		metaObjPackages2 python:filter(lambda x: x not in metaObjPackages, map(lambda x: x.get('package'), metaObjs))">
-<tal:block tal:content="structure python:here.zmi_breadcrumbs(here,request,extra=[here.manage_sub_options()[1]]+map(lambda x:{'action':'?id=%s'%x['id'],'label':x['name']},filter(lambda x:x['id']==request.get('id'),metaObjs)))">zmi_breadcrumbs</tal:block>
+		metaObjs python:[here.getMetaobj(x,aq_attrs=['enabled']) for x in metaObjIds];
+		metaObjPackages python:here.sort_list(['']+[x['id'] for x in metaObjs if x.get('type','') == 'ZMSPackage']);
+		metaObjPackages2 python:[x for x in [x.get('package') for x in metaObjs] if x not in metaObjPackages]">
+<tal:block tal:content="structure python:here.zmi_breadcrumbs(here,request,extra=[here.manage_sub_options()[1]]+[{'action':'?id=%s'%x['id'],'label':x['name']} for x in metaObjs if x['id']==request.get('id')])">zmi_breadcrumbs</tal:block>
 
 <div class="ui-helper-hidden">
 	<div id="insertObj" class="inner">
@@ -73,7 +73,7 @@
 				<option tal:attributes="value metaAttrId" tal:content="python:here.getMetadictAttr(metaAttrId)['name']">type</option>
 			</tal:block>
 			<option id="type_objects" value="" tal:content="python:'--- %s ---'%here.getZMILangStr('ATTR_OBJECTS')"></option>
-			<tal:block tal:repeat="metaObj python:filter(lambda x: x['type']!='ZMSPackage',metaObjs)">
+			<tal:block tal:repeat="metaObj python:filter(lambda x: x.get('type','')!='ZMSPackage',metaObjs)">
 				<option tal:attributes="value python:metaObj['id']" tal:content="python:here.display_type(request,metaObj['id'])">type</option>
 			</tal:block>
 			<option id="type_objects_sequence" value="" tal:content="python:'--- %s ---'%here.getZMILangStr('ATTR_SEQUENCE')"></option>
@@ -112,7 +112,7 @@
 						</tal:block>
 					</tal:block>
 					<tal:block tal:repeat="metaObj metaObjs">
-						<li tal:condition="python:metaObj['type']!='ZMSPackage' and metaObj.get('package')==metaObjPackage" style="padding-left:1em">
+						<li tal:condition="python:metaObj.get('type','')!='ZMSPackage' and metaObj.get('package')==metaObjPackage" style="padding-left:1em">
 							<a tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],metaObj['id'])">
 								<span tal:on-error="string:ERROR" tal:replace="structure python:here.display_icon(request,metaObj['id'],zpt=True)">the icon</span>
 								<span tal:on-error="string:ERROR" tal:replace="metaObj/name">the name</span>
@@ -463,7 +463,7 @@
 		<tal:block tal:define="
 				metaObj python:metaObjs[i];
 				revision python:here.getMetaobjRevision(metaObj['id']);">
-			<tr class="zmi-selectable" tal:condition="python:metaObj['type']!='ZMSPackage' and metaObj.get('package')==metaObjPackage">
+			<tr class="zmi-selectable" tal:condition="python:metaObj.get('type','')!='ZMSPackage' and metaObj.get('package')==metaObjPackage">
 				<td style="text-align:center;">
 					<input type="checkbox" name="ids:list" tal:attributes="value python:metaObj['id']"/>
 				</td>
