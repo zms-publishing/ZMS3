@@ -25,10 +25,10 @@
 					<span class="btn btn-default" tal:attributes="title python:'%s/%s'%(here.getZMILangStr('BTN_SLCTALL'),here.getZMILangStr('BTN_SLCTNONE'))" onclick="zmiToggleSelectionButtonClick(this)"><tal:block tal:content="structure python:here.zmi_icon(name='icon-check')"></tal:block></span>
 					<button type="submit" class="btn btn-default" name="btn" value="refresh"><tal:block tal:content="structure python:here.zmi_icon(name='icon-refresh')"></tal:block> Refresh</button>
 					<tal:block tal:define="meta_cmds python:here.getMetaCmds(here,'repository')">
-						<tal:block tal:condition="not:meta_cmds">
-							<button type="submit" class="btn btn-default" name="btn" value="update"><tal:block tal:content="structure python:here.zmi_icon(name='icon-reply')"></tal:block> Update</button>
-							<button type="submit" class="btn btn-default" name="btn" value="commit">Commit <tal:block tal:content="structure python:here.zmi_icon(name='icon-share-alt text-success')"></tal:block></button>
-						</tal:block>
+						<div class="btn-group" tal:condition="not:meta_cmds">
+							<button type="submit" class="btn btn-default" name="btn" value="update" title="Update from working-copy"><tal:block tal:content="structure python:here.zmi_icon(name='icon-reply text-success')"></tal:block> Update</button>
+							<button type="submit" class="btn btn-default" name="btn" value="commit" title="Commit to working-copy"><tal:block tal:content="structure python:here.zmi_icon(name='icon-share-alt text-success')"></tal:block> Commit</button>
+						</div>
 						<div class="btn-group" tal:condition="meta_cmds">
 							<button class="btn btn-default dropdown-toggle" type="button" id="teamDropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								Team  <span class="caret"></span>
@@ -48,7 +48,7 @@
 				</div><!-- .col-sm-10 -->
 			</div><!-- .form-group -->
 			<div class="form-group">
-				<label class="col-sm-2" tal:content="python:here.getZMILangStr('ATTR_PATH')">the label</label>
+				<label class="col-sm-2 control-label">Working-copy</label>
 				<div class="col-sm-10">
 					<input class="form-control" type="text" tal:attributes="value python:here.get_conf_basepath()" readonly/>
 				</div>

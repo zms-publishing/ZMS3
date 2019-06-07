@@ -340,7 +340,7 @@ class ZMSRepositoryManager(
             mode = os.stat(filepath)[stat.ST_MODE]
             if stat.S_ISDIR(mode):
               traverse(base, filepath)
-            elif not name in ['__impl__.py'] and name.startswith('__') and name.endswith('__.py'):
+            elif name.startswith('__') and name.endswith('__.py'):
               # Read python-representation of repository-object
               self.writeBlock("[readRepository]: read %s"%filepath)
               f = open(filepath, "rb")
