@@ -63,7 +63,7 @@ ins {
 
 	<tal:block tal:condition="not:provider_diffs_count">
 		<div class="form-group" tal:repeat="provider python:here.getRepositoryProviders()">
-			<label class="col-sm-2" style="text-align:right">
+			<label class="col-sm-2 text-right" style="margin:0.75em 0 auto 0;">
 				<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"><tal:block tal:content="python:provider.id">the provider</tal:block></a>
 			</label>
 			<div class="col-sm-10" tal:define="
@@ -88,7 +88,7 @@ ins {
 			ids python:standard.distinct_list(map(lambda x:x[2],diffs)); 
 			dummy0 python:ids.sort();">
 	<div class="form-group" tal:condition="ids">
-		<label class="col-sm-2" style="text-align:right">
+		<label class="col-sm-2 text-right" style="margin:0.75em 0 auto 0;">
 			<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"><tal:block tal:content="python:provider.id">the provider</tal:block></a>
 		</label>
 		<div class="col-sm-10">
@@ -177,7 +177,7 @@ ins {
 						<tal:block tal:content="python:'%s;; %i Bytes'%(str(l['version']),len(ld))"></tal:block>
 					</tal:block>
 				</small>
-				<a href="#zmi-tab"><tal:block tal:content="structure python:here.zmi_icon(name='icon-collapse-top')"></tal:block></a>
+				<a href="#zmi-tab"><i class="icon-collapse-top far fa-caret-square-up"></i></a>
 			</td>
 		</tr>
 		<tr>
