@@ -316,7 +316,7 @@ class ZMSMetacmdProvider(
       object = zopeutil.addObject(container, newMethod, newId, newTitle, newData, permissions={'Authenticated':['View']})
       
       # Return with new id.
-      return object.id
+      return newId
 
 
     # --------------------------------------------------------------------------
