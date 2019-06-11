@@ -51,7 +51,8 @@ class MetacmdManagerTest(ZMSTestCase):
         # Stays around for longer, and browsers are now so fast that it matters
         dialog_backdrop = self._find_element(By.CSS_SELECTOR, 'div.modal-backdrop')
         self._wait(lambda driver: not dialog.is_displayed())
-        self._wait(EC.staleness_of(dialog_backdrop,timeout=SeleniumTestCase.DEFAULT_TIMEOUT))
+        yield
+        self._wait(EC.staleness_of(dialog_backdrop))
         
         # reload page (also removes .alert-success)
         with self._wait_for_page_load():
