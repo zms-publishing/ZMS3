@@ -25,19 +25,31 @@ Installation (GNU/Linux, OSX/Darwin and Windows/WSL)
 
 $ cd ~
 $ virtualenv ZMS3
+
+**(2) Install ZMS dependencies**
+
+::
+
+$ ./ZMS3/bin/pip install --requirements https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
            
-**(2) Install [or Upgrade] the Product**
+**(3) Install [or Upgrade] the Product**
 
 ::     
 
 $ ./ZMS3/bin/pip install ZMS3 [--upgrade]
 
-**(3) Create an Instance [or restart on Upgrade]**
+**(4) Create an Instance [or restart on Upgrade]**
 
 ::     
 
 $ ./ZMS3/bin/mkzopeinstance --dir ZMS3/instance
-$ ./ZMS3/instance/bin/zopectl start
+$ ./ZMS3/instance/bin/zopectl start # start as service
+
+or 
+
+::
+
+$ ./ZMS3/instance/bin/runzope # start it in the foreground
 
     and finally "Add ZMS" via web user interface
 
