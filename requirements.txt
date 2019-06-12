@@ -102,4 +102,3 @@ zope.untrustedpython==4.0.0
 zope.viewlet==4.0.0
 Zope2==2.13.24
 ZopeUndo==2.12.0
-Products.CMFCore==2.3.0
