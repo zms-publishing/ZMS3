@@ -131,14 +131,17 @@ class ZMSMetaobjManager:
       for id in filter(lambda x:x in valid_ids, ids):
         o = self.getMetaobj(id)
         if o and not o.get('acquired',0):
-          package = o.get('package','')
           d = copy.deepcopy(o)
+          attrs = d.get('attrs',[])
+          package = d.get('package','')
+          mandatory_keys = ['access','enabled','id','name','package','revision','type']
+          for key in d.keys():
+            if not key in mandatory_keys:
+              del d[key]
+          package = o.get('package','')
           d['__filename__'] = [[],[package]][len(package)>0]+[id,'__init__.py']
-          for dk in ['acquired']:
-            if d.has_key(dk):
-              del d[dk]
-          for attr in d['attrs']:
-            syncZopeMetaobjAttr(self,o,attr)
+          for attr in attrs:
+            syncZopeMetaobjAttr(self,d,attr)
             mandatory_keys = ['id','name','type','default','keys','mandatory','multilang','ob','repetitive']
             if attr['type']=='interface':
               attr['name'] = attr['id']
@@ -147,8 +150,7 @@ class ZMSMetaobjManager:
             for key in attr.keys():
               if not key in mandatory_keys:
                 del attr[key]
-          d['Attrs'] = d['attrs']
-          del d['attrs']
+          d['Attrs'] = attrs
           r[id] = d
 
     """
