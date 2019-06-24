@@ -179,6 +179,7 @@ class ZMSMetaobjManager:
             if newType in ['resource']:
               newCustom = _blobfields.createBlobField( self,_blobfields.MyFile, {'data':newCustom,'filename':newId})
             self.setMetaobjAttr(id,oldId,newId,newName,newMandatory,newMultilang,newRepetitive,newType,newKeys,newCustom,newDefault)
+        self.synchronizeObjAttrs(id)
       return id
 
 
