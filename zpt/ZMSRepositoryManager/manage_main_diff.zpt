@@ -73,7 +73,9 @@ ins {
 					">
 				<div tal:repeat="id ids">
 					<tal:block tal:content="structure python:here.zmi_icon(name='icon-ok text-success')"></tal:block>
-					<tal:block tal:content="id"></tal:block>
+					<a tal:attributes="href python:'%s/manage_main?lang=%s&id=%s'%(provider.absolute_url(),request['lang'],id)" target="_blank">
+						<tal:block tal:content="id"></tal:block>
+					</a>
 				</div>
 			</div>
 		</div>
@@ -101,7 +103,11 @@ ins {
 			<tal:block tal:repeat="id ids">
 				<tr>
 					<td><input type="checkbox" name="ids:list" tal:attributes="value python:'%s:%s'%(provider.id,id)" checked="checked"></td>
-					<td><strong tal:content="id">the id</strong></td>
+					<td>
+						<a tal:attributes="href python:'%s/manage_main?lang=%s&id=%s'%(provider.absolute_url(),request['lang'],id)" target="_blank">
+							<strong tal:content="id">the id</strong>
+						</a>
+					</td>
 					<td>
 					<div tal:repeat="diff python:filter(lambda x:x[2]==id,diffs)">
 						<tal:block tal:define="
