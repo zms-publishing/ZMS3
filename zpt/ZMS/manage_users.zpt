@@ -469,7 +469,7 @@ function zmiModalInsertUserOpen(context) {
 		<td>
 			<input type="checkbox" name="ids:list" tal:attributes="value userName"/>
 			<a tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],userName)"
-				><span><i class="fa fa-spinner"></i> <tal:block tal:content="userName">userName</tal:block></span>
+				><span><i class="icon-spinner icon-spin fas fa-spinner fa-spin"></i> <tal:block tal:content="userName">userName</tal:block></span>
 			</a><tal:block 
 				tal:define="global nodes python:securityUsers.get(userName,{}).get('nodes',{})"
 				tal:condition="python:len(nodes)>0"

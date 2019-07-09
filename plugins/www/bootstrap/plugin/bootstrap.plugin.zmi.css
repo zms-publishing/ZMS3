@@ -1784,6 +1784,16 @@ div.right .btn .caret {
 	}
 }
 
+/* Fix Scroll Issue on Mutiple Modal Windows */
+.modal {
+	overflow-y:auto;
+	-ms-overflow-style: none;
+	scrollbar-width: none; 
+}
+.modal::-webkit-scrollbar { 
+	display: none;
+}
+
 @media (min-width: 767px) {
 	.zmi nav #toggle_zmitabs {
 		display: none;
