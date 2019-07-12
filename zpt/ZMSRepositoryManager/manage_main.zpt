@@ -11,8 +11,17 @@
 
 <div class="tabbable tabs-left">
 	<ul class="nav nav-tabs">
-		<li><a href="#diff" data-toggle="tab"><tal:block tal:content="structure python:here.zmi_icon(name=['icon-check-empty','icon-check'][here.get_auto_update()])"></tal:block> Diff</a></li>
-		<li><a href="#properties" data-toggle="tab">Properties</a></li>
+		<li>
+			<a href="#diff" data-toggle="tab">
+				<i tal:condition="python:here.get_auto_update()" class="icon-refresh fas fa-sync-alt"></i>
+				Diff
+			</a>
+		</li>
+		<li>
+			<a href="#properties" data-toggle="tab">
+				Properties
+			</a>
+		</li>
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane active" id="diff">
@@ -23,7 +32,7 @@
 				<label class="col-sm-2"></label>
 				<div class="col-sm-10">
 					<span class="btn btn-default" tal:attributes="title python:'%s/%s'%(here.getZMILangStr('BTN_SLCTALL'),here.getZMILangStr('BTN_SLCTNONE'))" onclick="zmiToggleSelectionButtonClick(this)"><tal:block tal:content="structure python:here.zmi_icon(name='icon-check')"></tal:block></span>
-					<button type="submit" class="btn btn-default" name="btn" value="refresh"><tal:block tal:content="structure python:here.zmi_icon(name='icon-refresh')"></tal:block> Refresh</button>
+					<button type="submit" class="btn btn-default" name="btn" value="refresh"><i class="icon-repeat fas fa-redo-alt"></i> Refresh</button>
 					<tal:block tal:define="meta_cmds python:here.getMetaCmds(here,'repository')">
 						<div class="btn-group" tal:condition="not:meta_cmds">
 							<button type="submit" class="btn btn-default" name="btn" value="update" title="Update from working-copy"><tal:block tal:content="structure python:here.zmi_icon(name='icon-reply text-success')"></tal:block> Update</button>
@@ -60,21 +69,23 @@
 			<form class="form-horizontal" action="manage_change" method="post">
 				<input type="hidden" name="lang" tal:attributes="value request/lang" />
 				<div class="form-group">
-					<label class="col-sm-2 control-label"><span>Auto-Update</span></label>
+					<label class="col-sm-2 control-label"><span>Auto-Update</span> <i class="icon-refresh fas fa-sync-alt"></i></label>
 					<div class="col-sm-10">
-							<input type="checkbox" name="auto_update" value="1" tal:attributes="checked python:['','checked'][here.get_auto_update()]">
-							<span tal:condition="python:here.get_auto_update() and here.getConfProperty('ZMS.debug',0)" class="label label-success">Active (Debug)</span>
-							<span tal:condition="python:here.get_auto_update() and not here.getConfProperty('ZMS.debug',0)" class="label label-danger">Inactive (No Debug!)</span>
+						<span class="btn btn-default">
+							<input type="checkbox" name="auto_update" value="1" tal:attributes="checked python:['','checked'][here.get_auto_update()]" />
+						</span>
+						<span tal:condition="python:here.get_auto_update() and here.getConfProperty('ZMS.debug',0)" class="label label-success">Active (Debug)</span>
+						<span tal:condition="python:here.get_auto_update() and not here.getConfProperty('ZMS.debug',0)" class="label label-danger">Inactive (No Debug!)</span>
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label"><span>Last Update</span></label>
+					<label class="col-sm-2 control-label"><span>Last Update</span> <i class="icon-time fas fa-clock"></i></label>
 					<div class="col-sm-10">
 						 <input class="form-control" type="text" name="last_update" tal:attributes="value python:here.getLangFmtDate(here.get_last_update())">
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label mandatory"><span>Repository <tal:block tal:content="structure python:here.zmi_icon(name='icon-folder-open')"></tal:block></span></label>
+					<label class="col-sm-2 control-label mandatory"><span>Repository</span> <i class="icon-folder-open-alt far fa-folder-open"></i></label>
 					<div class="col-sm-10">
 						 <input class="form-control" type="text" name="basepath" tal:attributes="value python:here.get_conf_basepath('')">
 					</div><!-- .col-sm-10 -->
