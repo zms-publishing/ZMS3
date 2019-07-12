@@ -36,11 +36,13 @@
 			</div><!-- .form-group -->
 			<div class="form-group">
 				<label for="el_description" class="col-sm-3 control-label"><span tal:content="python:here.getZMILangStr('ATTR_CONFIRM')">Confirm</span></label>
-				<div class="col-sm-9"><input type="text" name="el_description" class="form-control input-sm" tal:attributes="value python:metaCmd.get('description')"/></div>
+				<div class="col-sm-9"><input type="text" name="el_description" class="form-control input-sm" tal:attributes="value python:metaCmd.get('description','')"/></div>
 			</div><!-- .form-group -->
 			<div class="form-group">
 				<label for="el_execution:int" class="col-sm-3 control-label"><span>Execution</span></label>
-				<div class="col-sm-9"><span class="btn btn-default"><input type="checkbox" name="el_execution:int" tal:attributes="checked python:['','checked'][int(metaCmd['execution'])]" value="1"/></span></div>
+				<div class="col-sm-9"><span class="btn btn-default"><input type="checkbox" name="el_execution:int"
+					tal:define="checked python:( (metaCmd.get('execution',False) in [True,'True',1,'1']) and 1 or 0 )" 
+					tal:attributes="checked python:['','checked'] [checked ]" value="1"/></span></div>
 			</div><!-- .form-group -->
 			<!-- ACE Editor -->
 			<tal:block tal:define="ob python:getattr(here,request['id'],None)">
