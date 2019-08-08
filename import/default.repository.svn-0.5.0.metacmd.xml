@@ -181,7 +181,7 @@ def svn(self, options):
 			return -1,'','Invalid credentials'
 		command = 'svn --non-interactive --no-auth-cache {$CREDENTIALS} %s'%options
 		standard.writeStdout(self,"[svn]: "+str(command))
-		p = subprocess.Popen(shlex.split(command.replace('{$CREDENTIALS}',' --username %s --password %s'%(userid,password))), cwd=base_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		p = subprocess.Popen(shlex.split(command.replace('{$CREDENTIALS}',' --username %s --password %s'%(userid,password))), cwd=base_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 		(output, err) = p.communicate()  
 		p_status = p.wait()
 		standard.writeStdout(self,"[svn]: [%s] %s %s"%(str(p_status),str(output),str(err)))
@@ -300,26 +300,13 @@ def manage_repository_commit(self, request=None):
 	printed.append('<div style="clear:both;">&nbsp;</div>')
 	printed.append('</div><!-- #zmi-tab -->')
 	printed.append(self.zmi_body_footer(self,request))
-	printed.append("""<script>$(function() {
-	$(".table tr").each(function() {
-			var $tr = $(this);
-			if ($(".state.bg-success,.arrow-left",$tr).length > 0) {
-				$("input:checkbox",$tr).remove();
-				$tr.addClass("bg-danger");
-			}
-		});
-	var can_commit = $(".table tr input:checkbox:visible").length > 0;
-	if (!can_commit && $('#svn_active').text()!='Connection Inactivated') {
-		$("#Commit-message,#toggle-checkboxes,button[value='Commit']").hide();
-	}
-});</script>""")
 	printed.append('</body>')
 	printed.append('</html>')
 
 	return '\n'.join(printed)]]>
       </item>
       <item key="description"></item>
-      <item key="execution" type="int">0</item>
+      <item key="execution">False</item>
       <item key="icon_clazz"><![CDATA[icon-share-alt text-success]]></item>
       <item key="id">manage_repository_commit</item>
       <item key="meta_type"><![CDATA[External Method]]></item>
@@ -336,6 +323,253 @@ def manage_repository_commit(self, request=None):
         </list>
       </item>
       <item key="title"><![CDATA[Commit Data to Repository, if configured (e.g. SVN)]]></item>
+    </dictionary>
+  </item>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import base64
+import re
+
+def svn(self, options):
+	if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
+		import shlex
+		import subprocess
+		base_path = self.get_conf_basepath()
+		userid = self.REQUEST.SESSION.get('ZMSRepository.svn.server.userid')
+		password = self.REQUEST.SESSION.get('ZMSRepository.svn.server.password')
+		try:
+			password = base64.b64decode(password)
+		except:
+			password = None
+		if userid is None or password is None:
+		  return -1,'','Invalid credentials'
+		command = 'svn --non-interactive --no-auth-cache {$CREDENTIALS} %s'%options
+		standard.writeStdout(self,"[svn]: "+str(command))
+		p = subprocess.Popen(shlex.split(command.replace('{$CREDENTIALS}',' --username %s --password %s'%(userid,password))), cwd=base_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+		(output, err) = p.communicate()  
+		p_status = p.wait()
+		standard.writeStdout(self,"[svn]: [%s] %s %s"%(str(p_status),str(output),str(err)))
+		return p_status, output, err
+	else:
+		return 'Status Unknown', 'SVN Connection Inactivated', ''
+
+def manage_repository_merge( self):
+	printed = []
+	request = self.REQUEST
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+	if request.get('svn_password','******') != '******':
+		request.SESSION.set('ZMSRepository.svn.server.userid',request['svn_userid'])
+		request.SESSION.set('ZMSRepository.svn.server.password',base64.b64encode(request['svn_password']))
+	base_path = self.get_conf_basepath()
+
+	printed.append('<!DOCTYPE html>')
+	printed.append('<html lang="en">')
+	printed.append(self.zmi_html_head(self,request))
+	printed.append('<body class="%s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+	printed.append(self.zmi_body_header(self,request,options=[{'action':'#','label':'Repository &gt; Team'}]))
+	printed.append('<div id="zmi-tab">')
+	printed.append(self.zmi_breadcrumbs(self,request))
+	printed.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+	printed.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+	printed.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+	printed.append('<legend>Merge...</legend>')
+
+	# --- MERGE.
+	# ---------------------------------
+	if btn=='Merge':
+		message = []
+		if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
+			# update from repository
+			command = 'update --revision %s --depth infinity'%(request['revision'])
+			p_status, output, err = svn(self,command)
+			printed.append('<div class="alert"><pre>%s [%s]\n%s\n%s</pre></div>'%(command,str(p_status),str(output),str(err)))
+		# import from working-copy
+		success,failure = self.updateChanges(request.get('ids',[]),btn=='override')
+		printed.append('<div class="alert alert-success">%s</div>'%(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success))))
+		if failure:
+			printed.append('<div class="alert alert-danger">%s</div>'%(' '.join(failure)))
+
+	# --- Cancel.
+	# ---------------------------------
+	elif btn==self.getZMILangStr('BTN_CANCEL'):
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	# --- Form.
+	# ---------------------------------
+	if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
+		p_status, output, err = svn(self,'info')
+		revision = (re.findall('Revision: (\d+)',output)+['?'])[0]
+		p_status, output, err = svn(self,'status -u')
+		printed.append('<div class="form-group">')
+		printed.append('<label for="svn_userid" class="col-sm-2 control-label mandatory">SVN-User</label>')
+		printed.append('<div class="col-sm-10"><input class="form-control" name="svn_userid" type="text" size="25" value="%s" placeholder="Enter SVN-User here"></div>'%self.REQUEST.SESSION.get('ZMSRepository.svn.server.userid',self.REQUEST['AUTHENTICATED_USER'].getId()))
+		printed.append('</div><!-- .form-group -->')
+		printed.append('<div class="form-group">')
+		printed.append('<label for="svn_password" class="col-sm-2 control-label mandatory">SVN-Password</label>')
+		printed.append('<div class="col-sm-10"><input class="form-control" name="svn_password" type="password" size="25" value="******" placeholder="Enter SVN-Password here"></div>')
+		printed.append('</div><!-- .form-group -->')
+		printed.append('<div class="form-group">')
+		printed.append('<label for="revision" class="col-sm-2 control-label">SVN-Status [@%s]</label>'%(revision))
+		printed.append('<div class="col-sm-10"><pre>%s%s</pre></div>'%(output,err))
+		printed.append('</div><!-- .form-group -->')
+		can_merge = len(output.strip().split('\n'))>1 and len(err)==0
+		
+		if can_merge:
+			printed.append('<div class="form-group">')
+			printed.append('<label for="revision" class="col-sm-2 control-label mandatory">Revision</label>')
+			printed.append('<div class="col-sm-10"><input class="form-control" name="revision" type="text" size="25" value="HEAD" placeholder="Enter commit message here"></div>')
+			printed.append('</div><!-- .form-group -->')
+
+		printed.append('<div class="form-group">')
+		printed.append('<div class="col-sm-2">')
+		printed.append('</div><!-- .col-sm-2 -->')
+		printed.append('<div class="col-sm-2">')
+		printed.append('<span id="toggle-checkboxes" class="btn btn-default" title="%s %s" onclick="zmiToggleSelectionButtonClick(this)">%s</span>'%(unicode(self.getZMILangStr('BTN_SLCTALL'),'utf-8'),unicode(self.getZMILangStr('BTN_SLCTNONE'),'utf-8'),self.zmi_icon(name='icon-check')))
+		printed.append('</div><!-- .col-sm-2 -->')
+		printed.append('<div class="col-sm-8 save">')
+		if can_merge:
+			printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button>'%('Merge','Merge'))
+
+	else:
+		printed.append('<div class="form-group">')
+		printed.append('<label for="revision" class="col-sm-2 control-label">SVN-Status</label>')
+		printed.append('<div class="col-sm-10"><pre id="svn_active">Connection Inactivated</pre></div>')
+		printed.append('</div><!-- .form-group -->')
+		printed.append('<div class="form-group">')
+		printed.append('<div class="col-sm-2">')
+		printed.append('</div><!-- .col-sm-2 -->')
+		printed.append('<div class="col-sm-2">')
+		printed.append('<span id="toggle-checkboxes" class="btn btn-default" title="%s %s" onclick="zmiToggleSelectionButtonClick(this)">%s</span>'%(unicode(self.getZMILangStr('BTN_SLCTALL'),'utf-8'),unicode(self.getZMILangStr('BTN_SLCTNONE'),'utf-8'),self.zmi_icon(name='icon-check')))
+		printed.append('</div><!-- .col-sm-2 -->')
+		printed.append('<div class="col-sm-8 save">')
+		printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button>'%('Merge','Merge'))
+
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8'),unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8')))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8'),unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8')))
+	printed.append('</div><!-- .col-sm-8 -->')
+	printed.append('</div><!-- .form-group -->')
+	printed.append(self.manage_main_diff(self,request))
+
+	# ---------------------------------
+
+	printed.append('</form><!-- .form-horizontal -->')
+	printed.append('<div style="clear:both;">&nbsp;</div>')
+	printed.append('</div><!-- #zmi-tab -->')
+	printed.append(self.zmi_body_footer(self,request))
+	printed.append('</body>')
+	printed.append('</html>')
+
+	return '\n'.join(printed)]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution" type="int">0</item>
+      <item key="icon_clazz"><![CDATA[icon-reply text-success]]></item>
+      <item key="id">manage_repository_merge</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name">Merge...</item>
+      <item key="revision">0.0.0</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title"><![CDATA[Merge Version from Repository to local Files]]></item>
+    </dictionary>
+  </item>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import re
+
+def manage_repository_update(self, request=None):
+	printed = []
+	request = self.REQUEST
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+
+	printed.append('<!DOCTYPE html>')
+	printed.append('<html lang="en">')
+	printed.append(self.zmi_html_head(self,request))
+	printed.append('<body class="%s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+	printed.append(self.zmi_body_header(self,request,options=[{'action':'#','label':'Repository &gt; Team'}]))
+	printed.append('<div id="zmi-tab">')
+	printed.append(self.zmi_breadcrumbs(self,request))
+	printed.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+	printed.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+	printed.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+	printed.append('<legend>Revert...</legend>')
+
+	# --- REVERT.
+	# ---------------------------------
+	if btn=='Revert':
+		success,failure = self.updateChanges(request.get('ids',[]),override=True)
+		printed.append('<div class="alert alert-success">%s</div>'%(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success))))
+		if failure:
+			printed.append('<div class="alert alert-danger">%s</div>'%(' '.join(failure)))
+
+	# --- Cancel.
+	# ---------------------------------
+	elif btn==self.getZMILangStr('BTN_CANCEL'):
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	# --- Form.
+	# ---------------------------------
+	printed.append('<div class="form-group">')
+	printed.append('<div class="col-sm-2">')
+	printed.append('</div><!-- .col-sm-2 -->')
+	printed.append('<div class="col-sm-10">')
+	printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s %s</button>'%('Revert',self.zmi_icon(name='icon-undo'),'Revert'))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8'),unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8')))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8'),unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8')))
+	printed.append('</div><!-- .col-sm-10 -->')
+	printed.append('</div><!-- .form-group -->')
+	printed.append(self.manage_main_diff(self,request))
+
+	# ---------------------------------
+
+	printed.append('</form><!-- .form-horizontal -->')
+	printed.append('<div style="clear:both;">&nbsp;</div>')
+	printed.append('</div><!-- #zmi-tab -->')
+	printed.append(self.zmi_body_footer(self,request))
+	printed.append("""<script>$(function() {
+	$("input[name='ids:list']:checked").prop('checked',false);
+});</script>""")
+	printed.append('</body>')
+	printed.append('</html>')
+
+	return '\n'.join(printed)]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution">False</item>
+      <item key="icon_clazz">icon-undo</item>
+      <item key="id">manage_repository_update</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name">Revert...</item>
+      <item key="revision">0.0.0</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title"><![CDATA[Revert local Files to Version from Repository]]></item>
     </dictionary>
   </item>
   <item type="dictionary">
@@ -430,15 +664,16 @@ def manage_repository_config(self, request=None):
 		printed.append('<label for="svn_password" class="col-sm-2 control-label mandatory svnmandatory">SVN-Password</label>')
 		printed.append('<div class="col-sm-10"><input class="form-control" name="svn_password" type="password" size="25" value="******" placeholder="Enter SVN-Password here"></div>')
 		printed.append('</div><!-- .form-group -->')
-		printed.append('<div class="form-group">')
-		printed.append('<div class="controls save">')
-		printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button> '%(unicode(self.getZMILangStr('BTN_CHANGE'),'utf-8'),unicode(self.getZMILangStr('BTN_CHANGE'),'utf-8')))
-		printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%('Cleanup','Cleanup'))
-		printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%('Checkout','Checkout'))
-		printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8'),unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8')))
-		printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%(unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8'),unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8')))
-		printed.append('</div>')
-		printed.append('</div><!-- .form-group -->')
+	
+	printed.append('<div class="form-group">')
+	printed.append('<div class="controls save">')
+	printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button> '%(unicode(self.getZMILangStr('BTN_CHANGE'),'utf-8'),unicode(self.getZMILangStr('BTN_CHANGE'),'utf-8')))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%('Cleanup','Cleanup'))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%('Checkout','Checkout'))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8'),unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8')))
+	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button> '%(unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8'),unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8')))
+	printed.append('</div>')
+	printed.append('</div><!-- .form-group -->')
 
 	# ---------------------------------
 	printed.append('''
@@ -467,7 +702,7 @@ def manage_repository_config(self, request=None):
 	return '\n'.join(printed)]]>
       </item>
       <item key="description"></item>
-      <item key="execution" type="int">0</item>
+      <item key="execution">False</item>
       <item key="icon_clazz">icon-cogs</item>
       <item key="id">manage_repository_config</item>
       <item key="meta_type"><![CDATA[External Method]]></item>
@@ -476,7 +711,7 @@ def manage_repository_config(self, request=None):
           <item>ZMS</item>
         </list>
       </item>
-      <item key="name">Repository-Settings</item>
+      <item key="name">Settings</item>
       <item key="revision">0.0.0</item>
       <item key="roles" type="list">
         <list>
@@ -484,176 +719,6 @@ def manage_repository_config(self, request=None):
         </list>
       </item>
       <item key="title"><![CDATA[Configure Data Transfer to Repository (e.g. SVN)]]></item>
-    </dictionary>
-  </item>
-  <item type="dictionary">
-    <dictionary>
-      <item key="data"><![CDATA[from Products.zms import standard
-import base64
-import re
-
-def svn(self, options):
-	if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
-		import shlex
-		import subprocess
-		base_path = self.get_conf_basepath()
-		userid = self.REQUEST.SESSION.get('ZMSRepository.svn.server.userid')
-		password = self.REQUEST.SESSION.get('ZMSRepository.svn.server.password')
-		try:
-			password = base64.b64decode(password)
-		except:
-			password = None
-		if userid is None or password is None:
-		  return -1,'','Invalid credentials'
-		command = 'svn --non-interactive --no-auth-cache {$CREDENTIALS} %s'%options
-		standard.writeStdout(self,"[svn]: "+str(command))
-		p = subprocess.Popen(shlex.split(command.replace('{$CREDENTIALS}',' --username %s --password %s'%(userid,password))), cwd=base_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-		(output, err) = p.communicate()  
-		p_status = p.wait()
-		standard.writeStdout(self,"[svn]: [%s] %s %s"%(str(p_status),str(output),str(err)))
-		return p_status, output, err
-	else:
-		return 'Status Unknown', 'SVN Connection Inactivated', ''
-
-def manage_repository_update(self, request=None):
-	printed = []
-	request = self.REQUEST
-	RESPONSE =  request.RESPONSE
-	btn = request.form.get('btn')
-	came_from = request.get('came_from',request['HTTP_REFERER'])
-	if came_from.find('?') > 0:
-		came_from = came_from[:came_from.find('?')]
-	if request.get('svn_password','******') != '******':
-		request.SESSION.set('ZMSRepository.svn.server.userid',request['svn_userid'])
-		request.SESSION.set('ZMSRepository.svn.server.password',base64.b64encode(request['svn_password']))
-	base_path = self.get_conf_basepath()
-
-	printed.append('<!DOCTYPE html>')
-	printed.append('<html lang="en">')
-	printed.append(self.zmi_html_head(self,request))
-	printed.append('<body class="%s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
-	printed.append(self.zmi_body_header(self,request,options=[{'action':'#','label':'Repository &gt; Team'}]))
-	printed.append('<div id="zmi-tab">')
-	printed.append(self.zmi_breadcrumbs(self,request))
-	printed.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
-	printed.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
-	printed.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	printed.append('<legend>Update to Version...</legend>')
-
-	# --- UPDATE.
-	# ---------------------------------
-	if btn=='Update':
-		message = []
-		if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
-			# update from repository
-			command = 'update --revision %s --depth infinity'%(request['revision'])
-			p_status, output, err = svn(self,command)
-			printed.append('<div class="alert"><pre>%s [%s]\n%s\n%s</pre></div>'%(command,str(p_status),str(output),str(err)))
-		# import from working-copy
-		success,failure = self.updateChanges(request.get('ids',[]),btn=='override')
-		printed.append('<div class="alert alert-success">%s</div>'%(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success))))
-		if failure:
-			printed.append('<div class="alert alert-danger">%s</div>'%(' '.join(failure)))
-
-	# --- Cancel.
-	# ---------------------------------
-	elif btn==self.getZMILangStr('BTN_CANCEL'):
-		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
-
-	# --- Form.
-	# ---------------------------------
-	if int(self.getConfProperty('ZMSRepository.svn.server.active',0))==1:
-		p_status, output, err = svn(self,'info')
-		revision = (re.findall('Revision: (\d+)',output)+['?'])[0]
-		p_status, output, err = svn(self,'status -u')
-		printed.append('<div class="form-group">')
-		printed.append('<label for="svn_userid" class="col-sm-2 control-label mandatory">SVN-User</label>')
-		printed.append('<div class="col-sm-10"><input class="form-control" name="svn_userid" type="text" size="25" value="%s" placeholder="Enter SVN-User here"></div>'%self.REQUEST.SESSION.get('ZMSRepository.svn.server.userid',self.REQUEST['AUTHENTICATED_USER'].getId()))
-		printed.append('</div><!-- .form-group -->')
-		printed.append('<div class="form-group">')
-		printed.append('<label for="svn_password" class="col-sm-2 control-label mandatory">SVN-Password</label>')
-		printed.append('<div class="col-sm-10"><input class="form-control" name="svn_password" type="password" size="25" value="******" placeholder="Enter SVN-Password here"></div>')
-		printed.append('</div><!-- .form-group -->')
-		printed.append('<div class="form-group">')
-		printed.append('<label for="revision" class="col-sm-2 control-label">SVN-Status [@%s]</label>'%(revision))
-		printed.append('<div class="col-sm-10"><pre>%s%s</pre></div>'%(output,err))
-		printed.append('</div><!-- .form-group -->')
-		can_update = len(output.strip().split('\n'))>1 and len(err)==0
-		
-		if can_update:
-			printed.append('<div class="form-group">')
-			printed.append('<label for="revision" class="col-sm-2 control-label mandatory">Revision</label>')
-			printed.append('<div class="col-sm-10"><input class="form-control" name="revision" type="text" size="25" value="HEAD" placeholder="Enter commit message here"></div>')
-			printed.append('</div><!-- .form-group -->')
-
-		printed.append('<div class="form-group">')
-		printed.append('<div class="col-sm-2">')
-		printed.append('</div><!-- .col-sm-2 -->')
-		printed.append('<div class="col-sm-2">')
-		printed.append('<span id="toggle-checkboxes" class="btn btn-default" title="%s %s" onclick="zmiToggleSelectionButtonClick(this)">%s</span>'%(unicode(self.getZMILangStr('BTN_SLCTALL'),'utf-8'),unicode(self.getZMILangStr('BTN_SLCTNONE'),'utf-8'),self.zmi_icon(name='icon-check')))
-		printed.append('</div><!-- .col-sm-2 -->')
-		printed.append('<div class="col-sm-8 save">')
-		if can_update:
-			printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button>'%('Update','Update'))
-
-	else:
-		printed.append('<div class="form-group">')
-		printed.append('<label for="revision" class="col-sm-2 control-label">SVN-Status</label>')
-		printed.append('<div class="col-sm-10"><pre id="svn_active">Connection Inactivated</pre></div>')
-		printed.append('</div><!-- .form-group -->')
-		printed.append('<div class="form-group">')
-		printed.append('<div class="col-sm-2">')
-		printed.append('</div><!-- .col-sm-2 -->')
-		printed.append('<div class="col-sm-2">')
-		printed.append('<span id="toggle-checkboxes" class="btn btn-default" title="%s %s" onclick="zmiToggleSelectionButtonClick(this)">%s</span>'%(unicode(self.getZMILangStr('BTN_SLCTALL'),'utf-8'),unicode(self.getZMILangStr('BTN_SLCTNONE'),'utf-8'),self.zmi_icon(name='icon-check')))
-		printed.append('</div><!-- .col-sm-2 -->')
-		printed.append('<div class="col-sm-8 save">')
-		printed.append('<button type="submit" name="btn" class="btn btn-primary" value="%s">%s</button>'%('Update','Update'))
-
-	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8'),unicode(self.getZMILangStr('BTN_REFRESH'),'utf-8')))
-	printed.append('<button type="submit" name="btn" class="btn btn-default" value="%s">%s</button>'%(unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8'),unicode(self.getZMILangStr('BTN_CANCEL'),'utf-8')))
-	printed.append('</div><!-- .col-sm-8 -->')
-	printed.append('</div><!-- .form-group -->')
-	printed.append(self.manage_main_diff(self,request))
-
-	# ---------------------------------
-
-	printed.append('</form><!-- .form-horizontal -->')
-	printed.append('<div style="clear:both;">&nbsp;</div>')
-	printed.append('</div><!-- #zmi-tab -->')
-	printed.append(self.zmi_body_footer(self,request))
-	printed.append("""<script>$(function() {
-	$(".table tr").each(function() {
-			var $tr = $(this);
-			if ($(".state.bg-danger,.arrow-right",$tr).length > 0) {
-				$("input:checkbox",$tr).remove();
-				$tr.addClass("bg-danger");
-			}
-		});
-});</script>""")
-	printed.append('</body>')
-	printed.append('</html>')
-
-	return '\n'.join(printed)]]>
-      </item>
-      <item key="description"></item>
-      <item key="execution" type="int">0</item>
-      <item key="icon_clazz"><![CDATA[icon-reply text-success]]></item>
-      <item key="id">manage_repository_update</item>
-      <item key="meta_type"><![CDATA[External Method]]></item>
-      <item key="meta_types" type="list">
-        <list>
-          <item>ZMS</item>
-        </list>
-      </item>
-      <item key="name"><![CDATA[Update to Version...]]></item>
-      <item key="revision">0.0.0</item>
-      <item key="roles" type="list">
-        <list>
-          <item>ZMSAdministrator</item>
-        </list>
-      </item>
-      <item key="title"><![CDATA[Update local Files to Version from Repository]]></item>
     </dictionary>
   </item>
 </list>
