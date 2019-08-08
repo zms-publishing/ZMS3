@@ -1503,9 +1503,13 @@ def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, l
     except:
       pass
   elif type(i) is int or type(i) is float:
-    return str(i)
+    i = str(i)
+    return i
   elif type(i) is bool:
-    return str(i).lower()
+    i = str(i)
+    if allow_booleans:
+      i = i.lower()
+    return i
   elif i is not None:
     if type(i) is unicode:
       if not (i.strip().startswith('<') and i.strip().endswith('>')):
