@@ -165,16 +165,21 @@ nav .scroller-left {
 	border-radius:0 !important;
 }
 .zmi footer {
-	left:0px;
-	bottom:0px;
-	height:26px;
-	width:100%;
-	padding:0.5em;
-	font-size:11px !important;
+	left: 0;
+	bottom: 0;
+	height: 26px;
+	width: 100%;
+	padding: 0.5em;
+	font-size: 11px !important;
+	background: #19232ca8;
+	color: white;
+}
+footer a {
+	color: white !important;
 }
 .zmi footer .back-to-top {
 	display:none;
-	color: rgb(81,142,212);
+	color: white;
 	cursor:pointer;
 	text-align:center;
 	margin: 0;
@@ -187,8 +192,7 @@ nav .scroller-left {
 	border-radius:4px;
 }
 .zmi footer .back-to-top:hover {
-	color: #fff;
-	background: rgb(81,142,212);
+	background-color:#222222;
 }
 .zmi ul.breadcrumb {
 	clear:left;
@@ -330,6 +334,7 @@ ul.nav-buttons li {
 div#zmi-tab {
 	background-color:#f5f5f5!important;
 	border-bottom: 1px solid #ddd;
+	min-height: calc(100vh - 112px);
 }
 div.alert {
 	margin:1em 1.5em;

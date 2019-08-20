@@ -1430,6 +1430,7 @@ ZMIObjectTree.prototype.toggleClick = function(toggle, callback) {
 		var base = $ZMI.getPhysicalPath();
 		base = base.substr(0,base.indexOf('/'+homeId));
 		// Set wait-cursor.
+		// $("body").addClass("loading");
 		$container.append('<div id="loading" class="zmi-page">'+$ZMI.icon("icon-spinner icon-spin")+'&nbsp;&nbsp;'+getZMILangStr('MSG_LOADING')+'<'+'/div>');
 		// JQuery.AJAX.get
 		var params = {lang:getZMILang(),preview:'preview',physical_path:$('meta[name=physical_path]').attr('content')}
@@ -1441,6 +1442,7 @@ ZMIObjectTree.prototype.toggleClick = function(toggle, callback) {
 		$.get(base+href+'/manage_ajaxGetChildNodes',params,function(result){
 				// Reset wait-cursor.
 				$("#loading").remove();
+				// $("body").removeClass("loading");
 				// Get and iterate pages.
 				var pages = $('page',result);
 				if ( pages.length == 0) {
