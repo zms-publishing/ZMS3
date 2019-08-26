@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?zms version='ZMS3-3.4.2dev (snapshot #)'?>
+<?zms version='ZMS3-3.4.3dev (snapshot #)'?>
 <list>
   <item type="dictionary">
     <dictionary>
@@ -952,15 +952,21 @@ return zmscontext.attr('attr_dc_description')
 ##bind namespace=
 ##bind script=script
 ##bind subpath=traverse_subpath
-##parameters=zmscontext
+##parameters=zmscontext=None
 ##title=py: Function: index_html
 ##
-# --// BO getHref2IndexHtml //--
+# --// getHref2IndexHtml //--
 
+href = ''
 file = zmscontext.attr('file')
 if file:
-    return file.getHref(zmscontext.REQUEST)
-return ''
+	request = zmscontext.REQUEST
+	href = file.getHref(request)
+	ids = href.split('/')
+	if request['SERVER_URL'] not in ids and zmscontext.getHome().id not in ids:
+		absolute_url = '/'.join(list(zmscontext.getPhysicalPath())+[''])
+		href == absolute_url + ids[-1]
+return href
 
 # --// EO getHref2IndexHtml //--
 ]]>
@@ -1064,7 +1070,7 @@ return ''
           <item key="id">ZMSFile</item>
           <item key="name">ZMSFile</item>
           <item key="package">com.zms.foundation</item>
-          <item key="revision">3.3.9</item>
+          <item key="revision">3.3.10</item>
           <item key="type">ZMSObject</item>
         </dictionary>
       </item>
@@ -6795,7 +6801,7 @@ return constraints
           <item key="id">com.zms.foundation</item>
           <item key="name">com.zms.foundation</item>
           <item key="package"></item>
-          <item key="revision">3.4.1</item>
+          <item key="revision">3.4.3</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
