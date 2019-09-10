@@ -17,10 +17,11 @@
 					><tal:block tal:condition="python:metaObjAttr['type']=='delimiter'"
 						><tal:block tal:content="structure python:'</div><!-- .accordion-inner --></div><!-- .accordion-body -->'"></tal:block>
 						<div class="accordion-heading">
-							<a class="accordion-toggle pull-left" data-toggle="collapse" tal:attributes="href python:'#%s'%metaObjAttr['id']">
-								<tal:block tal:content="structure python:here.zmi_icon(name='')"></tal:block>
-								<tal:block tal:content="elLabel">the label</tal:block>
-							</a>
+							<a class="accordion-toggle pull-left" data-toggle="collapse" 
+								tal:attributes="href python:'#%s'%metaObjAttr['id']"
+								><tal:block tal:content="structure python:here.zmi_icon(name='')"></tal:block
+								><tal:block tal:content="elLabel">the label</tal:block
+							></a>
 							<div class="clearfix"></div>
 						</div><!-- .accordion-heading -->
 						<tal:block tal:content="structure python:'<div id=\042%s\042 class=\042accordion-body collapse in\042><div class=\042accordion-inner\042>'%metaObjAttr['id']"></tal:block>
@@ -77,7 +78,7 @@
 							and (metaObjAttr['id']!='imgsuperres' or (pilutil.enabled() and here.getConfProperty('ZMSGraphic.superres',0)==1))">
 						<div class="form-group" tal:attributes="id python:'tr_%s'%(elName); class python:' '.join(['form-group']+[[],['is-modified']][int(here.attr_is_modified(metaObjAttrId))])">
 							<label tal:attributes="for elName; class python:' '.join(['col-sm-2 control-label']+[[],['mandatory']][int(standard.nvl(metaObjAttr.get('mandatory'),False))])">
-								<span tal:content="elLabel">the label</span>
+								<span tal:content="structure elLabel">the label</span>
 							</label>
 							<div class="col-sm-10"
 								tal:content="structure python:here.getObjInput(metaObjAttr['id'],request)">the control</div><!-- .col-lg-10 -->
