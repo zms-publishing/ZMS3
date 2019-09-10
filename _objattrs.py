@@ -310,11 +310,20 @@ class ObjAttrs:
           lang_attr = 'OPT_'
           for skey in obj_attr['id'].split('_'):
             lang_attr += skey[0]
-          lang_attr += '_' + str(opt[1]).replace(' ','')
+          try:
+            lang_attr += '_' + str(opt[1]).replace(' ','')
+          except:
+            # Avoid str()-Function and Unicode Decode Error (e.g. SQL Connections)
+            lang_attr += '_' + opt[1]
           lang_attr = lang_attr.upper()
           lang_str = self.getZMILangStr(lang_attr)
-          value = str(opt[0])
-          display = str(opt[1])
+          try:
+            value = str(opt[0])
+            display = str(opt[1])
+          except:
+            # Avoid str()-Function and Unicode Decode Error (e.g. SQL Connections)
+            value = opt[0]
+            display = opt[1]
           if lang_attr != lang_str:
             display = lang_str
           optpl.append([value,display])
