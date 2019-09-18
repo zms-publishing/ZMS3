@@ -153,7 +153,7 @@ def umlaut_quote(s, mapping={}):
   @rtype: C{str}
   """
   if type(s) is not unicode:
-    s = unicode(s,'utf-8')
+    s = unicode(s,'utf-8',errors='ignore')
   map( lambda x: operator.setitem( mapping, x, _globals.umlaut_map[x]), _globals.umlaut_map.keys())
   for key in mapping.keys():
     s = s.replace(key,mapping[key])
