@@ -947,12 +947,12 @@ class ZMSMetaobjManager:
             # Get container.
             container = self.getHome()
             ids = attr['id'].split('/')
-            for id in ids:
-              container = getattr(container,id,None)
+            for ob_id in ids[:-1]:
+              container = getattr(container,ob_id,None)
               if container is None:
                 break
             if container is not None:
-              zopeutil.removeObject(container.getParentNode(), ids[-1], removeFile=True)
+              zopeutil.removeObject(container, ids[-1], removeFile=True)
         else:
           cp.append(attr)
       ob['attrs'] = cp
