@@ -169,7 +169,7 @@ $(function(){
 	$(".navbar-main .navbar-brand").before(""
 		+ '<a id="navbar-sitemap"'
 		+ ' href="manage?lang='+getZMILang()+(manage_menu?'':'&dtpref_sitemap=1')+'"'
-		+ ' target="'+(manage_menu?'_parent':'_self')+'"'
+		+ ' target="'+(manage_menu?'_top':'_self')+'"'
 		+ ' class="'+(manage_menu?'active':'')+'"'
 		+ ' title="Sitemap">'
 		+ $ZMI.icon('icon-reorder')
