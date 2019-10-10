@@ -323,6 +323,48 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="Products.zms._blobfields.MyFile-class.html" 
+      class="link">MyFile</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="Products.zms.zmsobject.ZMSObject-class.html#FileFromData" class="summary-sig-name">FileFromData</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">data</span>,
+        <span class="summary-sig-arg">filename</span>=<span class="summary-sig-default">''</span>,
+        <span class="summary-sig-arg">content_type</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">mediadbStorable</span>=<span class="summary-sig-default">False</span>)</span><br />
+      Creates a new instance of a file from given data.</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="ImageFromData"></a><span class="summary-sig-name">ImageFromData</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">data</span>,
+        <span class="summary-sig-arg">filename</span>=<span class="summary-sig-default">''</span>,
+        <span class="summary-sig-arg">content_type</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">mediadbStorable</span>=<span class="summary-sig-default">False</span>)</span></td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -948,8 +990,7 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="Products.zms.zmsobject.ZMSObject-class.html#getParentNode" class="summary-sig-name">getParentNode</a>(<span class="summary-sig-arg">self</span>)</span><br />
-      The parent of this node.</td>
+          <td><span class="summary-sig"><a name="getParentNode"></a><span class="summary-sig-name">getParentNode</span>(<span class="summary-sig-arg">self</span>)</span></td>
           <td align="right" valign="top">
             
             
@@ -965,11 +1006,9 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="Products.zms.zmsobject.ZMSObject-class.html#getTreeNodes" class="summary-sig-name">getTreeNodes</a>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a name="getTreeNodes"></a><span class="summary-sig-name">getTreeNodes</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">REQUEST</span>=<span class="summary-sig-default">{}</span>,
-        <span class="summary-sig-arg">meta_types</span>=<span class="summary-sig-default">None</span>)</span><br />
-      Returns a NodeList that contains all children of this subtree in 
-      correct order.</td>
+        <span class="summary-sig-arg">meta_types</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             
             
@@ -1416,7 +1455,7 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="MISC_ZMS"></a><span class="summary-name">MISC_ZMS</span> = <code title="'/misc_/zms/'">'/misc_/zms/'</code>
+        <a name="MISC_ZMS"></a><span class="summary-name">MISC_ZMS</span> = <code title="'/++resource++zms_/img/'">'/++resource++zms_/img/'</code>
     </td>
   </tr>
 <tr>
@@ -1430,7 +1469,7 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="spacer_gif"></a><span class="summary-name">spacer_gif</span> = <code title="'/misc_/zms/spacer.gif'">'/misc_/zms/spacer.gif'</code>
+        <a name="spacer_gif"></a><span class="summary-name">spacer_gif</span> = <code title="'/++resource++zms_/img/spacer.gif'">'/++resource++zms_/img/spacer.gif'</code>
     </td>
   </tr>
 <tr>
@@ -1590,44 +1629,34 @@ ZCatalog.CatalogPathAwareness.CatalogAware --+
     <span class="table-header">Method Details</span></td>
 </tr>
 </table>
-<a name="getParentNode"></a>
+<a name="FileFromData"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
        cellspacing="0" width="100%" bgcolor="white">
 <tr><td>
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">getParentNode</span>(<span class="sig-arg">self</span>)</span>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">FileFromData</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">data</span>,
+        <span class="sig-arg">filename</span>=<span class="sig-default">''</span>,
+        <span class="sig-arg">content_type</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">mediadbStorable</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     >&nbsp;
     </td>
   </tr></table>
   
-  <p>The parent of this node. All nodes except root may have a parent.</p>
+  <p>Creates a new instance of a file from given data.</p>
   <dl class="fields">
-  </dl>
-</td></tr></table>
-</div>
-<a name="getTreeNodes"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTreeNodes</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">REQUEST</span>=<span class="sig-default">{}</span>,
-        <span class="sig-arg">meta_types</span>=<span class="sig-default">None</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    >&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Returns a NodeList that contains all children of this subtree in 
-  correct order. If none, this is a empty NodeList.</p>
-  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>data</code></strong> (<code>string</code>) - File-data (binary)</li>
+        <li><strong class="pname"><code>filename</code></strong> (<code>string</code>) - Filename</li>
+    </ul></dd>
+    <dt>Returns: <a href="Products.zms._blobfields.MyFile-class.html" 
+      class="link">MyFile</a></dt>
+        <dd>New instance of file.</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -1976,7 +2005,7 @@ PageTemplateFile('zpt/ZMSObject/input_elements', globals())
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Feb 25 17:30:32 2017
+    Generated by Epydoc 3.0.1 on Thu Oct 10 17:38:55 2019
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
