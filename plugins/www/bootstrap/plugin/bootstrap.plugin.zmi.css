@@ -223,6 +223,9 @@ footer a {
 	max-width: 98px;
 	overflow: hidden;
 }
+.zmi ul.breadcrumb.small li i:before {
+	display: contents;
+}
 #attr_ref_preview .contentEditable {
 	background-color: #FFF;
 	box-shadow: 0 2px 10px #ccc;
