@@ -39,42 +39,13 @@ function pluginUIDatepicker(s, c) {
 }
 
 /**
- * jQuery UI Autocomplete
+ * jQuery Autocomplete
  */
-function zmiAutocompleteDefaultFormatter(l, q) {
-	return $.map(l,function(x){
-		var label = x;
-		var value = x;
-		if (typeof x == "object") {
-			label = x.label;
-			value = x.value;
-		}
-		var orig = label;
-		return {label: label.replace(
-								new RegExp(
-										"(?![^&;]+;)(?!<[^<>]*)(" +
-										$.ui.autocomplete.escapeRegex(q) +
-										")(?![^<>]*>)(?![^&;]+;)", "gi"
-										), "<strong>$1</strong>" ),
-				value: value,
-				orig: label};
-			})
+function zmiAutocomplete(s, o) { 
+	pluginAutocomplete(s,function() { 
+ 		$(s).autocomplete(o).after('<i class="icon-search fas fa-search"></i>').parent().addClass("inner-addon right-addon"); 
+	}); 
 }
-
-function zmiAutocomplete(s, o) {
-	//$ZMI.setCursorWait("zmiAutocomplete");
-	pluginUI(s,function() {
-		//$ZMI.setCursorAuto("zmiAutocomplete");
-		$(s).autocomplete(o)
-		.data("ui-autocomplete")._renderItem = function( ul, item ) {
-				return $( "<li></li>" )
-					.data( "item.autocomplete", item )
-					.append( "<a>" + item.label + "</a>" )
-					.appendTo( ul );
-			};
-	});
-}
-
 
 /**
  * ZMSLightbox
@@ -113,8 +84,7 @@ function showFancybox($sender) {
  */
 function pluginAutocomplete(s, c) {
 	$.plugin('autocomplete',{
-		files: ['/++resource++zms_/jquery/autocomplete/jquery.bgiframe.min.js',
-				'/++resource++zms_/jquery/autocomplete/jquery.autocomplete.min.js',
+		files: ['/++resource++zms_/jquery/autocomplete/jquery.autocomplete.min.js',
 				'/++resource++zms_/jquery/autocomplete/jquery.autocomplete.css']
 	});
 	$.plugin('autocomplete').get(s,c);
