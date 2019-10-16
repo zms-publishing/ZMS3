@@ -333,7 +333,10 @@ class ZMSWorkflowProvider(
         for node in nodes:
           ob = self.getLinkObj( node)
           if ob is not None:
-            message += '[%s: %i]'%(node,ob.packHistory())
+            try:
+              message += '[%s: %i]'%(node,ob.packHistory())
+            except:
+              message += '[%s: %s]'%(node,'No history to pack')
         message = self.getZMILangStr('MSG_CHANGED')+message
       
       # Properties.
