@@ -406,7 +406,7 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
     ##############################################################################
     if func_ == 'get_uid':
       forced = args[1]
-      if forced or '_uid' not in self.__dict__ or getattr(self,'_uid',None) is None:
+      if forced or '_uid' not in self.__dict__ or getattr(self,'_uid',None) is None or len(getattr(self,'_uid',None)).split('-')<5:
         self._uid = str(uuid.uuid4())
       return 'uid:%s'%self._uid
 
