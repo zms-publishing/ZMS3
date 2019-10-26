@@ -415,6 +415,36 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
       c.execute(s)
       c.close()
       con.commit()
+    def db_init():
+      try:
+        sql = []
+        sql.append('UPDATE t_resync SET runid = runid+1')
+        db_exec('\n'.join(sql))
+      except:
+        pass
+    def db_resync(home_id, old_url, old_state, new_data_id, new_url, new_state):
+      try:
+        sql = []
+        sql.append('INSERT INTO t_resync (')
+        sql.append('idrun,')
+        sql.append('home_id,')
+        sql.append('old_url,')
+        sql.append('old_state,')
+        sql.append('new_data_id,')
+        sql.append('new_url,')
+        sql.append('new_state')
+        sql.append(') VALUES (')
+        sql.append('0,')
+        sql.append('\'%s\','%home_id)
+        sql.append(['\'%s\','%str(old_url),'NULL'][old_url is None])
+        sql.append('%i,'%old_state)
+        sql.append(['\'%s\','%str(new_data_id),'NULL'][new_data_id is None])
+        sql.append(['\'%s\','%str(new_url),'NULL'][new_url is None])
+        sql.append('%i'%new_state)
+        sql.append(')')
+        db_exec('\n'.join(sql))
+      except:
+        pass
 
     ##############################################################################
     # Get uid
