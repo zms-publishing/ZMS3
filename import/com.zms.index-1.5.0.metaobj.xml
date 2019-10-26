@@ -341,6 +341,7 @@ $(function() {
                   <item key="custom"><![CDATA[from Products.ZCatalog import ZCatalog
 from traceback import format_exception
 import logging
+import os
 import re
 import sys
 import time
@@ -400,6 +401,20 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
     else:
       func_ = request.get('func_')
     writeDebug(self,'ZMSIndexZCatalog.%s:'%(func_))
+
+    # Log-Db
+    inst_home = self.Control_Panel.getINSTANCE_HOME()
+    db_home = os.path.join(inst_home,'var','sqlite')
+    db_id = 'zcatalog_index_%s'%(self.getHome().id)
+    db_path = '%s/%s.sqlite'%(db_home,db_id)
+    def db_exec(s):
+      import sqlite3 as sqlite
+      con = sqlite.connect(db_path)
+      writeDebug(self,s)
+      c = con.cursor()
+      c.execute(s)
+      c.close()
+      con.commit()
 
     ##############################################################################
     # Get uid
@@ -504,6 +519,40 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
       index = visit(self.getDocumentElement())
       writeInfo(self,'[ZMSIndexZCatalog_func_] deactivate done: %i in %.2fsecs.'%(len(index),time.time()-t0))
 
+    ##############################################################################
+    # Init DB
+    ##############################################################################
+    elif func_ == 'initDb':
+
+      sql = """
+      CREATE TABLE t_resync(
+        idresync INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        idrun INTEGER NOT NULL,
+        dt DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
+        home_id VARCHAR(200) NOT NULL,
+        old_url VARCHAR(2000) NOT NULL,
+        old_state INTEGER NOT NULL,
+        new_data_id VARCHAR(2000),
+        new_url VARCHAR(2000),
+        new_state INTEGER NOT NULL
+      );"""
+
+      # Create SQLite.
+      for s in sql.split(";"):
+        db_exec(s)
+    
+      # Create ZSQLiteDA
+      root = self.breadcrumbs_obj_path()[0].getHome()
+      new_id = '%s_da'%(db_id)
+      if new_id in root.objectIds():
+        root.manage_delObjects(ids=[new_id])
+      new_title = ''
+      new_connection = '%s.sqlite'%(db_id)
+      root.manage_addProduct["ZSQLiteDA"].manage_addZSQLiteConnection(id=new_id,title=new_title,connection=new_connection)
+  
+      # Open connection.
+      new_da = getattr(root,new_id)
+      new_da.manage_open_connection()
 
     ##############################################################################
     # Resync
@@ -1222,7 +1271,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">ZMSIndexZCatalog</item>
           <item key="name">ZMSIndexZCatalog</item>
           <item key="package">com.zms.index</item>
-          <item key="revision">1.4.16</item>
+          <item key="revision">1.5.0</item>
           <item key="type">ZMSResource</item>
         </dictionary>
       </item>
@@ -1241,7 +1290,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">com.zms.index</item>
           <item key="name">com.zms.index</item>
           <item key="package"></item>
-          <item key="revision">1.4.16</item>
+          <item key="revision">1.5.0</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
