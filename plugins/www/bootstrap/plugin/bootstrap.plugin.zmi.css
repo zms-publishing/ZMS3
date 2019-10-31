@@ -164,22 +164,20 @@ nav .scroller-left {
 .zmi .navbar-inner {
 	border-radius:0 !important;
 }
-.zmi footer {
+.zmi:not(.manage-menu) footer {
 	left: 0;
 	bottom: 0;
 	height: 26px;
 	width: 100%;
 	padding: 0.5em;
 	font-size: 11px !important;
-	background: #19232ca8;
-	color: white;
+	color:#999;
 }
-footer a {
-	color: white !important;
+.zmi footer a {
+	color: inherit;
 }
 .zmi footer .back-to-top {
-	display:none;
-	color: white;
+	color:#08c;
 	cursor:pointer;
 	text-align:center;
 	margin: 0;
@@ -192,7 +190,10 @@ footer a {
 	border-radius:4px;
 }
 .zmi footer .back-to-top:hover {
-	background-color:#222222;
+	background-color:#08c;	
+}
+.zmi footer .back-to-top:hover i {
+	color:#fff;	
 }
 .zmi ul.breadcrumb {
 	clear:left;
@@ -788,8 +789,10 @@ body.browse_iframe .toggle {
 	color: #CCCCCC !important;
 }
 .zmi.manage-menu .zmi-helper-clickable.refresh {
-	font-size: 14px;
-	margin-left: .7em;
+	margin-left: 1em;
+}
+.zmi.manage-menu .zmi-helper-clickable.refresh i {
+	margin-right: .35em;
 }
 
 /*  Font Awesome styles: prevent resetting by CK Editor
@@ -2184,13 +2187,13 @@ table.ZMSTable {
 
 /* Prevent the text contents of draggable elements from being selectable. */
 [draggable] {
-  -moz-user-select: none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-  /* Required to make elements draggable in old WebKit */
-  -khtml-user-drag: element;
-  -webkit-user-drag: element;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+	/* Required to make elements draggable in old WebKit */
+	-khtml-user-drag: element;
+	-webkit-user-drag: element;
 }
 
 body.zmi ul.zmi-container.zmi-sortable .zmi-item.zmi-data-transfer-drag .center { 
