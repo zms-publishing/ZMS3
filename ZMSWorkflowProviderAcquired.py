@@ -97,12 +97,6 @@ class ZMSWorkflowProviderAcquired(
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    ZMSWorkflowProviderAcquired.writeProtocol
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    def writeProtocol(self, entry):
-      self.getPortalMaster().getWorkflowManager().writeProtocol(entry)
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     @see IZMSWorkflowProvider.getActivities()
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     def getActivities(self):

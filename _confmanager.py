@@ -1061,7 +1061,6 @@ class ConfManager(
       if len(manager)==0:
         class DefaultManager:
           def importXml(self, xml): pass
-          def writeProtocol(self, log): pass
           def getAutocommit(self): return True
           def getActivities(self): return []
           def getActivityIds(self): return []

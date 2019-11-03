@@ -468,15 +468,17 @@ nav .scroller,nav .scroller i.glyphicon,nav .scroller i.glyphicon:hover{color:wh
 nav .scroller-right{float:right}
 nav .scroller-left{float:left}
 .zmi .navbar-inner{border-radius:0 !important}
-.zmi footer{left:0;bottom:0;height:26px;width:100%;padding:0.5em;font-size:11px !important;background:#19232ca8;color:white}
-footer a{color:white !important}
-.zmi footer .back-to-top{display:none;color:white;cursor:pointer;text-align:center;margin:0;position:fixed;bottom:.2em;right:.4em;padding:.2em .3em;z-index:100;border:none;border-radius:4px}
-.zmi footer .back-to-top:hover{background-color:#222222}
+.zmi:not(.manage-menu) footer{left:0;bottom:0;height:26px;width:100%;padding:0.5em;font-size:11px !important;color:#999}
+.zmi footer a{color:inherit}
+.zmi footer .back-to-top{color:#08c;cursor:pointer;text-align:center;margin:0;position:fixed;bottom:.2em;right:.4em;padding:.2em .3em;z-index:100;border:none;border-radius:4px}
+.zmi footer .back-to-top:hover{background-color:#08c}
+.zmi footer .back-to-top:hover i{color:#fff}
 .zmi ul.breadcrumb{clear:left;padding:1em 0 1em 1.8em;margin-bottom:0px !important}
 .zmi #zmi-tab > ul.breadcrumb li a,.zmi #zmi-tab > ul.breadcrumb li span{display:inline-block;white-space:nowrap;text-overflow:ellipsis;max-width:128px;overflow:hidden;vertical-align:bottom}
 .zmi .breadcrumb li a *{display:inline!important}
 .zmi ul.breadcrumb.small{padding:0.4em 0 0 0 !important;margin:0 !important;background-color:transparent !important;font-size:80%}
 .zmi ul.breadcrumb.small li{white-space:nowrap;text-overflow:ellipsis;max-width:98px;overflow:hidden}
+.zmi ul.breadcrumb.small li i:before{display:contents}
 #attr_ref_preview .contentEditable{background-color:#FFF;box-shadow:0 2px 10px #ccc;border-radius:4px;padding:1em;margin:0 0 1em}
 #attr_ref_preview .contentEditable:before{content:'preview';display:inline-block;text-align:right;position:relative;float:right;color:silver}
 .popover.bottom{max-width:90% !important}
@@ -601,7 +603,8 @@ body.browse_iframe .toggle{font-size:120%;vertical-align:bottom;width:12px;margi
 .zmi.manage-menu .dropdown-lang .dropdown-menu{background-color:#222;border:1px solid #888;color:#000;left:-100px;position:absolute;min-width:110px}
 .zmi.manage-menu .dropdown-lang .dropdown-menu > li > a:focus,.zmi.manage-menu .dropdown-lang .dropdown-menu > li > a:hover{background-color:transparent !important;color:#fff !important}
 .zmi.manage-menu #loading,.zmi.manage-menu #loading .icon{color:#CCCCCC !important}
-.zmi.manage-menu .zmi-helper-clickable.refresh{font-size:14px;margin-left:.7em}
+.zmi.manage-menu .zmi-helper-clickable.refresh{margin-left:1em}
+.zmi.manage-menu .zmi-helper-clickable.refresh i{margin-right:.35em}
 .cke_reset_all span[class^="glyphicon-"],.cke_reset_all span[class*=" glyphicon-"],.cke_reset_all i[class^="icon-"],.cke_reset_all i[class*=" icon-"]{font-family:FontAwesome !important;margin-right:4px !important;font-size:14px}
 div.cke_panel{width:280px !important}
 .cke_button_icon.cke_button__linkbutton_icon{background-image:url('/++resource++zms_/ckeditor/plugins/icons.png') !important;background-position:0 -696px !important;;background-size:auto !important}
@@ -915,9 +918,6 @@ table.ZMSTable td{background-color:#f9f9f9;border:1px solid #ccc !important;over
 table.ZMSTable{margin:1em 0}
 .input-group-addon.input-group-dropdown{padding:0}
 .input-group-addon.input-group-dropdown .btn{border:0;border-top-left-radius:0;border-bottom-left-radius:0}
-#zmi-measurement .table{background-color:#333}
-#zmi-measurement .table th,#zmi-measurement .table td{color:#40FF40!important;font-size:smaller;font-family:"Courier New",Courier,monospace}
-#zmi-measurement .table.table-striped > tbody > tr:nth-of-type(2n+1){background-color:#222}
 [draggable]{-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;-khtml-user-drag:element;-webkit-user-drag:element}
 body.zmi ul.zmi-container.zmi-sortable .zmi-item.zmi-data-transfer-drag .center{border-top:4px dashed #08c !important;transition:border-top 0.5s ease;margin-top:-4px}
 body.zmi.properties .alert.zmi-dragged-info{width:100%;height:2rem;padding:.35rem 1rem;margin:0;border-radius:0;border:none;border:1px solid rgba(0,0,0,0.1);text-align:right}
