@@ -912,8 +912,9 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
     msg = "[%s@%s]"%(self.meta_id,self.absolute_url())+''.join(format_exception(t, v, tb))
     writeError(self,'[ZMSIndexZCatalog_func_] except %s'%msg)
 
-  response = request.RESPONSE
-  response.setHeader('Content-Type','text/plain')
+  response = getattr(request,'RESPONSE',None)
+  if response is not None:
+    response.setHeader('Content-Type','text/plain')
   return '\n'.join(printed)]]>
                   </item>
                   <item key="default"></item>
