@@ -2204,3 +2204,6 @@ body.zmi.properties .alert.zmi-dragged-info {
 		width:80%;
 	}
 }
+.zmi:not(.manage-menu) .navbar-nav .dropdown-menu a[href*="zmi-manage-system=0"] { 
+	background:rgba(53, 79, 103, 0.15); 
+}
