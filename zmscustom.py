@@ -142,7 +142,6 @@ class ZMSCustom(ZMSContainerObject):
 
     # Management Options.
     # -------------------
-    manage_options__roles__ = None
     def manage_options(self):
       pc = 'e' in map(lambda x:x['id'],self.getMetaobjAttrs(self.meta_id,types=['*']))
       opts = []
