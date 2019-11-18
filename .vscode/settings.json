@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Program Files (x86)\\python\\python27\\python.exe",
+    "python.pythonPath": "/home/zope/vpy27/bin/",
     "window.zoomLevel": 0,
     "workbench.colorTheme": "Visual Studio Light",
     "git.ignoreMissingGitWarning": true,
