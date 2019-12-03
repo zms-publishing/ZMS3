@@ -1,3 +1,0 @@
--r requirements.txt
--e git+https://github.com/zms-publishing/zms3/#egg=zms3
-Products.PluggableAuthService==1.11.0

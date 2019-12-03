@@ -1,0 +1,2 @@
+Products.PluggableAuthService==1.11.0
+Products.PluginRegistry==1.4
