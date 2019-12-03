@@ -1,2 +1,3 @@
 Products.PluggableAuthService==1.11.0
+# newer versions will pull in zope4
 Products.PluginRegistry==1.4
