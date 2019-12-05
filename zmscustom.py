@@ -418,7 +418,7 @@ class ZMSCustom(ZMSContainerObject):
       params = {'lang':lang}
       t0 = time.time()
       
-      if btn not in [ self.getZMILangStr('BTN_CANCEL'), self.getZMILangStr('BTN_BACK')]:
+      if action or btn and btn not in [ self.getZMILangStr('BTN_CANCEL'), self.getZMILangStr('BTN_BACK')]:
         try:
           ##### Object State #####
           self.setObjStateModified(REQUEST)
