@@ -973,7 +973,7 @@ if url.startswith('{$') and url.endswith('}'):
   elif not url.startswith('__'):
     url = url.replace('@','/content/')
     l = url.split('/') 
-    ob = zmscontext
+    ob = zmscontext.getDocumentElement()
     try:
       for id in [x for x in l if x]:
         ob = getattr(ob,id,None)
@@ -1325,7 +1325,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">ZMSIndexZCatalog</item>
           <item key="name">ZMSIndexZCatalog</item>
           <item key="package">com.zms.index</item>
-          <item key="revision">1.5.0</item>
+          <item key="revision">1.5.1</item>
           <item key="type">ZMSResource</item>
         </dictionary>
       </item>
@@ -1344,7 +1344,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">com.zms.index</item>
           <item key="name">com.zms.index</item>
           <item key="package"></item>
-          <item key="revision">1.5.0</item>
+          <item key="revision">1.5.1</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
