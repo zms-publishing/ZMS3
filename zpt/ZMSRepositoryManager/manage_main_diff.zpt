@@ -50,6 +50,16 @@ ins {
 .prettyTextDiff .changed {
 	display:none;
 }
+.table.table-borderless,
+.table.table-borderless th,
+.table.table-borderless td {
+	border:none !important;
+	padding:.2em 0;
+}
+.table.table-borderless {
+	margin-bottom:3em;
+}
+
 </style>
 
 	<tal:block tal:define="
@@ -94,7 +104,7 @@ ins {
 			<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"><tal:block tal:content="python:provider.id">the provider</tal:block></a>
 		</label>
 		<div class="col-sm-10">
-			<table class="table">
+			<table id="repo-diff-files" class="table">
 			<colgroup>
 				<col width="1em"/>
 				<col width="20%"/>
@@ -144,46 +154,34 @@ ins {
 	</tal:block>
 	</tal:block>
 
-	<div class="form-group">
-		<label class="col-sm-2"></label>
-		<div class="col-sm-10">
-			<small>
-				<span class="state bg-success">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_NEW')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<span class="state bg-warning">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_MODIFIED')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<span class="state bg-danger">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_DELETED')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			</small>
-		</div><!-- .col-sm-10 -->
-	</div><!-- .form-group -->
-
-	<tal:block tal:repeat="provider_diff provider_diffs">
-	<tal:block tal:define="provider python:provider_diff[0]; diffs python:provider_diff[1];">
-		<tal:block tal:repeat="diff diffs">
-		<tal:block tal:define="
-				filename python:diff[0];
-				mt python:diff[1];
-				l python:diff[3];
-				r python:diff[4];
-				ld python:[l.get('data'),''][l.get('data') is None];
-				rd python:[r.get('data'),''][r.get('data') is None];
-				is_modified python:len(ld)>0 and len(rd)>0;
-				is_text python:mt.startswith('text/') or mt in ['application/javascript']">
-		<table class="table" tal:condition="is_modified" tal:attributes="id python:here.id_quote(filename)">
+	<tal:block tal:repeat="provider_diff provider_diffs"
+	><tal:block tal:define="provider python:provider_diff[0]; diffs python:provider_diff[1];"
+		><tal:block tal:repeat="diff diffs"
+		><tal:block tal:define="
+			filename python:diff[0];
+			mt python:diff[1];
+			l python:diff[3];
+			r python:diff[4];
+			ld python:[l.get('data'),''][l.get('data') is None];
+			rd python:[r.get('data'),''][r.get('data') is None];
+			is_modified python:len(ld)>0 and len(rd)>0;
+			is_text python:mt.startswith('text/') or mt in ['application/javascript']"
+		><table id="repo-diff-details" class="table table-borderless" tal:condition="is_modified" tal:attributes="id python:here.id_quote(filename)">
 		<tr>
 			<td>
-				<strong tal:content="python:here.get_conf_basepath(provider.id+'/'+filename)"></strong>
-				(<em tal:content="mt"></em>)
-				<small>
+				<strong class="text-primary" tal:content="python:here.get_conf_basepath(provider.id+'/'+filename)"></strong>
+				(<em class="text-muted" tal:content="mt"></em>)
+				<small style="display:block">
 					<tal:block tal:condition="r">
 						Repository: 
 						<tal:block tal:content="python:'%s;; %i Bytes'%(str(r['version']),len(rd))"></tal:block>
 					</tal:block>
-					->
+					<i class="icon-arrow-right fas fa-arrow-right"></i>>
 					<tal:block tal:condition="l">
 						ZODB: 
 						<tal:block tal:content="python:'%s;; %i Bytes'%(str(l['version']),len(ld))"></tal:block>
 					</tal:block>
 				</small>
-				<a href="#zmi-tab"><i class="icon-collapse-top far fa-caret-square-up"></i></a>
 			</td>
 		</tr>
 		<tr>

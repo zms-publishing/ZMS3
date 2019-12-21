@@ -55,11 +55,23 @@
 				</div><!-- .col-sm-10 -->
 			</div><!-- .form-group -->
 			<div class="form-group">
-				<label class="col-sm-2 control-label">Working-copy</label>
+				<label class="col-sm-2 control-label">Working-Copy</label>
 				<div class="col-sm-10">
 					<input class="form-control" type="text" tal:attributes="value python:here.get_conf_basepath()" readonly/>
 				</div>
 			</div>
+			<div class="form-group">
+				<label class="col-sm-2"></label>
+				<div class="col-sm-10">
+					<small style="display:block;padding:0 0.5em;" title="Color-Scheme for Marking the latest Code Status in Working-Copy (compared to ZODB)">
+						<span class="state bg-success">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_NEW')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<span class="state bg-warning">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_MODIFIED')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<span class="state bg-danger">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_DELETED')"></tal:block>&nbsp;
+						(in Working-Copy)
+					</small>
+				</div><!-- .col-sm-10 -->
+			</div><!-- .form-group -->
+
 			<tal:block
 				tal:on-error="string:${error/type}: ${error/value}"
 				tal:content="structure python:here.manage_main_diff(here,request)">
