@@ -108,6 +108,13 @@ class ZMSRepositoryManager(
 
 
     """
+    Returns copy mode: incomming vs. outgoing
+    """
+    def get_copymode(self):
+      return getattr(self,'copymode','incoming')
+
+
+    """
     Returns auto-update.
     """
     def get_auto_update(self):
@@ -138,6 +145,7 @@ class ZMSRepositoryManager(
     def startDaemon(self):
       self.writeLog("[startDaemon]")
       self.exec_auto_update()
+
 
     """
     @see IZMSRepositoryManager
@@ -476,6 +484,7 @@ class ZMSRepositoryManager(
         self.auto_update = REQUEST.get('auto_update','')!=''
         self.last_update = self.parseLangFmtDate(REQUEST.get('last_update',''))
         self.setConfProperty('ZMS.conf.path',REQUEST.get('basepath',''))
+        self.copymode = REQUEST.get('copymode','incoming')
         message = self.getZMILangStr('MSG_CHANGED')
       
       elif btn == 'commit':
