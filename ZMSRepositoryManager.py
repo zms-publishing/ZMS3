@@ -108,10 +108,11 @@ class ZMSRepositoryManager(
 
 
     """
-    Returns copy mode: incomming vs. outgoing
+    Returns coloring mode showing code diffs: 
+    incomming vs. outgoing
     """
-    def get_copymode(self):
-      return getattr(self,'copymode','incoming')
+    def get_colormode(self):
+      return getattr(self,'colormode','incoming')
 
 
     """
@@ -484,7 +485,7 @@ class ZMSRepositoryManager(
         self.auto_update = REQUEST.get('auto_update','')!=''
         self.last_update = self.parseLangFmtDate(REQUEST.get('last_update',''))
         self.setConfProperty('ZMS.conf.path',REQUEST.get('basepath',''))
-        self.copymode = REQUEST.get('copymode','incoming')
+        self.colormode = REQUEST.get('colormode','incoming')
         message = self.getZMILangStr('MSG_CHANGED')
       
       elif btn == 'commit':

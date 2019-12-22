@@ -23,8 +23,8 @@
 			</a>
 		</li>
 	</ul>
-	<div class="tab-content">
-		<div class="tab-pane active" id="diff">
+	<div class="tab-content" tal:attributes="data-colormode here/get_colormode">
+		<div id="diff" class="tab-pane active">
 			<form class="form-horizontal" action="manage_change" method="post">
 			<input type="hidden" name="lang" tal:attributes="value request/lang" />
 
@@ -61,13 +61,13 @@
 				</div>
 			</div>
 			<div class="form-group">
-				<label class="col-sm-2"></label>
+				<label class="col-sm-2 control-label">Diff-Coloring</label>
 				<div class="col-sm-10">
-					<small style="display:block;padding:0 0.5em;" title="Incomming Mode: Color-Scheme for Labelling the latest Code Status in Working-Copy compared to ZODB">
+					<small style="display:block;padding:0.65em 0.5em;" title="Labelling the Latest Code Differences in ZODB compared to the Working-Copy in Filesystem">
 						<span class="state bg-success">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_NEW')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 						<span class="state bg-warning">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_MODIFIED')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 						<span class="state bg-danger">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_DELETED')"></tal:block>&nbsp;
-						(<tal:block tal:content="python:here.get_copymode()">incomming</tal:block> mode)
+						(<tal:block tal:content="python:here.get_colormode().title()">Incomming</tal:block> Mode)
 					</small>
 				</div><!-- .col-sm-10 -->
 			</div><!-- .form-group -->
@@ -79,7 +79,7 @@
 			</tal:block>
 			</form>
 		</div><!-- .tab-pane -->
-		<div class="tab-pane" id="properties">
+		<div id="properties" class="tab-pane">
 			<form class="form-horizontal" action="manage_change" method="post">
 				<input type="hidden" name="lang" tal:attributes="value request/lang" />
 				<div class="form-group">
@@ -105,11 +105,11 @@
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label"><span>Copy Mode</span> <i class="icon-exchange fas fa-exchange"></i></label>
+					<label class="col-sm-2 control-label"><span>Diff-Coloring</span> <i class="icon-exchange fas fa-exchange"></i></label>
 					<div class="col-sm-10">
-						 <select class="form-control" name="copymode">
-							<option value="incoming" tal:attributes="selected python:here.get_copymode()=='incoming' and 'select' or None">Show incoming changes</option>
-							<option value="outgoing" tal:attributes="selected python:here.get_copymode()=='outgoing' and 'select' or None">Show outgoing changes</option tal:attributes="selected python:here.get_copymode()=='outgoing' and 'select' or None">
+						 <select class="form-control" name="colormode" title="Please select how to color the code differences...">
+							<option value="incoming" tal:attributes="selected python:here.get_colormode()=='incoming' and 'selected' or None">Incoming Mode: Coloring Diffs on ZODB-Status for Updating (Default)</option>
+							<option value="outgoing" tal:attributes="selected python:here.get_colormode()=='outgoing' and 'selected' or None">Outgoing Mode: Coloring Diffs on Filesystem for Committing</option>
 						</select>
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->

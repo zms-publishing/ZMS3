@@ -46,6 +46,16 @@ ins {
 	background-color: #DFF0D8!important;
 	text-decoration:none;
 }
+.tab-content[data-colormode='outgoing'] ins,
+.tab-content[data-colormode='outgoing'] table .state.bg-success {
+	background-color:#F2DEDE!important;
+	text-decoration:line-through;
+}
+.tab-content[data-colormode='outgoing'] del,
+.tab-content[data-colormode='outgoing'] table .state.bg-danger {
+	background-color:#DFF0D8 !important;
+	text-decoration:none;
+}
 .prettyTextDiff .original, 
 .prettyTextDiff .changed {
 	display:none;
@@ -72,7 +82,7 @@ ins {
 			provider_diffs_count python:sum(map(lambda x:len(x[1]),provider_diffs)+[0])">
 
 	<tal:block tal:condition="not:provider_diffs_count">
-		<div class="form-group" tal:repeat="provider python:here.getRepositoryProviders()">
+		<div class="form-group filelist" tal:repeat="provider python:here.getRepositoryProviders()">
 			<label class="col-sm-2 text-right" style="margin:0.75em 0 auto 0;">
 				<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"><tal:block tal:content="python:provider.id">the provider</tal:block></a>
 			</label>
@@ -138,11 +148,18 @@ ins {
 											+[[],['bg-success']][is_new]
 											+[[],['bg-warning']][is_modified]
 											+[[],['bg-danger']][is_removed]
-											)">&nbsp;</span>
+											);title python: is_incoming and 
+											'INCOMING - ZODB: %s;; Repository: %s'%(
+												str(l.get('version','')),
+												str(r.get('version',''))
+												) or ( 
+											is_outgoing and 
+											'OUTGOING - ZODB: %s;; Repository: %s'%(
+												str(l.get('version','')),
+												str(r.get('version',''))
+												) or '')">&nbsp;</span>
 									</tal:block>
 									<a tal:attributes="href python:'#%s'%here.id_quote(filename)" tal:content="python:filename">the filename</a>
-									<tal:block tal:condition="is_incoming"><div class="arrow-left" tal:attributes="title python:'Incoming - ZODB: %s;; Repository: %s'%(str(l.get('version','')),str(r.get('version','')))"></div></tal:block>
-									<tal:block tal:condition="is_outgoing"><div class="arrow-right" tal:attributes="title python:'Outgoing - ZODB: %s;; Repository: %s'%(str(l.get('version','')),str(r.get('version','')))"></div></tal:block>
 						</tal:block>
 					</div>
 					</td>
@@ -176,7 +193,8 @@ ins {
 						Repository: 
 						<tal:block tal:content="python:'%s;; %i Bytes'%(str(r['version']),len(rd))"></tal:block>
 					</tal:block>
-					<i class="icon-arrow-right fas fa-arrow-right"></i>>
+					<i tal:condition="python:here.get_colormode()=='incoming'" class="icon-arrow-right fas fa-arrow-right"></i>
+					<i tal:condition="python:here.get_colormode()=='outgoing'" class="icon-arrow-left fas fa-arrow-left"></i>
 					<tal:block tal:condition="l">
 						ZODB: 
 						<tal:block tal:content="python:'%s;; %i Bytes'%(str(l['version']),len(ld))"></tal:block>
