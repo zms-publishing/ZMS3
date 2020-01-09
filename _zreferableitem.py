@@ -18,10 +18,9 @@
 
 # Imports.
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
+import base64
 import copy
-import operator
 import re
-import time
 import urllib
 # Product Imports.
 import standard
@@ -433,7 +432,7 @@ class ZReferableItem:
       url = index_html + ref_anchor
     elif isMailLink (url): 
       prefix = 'mailto:'
-      url = prefix + standard.encrypt_ordtype(url[len(prefix):])
+      url = 'javascript:window.location.href=\''+prefix+'\'+atob(\''+base64.b64encode(url[len(prefix):].encode()).decode()+'\')'
     return url
 
   # ----------------------------------------------------------------------------
