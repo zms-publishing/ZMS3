@@ -4174,7 +4174,7 @@ return None
           <item key="id">ZMSObjectSet</item>
           <item key="name">ZMSObjectSet</item>
           <item key="package">com.zms.foundation</item>
-          <item key="revision">3.4.0</item>
+          <item key="revision">3.4.1</item>
           <item key="type">ZMSObject</item>
         </dictionary>
       </item>
