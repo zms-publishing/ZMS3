@@ -3382,20 +3382,45 @@ zmscontext.commitObj(request)
 <tal:block tal:define="zmscontext context">
 
 <style>
-.form-filter .row {
-	margin-bottom:1.25em;
-}
-.highlight {
-	color:#333;
-	background-color: #fff59B;
-	border:0;
-	padding:1px 0 1px 0;
-	margin:1px 0 1px 0;
-	font-weight:bold;
-}
-.matched > a {
-	font-weight:bold;
-}
+	.form-filter .row {
+		margin: .5em -0 1.25em -15px;
+	}
+	
+	.form-filter ul.ZMSObjectSet {
+		margin-top:1em;
+	}
+	ul.ZMSObjectSet h3.panel-title span.title {
+		max-width: calc(100% - 8em);
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		display: inline-block;
+		vertical-align: text-bottom;
+	}
+	ul.ZMSObjectSet h3.panel-title em.date {
+		float: right;
+		margin-left: 1em;
+		opacity: .5;
+		font-style: normal;
+	}
+	
+	@media (max-width: 767px) {
+		.form-filter .row {
+			margin: .5em 35px 1.25em -15px;
+		}
+	}
+	
+	.form-filter .highlight {
+		color:#333;
+		background-color: #fff59B;
+		border:0;
+		padding:1px 0 1px 0;
+		margin:1px 0 1px 0;
+		font-weight:bold;
+	}
+	.form-filter .matched > a {
+		font-weight:bold;
+	}
 </style>
 
 <script>
@@ -3470,12 +3495,18 @@ $(function() {
 		</div><!-- .row -->
 	</form>
 
-	<ul class="ZMSObjectSet">
-		<tal:block tal:repeat="childNode python:zmscontext.filteredChildNodes(request)">
-			<div class="panel" tal:attributes="class python:' '.join(['panel'])">
+
+	<ul class="ZMSObjectSet" tal:define="
+		childNodes python:[ x[1] for x in zmscontext.sort_list([( int(zmscontext.getLangFmtDate( i.attr('attr_active_start') and i.attr('attr_active_start') or i.attr('created_dt'),'eng','%Y%m%d')), i ) for i in zmscontext.filteredChildNodes(request)], 0) ];
+		apply_sort_desc python:childNodes.reverse()">
+		<tal:block tal:repeat="childNode childNodes">
+		<div class="panel" tal:attributes="class python:' '.join(['panel'])">
 				<h3 class="panel-title">
 					<a tal:attributes="href python:childNode.getHref2IndexHtml(request,deep=False); class python:childNode.meta_id;">
 						<span class="title" tal:content="python:unicode(childNode.getTitle(request),'utf-8')">the title</span>
+						<em class="date" 
+							tal:content="python:zmscontext.getLangFmtDate(childNode.attr('attr_active_start') and childNode.attr('attr_active_start') or childNode.attr('created_dt'),request.get('lang','ger'),'DATE_FMT')">date
+						</em>
 					</a>
 				</h3><!-- /.panel-title -->
 			</div><!-- /.panel -->
