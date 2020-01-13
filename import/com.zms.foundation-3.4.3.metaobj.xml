@@ -3381,48 +3381,6 @@ zmscontext.commitObj(request)
 
 <tal:block tal:define="zmscontext context">
 
-<style>
-	.form-filter .row {
-		margin: .5em -0 1.25em -15px;
-	}
-	
-	.form-filter ul.ZMSObjectSet {
-		margin-top:1em;
-	}
-	ul.ZMSObjectSet h3.panel-title span.title {
-		max-width: calc(100% - 8em);
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		display: inline-block;
-		vertical-align: text-bottom;
-	}
-	ul.ZMSObjectSet h3.panel-title em.date {
-		float: right;
-		margin-left: 1em;
-		opacity: .5;
-		font-style: normal;
-	}
-	
-	@media (max-width: 767px) {
-		.form-filter .row {
-			margin: .5em 35px 1.25em -15px;
-		}
-	}
-	
-	.form-filter .highlight {
-		color:#333;
-		background-color: #fff59B;
-		border:0;
-		padding:1px 0 1px 0;
-		margin:1px 0 1px 0;
-		font-weight:bold;
-	}
-	.form-filter .matched > a {
-		font-weight:bold;
-	}
-</style>
-
 <script>
 /**
  * Highlight all occurences of given text.
@@ -3499,8 +3457,7 @@ $(function() {
 	<ul class="ZMSObjectSet" tal:define="
 		childNodes python:[ x[1] for x in zmscontext.sort_list([( int(zmscontext.getLangFmtDate( i.attr('attr_active_start') and i.attr('attr_active_start') or i.attr('created_dt'),'eng','%Y%m%d')), i ) for i in zmscontext.filteredChildNodes(request)], 0) ];
 		apply_sort_desc python:childNodes.reverse()">
-		<tal:block tal:repeat="childNode childNodes">
-		<div class="panel" tal:attributes="class python:' '.join(['panel'])">
+		<div class="panel" tal:repeat="childNode childNodes">
 				<h3 class="panel-title">
 					<a tal:attributes="href python:childNode.getHref2IndexHtml(request,deep=False); class python:childNode.meta_id;">
 						<span class="title" tal:content="python:unicode(childNode.getTitle(request),'utf-8')">the title</span>
@@ -3510,7 +3467,6 @@ $(function() {
 					</a>
 				</h3><!-- /.panel-title -->
 			</div><!-- /.panel -->
-		</tal:block>
 	</ul>
 </tal:block>
 
@@ -3767,17 +3723,17 @@ tr.inactive > * {
 	<input type="hidden" name="preview" tal:attributes="value request/preview">
 	<input tal:condition="python:request.has_key('qorder')" type="hidden" name="qorder" tal:attributes="value request/qorder">
 	<input tal:condition="python:request.has_key('qorderdir')" type="hidden" name="qorderdir" tal:attributes="value request/qorderdir">
-	<div class="accordion-group perc100" tal:define="filter_columns attr_ids">
+	<div class="accordion-group" tal:define="filter_columns attr_ids">
 		<div class="accordion-heading filters">
-			<a class="accordion-toggle pull-left" data-toggle="collapse" href="#attrProperties">
-				<tal:block tal:content="structure python:zmscontext.zmi_icon(name='icon-caret-down')"></tal:block>
-			</a>
-			<label class="control-label">
-				<tal:block tal:content="structure python:zmscontext.zmi_icon(name='icon-filter')">the icon</tal:block>
-				<tal:block tal:content="structure python:zmscontext.getZMILangStr('ATTR_FILTER')">the label</tal:block>
-			</label>
+			<div class="btn-group">
+				<a class="btn accordion-toggle" data-toggle="collapse" href="#attrProperties"
+					style="padding-left:0;font-weight:bold">
+					<tal:block tal:content="structure python:zmscontext.zmi_icon(name='icon-caret-down')"></tal:block>
+					<tal:block tal:content="structure python:zmscontext.getZMILangStr('ATTR_FILTER')">the label</tal:block>
+				</a>
+			</div>
 		</div><!-- .accordion-heading -->
-		<div id="attrProperties" class="accordion-body filters collapse in">
+		<div id="attrProperties" class="row accordion-body filters collapse in">
 			<div class="accordion-inner">
 				<tal:block tal:repeat="filterIndex python:range(request.get('qfilters',1)+1)">
 					<div tal:attributes="class python:' '.join(['form-group','col-lg-12']+[[],['hidden']][int(filterIndex==request.get('qfilters',1))])">
@@ -4205,7 +4161,7 @@ return None
           <item key="id">ZMSObjectSet</item>
           <item key="name">ZMSObjectSet</item>
           <item key="package">com.zms.foundation</item>
-          <item key="revision">3.4.1</item>
+          <item key="revision">3.4.2</item>
           <item key="type">ZMSObject</item>
         </dictionary>
       </item>
