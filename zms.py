@@ -502,6 +502,19 @@ class ZMS(
       return 'global.'+self.getPrimaryLanguage()
 
 
+    # --------------------------------------------------------------------------
+    #  ZMS.__before_publishing_traverse__:
+    #  Hack around a Zope bug (?) on updating ancient Zope/ZMS2, Reference:
+    #  https://github.com/zopefoundation/Products.CMFCore/blob/master/Products/CMFCore/PortalObject.py#L60
+    #  In the case of error 
+    #  AttributeError: type object 'ZMS' has no attribute '__before_publishing_traverse__'
+    #  please activate the dummy code 
+    # --------------------------------------------------------------------------
+    ## def __before_publishing_traverse__(self, arg1, arg2=None):
+    ##     """ Pre-traversal hook.
+    ##     """
+    ##     pass
+
 
     ############################################################################
     #
