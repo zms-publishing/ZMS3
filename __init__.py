@@ -61,6 +61,7 @@ try:
   registerFileExtension('eot', FSFile)
   registerFileExtension('woff', FSFile)
   registerFileExtension('woff2', FSFile)
+  registerFileExtension('mp4', FSFile)
 except:
   pass
 
