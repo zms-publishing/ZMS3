@@ -35,8 +35,12 @@
 					<button type="submit" class="btn btn-default" name="btn" value="refresh"><i class="icon-repeat fas fa-redo-alt"></i> Refresh</button>
 					<tal:block tal:define="meta_cmds python:here.getMetaCmds(here,'repository')">
 						<div class="btn-group" tal:condition="not:meta_cmds">
-							<button type="submit" class="btn btn-default" name="btn" value="update" title="Update from working-copy"><tal:block tal:content="structure python:here.zmi_icon(name='icon-reply text-success')"></tal:block> Update</button>
-							<button type="submit" class="btn btn-default" name="btn" value="commit" title="Commit to working-copy"><tal:block tal:content="structure python:here.zmi_icon(name='icon-share-alt text-success')"></tal:block> Commit</button>
+							<button type="submit" class="btn btn-default" name="btn" value="commit" title="Save Sources to Filesystem">
+								<i class="icon-download-alt"></i> Save
+							</button>
+							<button type="submit" class="btn btn-default" name="btn" value="update" title="Load Sources from Filesystem">
+								<i class="icon-upload-alt"></i> Load
+							</button>
 						</div>
 						<div class="btn-group" tal:condition="meta_cmds">
 							<button class="btn btn-default dropdown-toggle" type="button" id="teamDropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -56,21 +60,21 @@
 			</div><!-- .form-group -->
 			<div class="form-group" 
 				title="Filesystem-Path connected to a Versioning Repository. Please, Double-Click for Editing.">
-				<label class="col-sm-2 control-label">Working-Copy</label>
+				<label class="col-sm-2 control-label">Filesystem-Path</label>
 				<div class="col-sm-10">
 					<div class="form-control" readonly="readonly" style="user-select:none;background:#f5f5f5"
 						ondblclick="javascript:$('a#nav-link-properties').click();$('#basepath').focus()"
-						tal:content="python:here.get_conf_basepath()">
+						tal:content="python:here.get_conf_basepath('')">
 					</div>
 				</div>
 			</div>
 			<div class="form-group" style="margin-bottom:3em;"
-				title="Coloring the latest Code Differences in ZODB compared to the Working-Copy in Filesystem. Please, Double-Click for Selecting Incoming or Outgoing Mode.">
+				title="Coloring the latest Code Differences in ZMS on Loading or in Filesystem on Saving. Please, Double-Click for Selecting the Coloring Mode.">
 				<label class="col-sm-2 control-label">Diff-Coloring</label>
 				<div class="col-sm-10">
-					<div class="form-control" readonly="readonly"  style="user-select:none;background:#f5f5f5"
+					<div class="form-control" readonly="readonly" style="user-select:none;background:#f5f5f5"
 						ondblclick="javascript:$('a#nav-link-properties').click();$('#colormode').focus()">
-						<tal:block tal:content="python:here.get_colormode().title()">Incomming</tal:block> Mode
+						<tal:block tal:content="python:here.get_colormode()=='Loading' and 'Loading Mode: Show ZMS Code Changes (Default)' or 'Saving Mode: Show Filesystem Changes'">Loading Mode</tal:block>
 						<small style="float:right;padding-top:0.2em">
 							<span class="state bg-success">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_NEW')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 							<span class="state bg-warning">&nbsp;</span> <tal:block tal:content="python:here.getZMILangStr('STATE_MODIFIED')"></tal:block>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -79,7 +83,6 @@
 					</div>
 				</div><!-- .col-sm-10 -->
 			</div><!-- .form-group -->
-
 			<tal:block
 				tal:on-error="string:${error/type}: ${error/value}"
 				tal:content="structure python:here.manage_main_diff(here,request)">
@@ -91,33 +94,41 @@
 			<form class="form-horizontal" action="manage_change" method="post">
 				<input type="hidden" name="lang" tal:attributes="value request/lang" />
 				<div class="form-group">
-					<label class="col-sm-2 control-label">Auto-Update</label>
+					<label class="col-sm-2 control-label" title="Automatic synchronization of ZMS-Status and Filesystem">
+						Auto-Sync
+					</label>
 					<div class="col-sm-10">
 						<span class="btn btn-default">
 							<input type="checkbox" name="auto_update" value="1" tal:attributes="checked python:['','checked'][here.get_auto_update()]" />
 						</span>
-						<span tal:condition="python:here.get_auto_update() and here.getConfProperty('ZMS.debug',0)" class="label label-success">Active (Debug)</span>
-						<span tal:condition="python:here.get_auto_update() and not here.getConfProperty('ZMS.debug',0)" class="label label-danger">Inactive (No Debug!)</span>
+						<span tal:condition="python:here.get_auto_update() and here.getConfProperty('ZMS.debug',0)" class="label label-success" title="Conf-Property ZMS.debug = 1">Active</span>
+						<span tal:condition="python:here.get_auto_update() and not here.getConfProperty('ZMS.debug',0)" class="label label-danger"  title="Conf-Property ZMS.debug = 0">Inactive (ZMS needs to run in Debug-Mode!)</span>
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label">Last Update</label>
+					<label class="col-sm-2 control-label">
+						Last Update
+					</label>
 					<div class="col-sm-10">
-						 <input class="form-control" type="text" name="last_update" tal:attributes="value python:here.getLangFmtDate(here.get_last_update())">
+						 <input id="last_update" name="last_update" class="form-control" type="text" tal:attributes="value python:here.getLangFmtDate(here.get_last_update())" />
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label mandatory">Repository</label>
+					<label class="col-sm-2 control-label mandatory">
+						Filesystem-Path
+					</label>
 					<div class="col-sm-10">
-						 <input id="basepath" class="form-control" type="text" name="basepath" tal:attributes="value python:here.get_conf_basepath('')">
+						 <input id="basepath" name="basepath" class="form-control" type="text" tal:attributes="value python:here.get_conf_basepath('')" />
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->
 				<div class="form-group">
-					<label class="col-sm-2 control-label">Diff-Coloring</label>
+					<label class="col-sm-2 control-label">
+						Diff-Coloring
+					</label>
 					<div class="col-sm-10">
-						 <select id="colormode" class="form-control" name="colormode" title="Please select how to color the code differences...">
-							<option value="incoming" tal:attributes="selected python:here.get_colormode()=='incoming' and 'selected' or None">Incoming Mode: Coloring Diffs for Updating ZODB-Status (Default)</option>
-							<option value="outgoing" tal:attributes="selected python:here.get_colormode()=='outgoing' and 'selected' or None">Outgoing Mode: Coloring Diffs for Committing to Filesystem</option>
+						 <select id="colormode" name="colormode" class="form-control" title="Please select how to color the code differences...">
+							<option value="Loading" tal:attributes="selected python:here.get_colormode()=='Loading' and 'selected' or None">Loading Mode: Show ZMS Code Changes on Loading from Filesystem (Default)</option>
+							<option value="Saving" tal:attributes="selected python:here.get_colormode()=='Saving' and 'selected' or None">Saving Mode: Show Filesystem Code Changes on Saving from ZMS</option>
 						</select>
 					</div><!-- .col-sm-10 -->
 				</div><!-- .form-group -->

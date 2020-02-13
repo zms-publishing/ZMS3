@@ -82,9 +82,9 @@ class ZMSRepositoryManager(
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Interface
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    manage = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main',globals())
-    manage_main = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main',globals())
-    manage_main_diff = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main_diff',globals())
+    manage = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main', globals())
+    manage_main = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main', globals())
+    manage_main_diff = PageTemplateFile('zpt/ZMSRepositoryManager/manage_main_diff', globals())
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     Management Permissions
@@ -109,35 +109,35 @@ class ZMSRepositoryManager(
 
     """
     Returns coloring mode showing code diffs: 
-    incomming vs. outgoing
+    Loading (ZMS changes) vs. Saving (filesystem changes)
     """
     def get_colormode(self):
-      return getattr(self,'colormode','incoming')
+      return getattr(self,'colormode','Loading')
 
 
     """
     Returns auto-update.
     """
     def get_auto_update(self):
-      return getattr(self,'auto_update',False)
+      return getattr(self, 'auto_update', False)
 
 
     """
     Returns last-update.
     """
     def get_last_update(self):
-      return getattr(self,'last_update',None)
+      return getattr(self, 'last_update', 0)
 
 
     """
     Returns conf-basepath.
     """
-    def get_conf_basepath(self, id=''):
+    def get_conf_basepath(self, id='conf'):
       basepath = self.get_conf_property('ZMS.conf.path')
-      basepath = basepath.replace('$INSTANCE_HOME',self.getINSTANCE_HOME())
+      basepath = basepath.replace('$INSTANCE_HOME', self.getINSTANCE_HOME())
       basepath = basepath.replace('$HOME_ID',"/".join([x.getHome().id for x in self.breadcrumbs_obj_path() if x.meta_id=='ZMS']))
-      basepath = basepath.replace("/",os.path.sep)
-      basepath = os.path.join(basepath,id)
+      basepath = basepath.replace("/", os.path.sep)
+      basepath = os.path.join(basepath, id)
       return basepath
 
     """
@@ -153,7 +153,7 @@ class ZMSRepositoryManager(
     """
     def exec_auto_commit(self, provider, id):
       if self.get_auto_update():
-        ids = [':'.join([provider.id,id])]
+        ids = [':'.join([provider.id, id])]
         self.writeLog("[exec_auto_commit]: Run... %s"%str(ids))
         self.commitChanges(ids)
 
@@ -164,37 +164,38 @@ class ZMSRepositoryManager(
     def exec_auto_update(self):
       #-- [ReqBuff]: Fetch buffered value from Http-Request.
       reqBuffId = 'ZMSRepositoryManager.exec_auto_update'
-      try: return self.fetchReqBuff(reqBuffId)
+      try:
+        return self.fetchReqBuff(reqBuffId)
       except:
         #-- [ReqBuff]: Returns value and stores it in buffer of Http-Request.
-        self.storeReqBuff(reqBuffId,True)
+        self.storeReqBuff(reqBuffId, True)
         # Execute once.
         self.writeLog("[exec_auto_update]")
         current_time = time.time()
         if self.get_auto_update():
           last_update = self.get_last_update()
-          if last_update is None or standard.getDateTime(last_update)<standard.getDateTime(self.Control_Panel.process_start) or self.getConfProperty('ZMS.debug',0):
+          if ( last_update==0 or standard.getDateTime(last_update)<standard.getDateTime(self.Control_Panel.process_start) ) and self.getConfProperty('ZMS.debug', 0)==True:
             self.writeBlock("[exec_auto_update]: Run...")
             def traverse(path):
               l = []
               if os.path.exists(path):
                 for file in os.listdir(path):
-                  filepath = os.path.join(path,file)
+                  filepath = os.path.join(path, file)
                   mode = os.stat(filepath)[stat.ST_MODE]
                   if stat.S_ISDIR(mode):
                     l.extend(traverse(filepath))
                   else:
-                    l.append((os.path.getmtime(filepath),filepath))
+                    l.append((os.path.getmtime(filepath), filepath))
               return l
             basepath = self.get_conf_basepath()
             files = traverse(basepath)
             mtime = max(map(lambda x:x[0],files)+[None])
-            self.writeBlock("[exec_auto_update]: %s<%s"%(str(last_update),str(mtime)))
-            if last_update is None or standard.getDateTime(last_update)<standard.getDateTime(mtime):
+            self.writeBlock("[exec_auto_update]: %s < %s"%(str(last_update),str(mtime)))
+            if last_update==0 or ( standard.getDateTime(last_update) < standard.getDateTime(mtime) ):
               update_files = map(lambda x:x[1][len(basepath):],filter(lambda x:last_update is None or standard.getDateTime(x[0])<standard.getDateTime(last_update),files))
               temp_files = map(lambda x:x.split(os.path.sep),update_files)
               temp_files = \
-                map(lambda x:[x[0],x[-1].replace('.py','')],filter(lambda x:len(x)==2,temp_files)) + \
+                map(lambda x:[x[0],x[-1].replace('.py', '')],filter(lambda x:len(x)==2,temp_files)) + \
                 map(lambda x:[x[0],x[-2]],filter(lambda x:len(x)>2,temp_files))
               # avoid processing of hidden files, e.g. .DS_Store on macOS
               temp_files = filter(lambda x: str(x).startswith('.'), temp_files)
@@ -235,7 +236,7 @@ class ZMSRepositoryManager(
       local = provider.provideRepository(ids)
       for id in local.keys():
         o = local[id]
-        filename = o.get('__filename__',[id,'__init__.py'])
+        filename = o.get('__filename__', [id, '__init__.py'])
         # Write python-representation.
         py = []
         py.append('class %s:'%id.replace('.','_').replace('-','_'))
@@ -485,7 +486,7 @@ class ZMSRepositoryManager(
         self.auto_update = REQUEST.get('auto_update','')!=''
         self.last_update = self.parseLangFmtDate(REQUEST.get('last_update',''))
         self.setConfProperty('ZMS.conf.path',REQUEST.get('basepath',''))
-        self.colormode = REQUEST.get('colormode','incoming')
+        self.colormode = REQUEST.get('colormode','Loading')
         message = self.getZMILangStr('MSG_CHANGED')
       
       elif btn == 'commit':
