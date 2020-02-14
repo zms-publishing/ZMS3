@@ -37,24 +37,44 @@
 		height:16px;
 		border:solid 1px #ccc;
 	}
+	pre {
+		display: block;
+		padding: 9.5px;
+		margin: 0 0 10px;
+		font-size: 13px;
+		line-height: 1.42857143;
+		color: #333;
+		word-break: break-all;
+		word-wrap: break-word;
+		background-color: #f5f5f5;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+	.focus pre {
+		border-color: #80bdff;
+		outline: 0;
+		box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+	}
 	del {
 		color:#777!important;
-		background-color:#F2DEDE!important;
+		background-color:#f8d7da!important;
 		text-decoration:line-through;
 	}
 	ins {
 		color: #3C763D!important;
-		background-color: #DFF0D8!important;
+		background-color: #d4edda!important;
 		text-decoration:none;
 	}
-	.tab-content[data-colormode='outgoing'] ins,
-	.tab-content[data-colormode='outgoing'] table .state.bg-success {
-		background-color:#F2DEDE!important;
+	.tab-content[data-colormode='Saving'] ins {
 		text-decoration:line-through;
 	}
-	.tab-content[data-colormode='outgoing'] del,
-	.tab-content[data-colormode='outgoing'] table .state.bg-danger {
-		background-color:#DFF0D8 !important;
+	.tab-content[data-colormode='Saving'] ins,
+	.tab-content[data-colormode='Saving'] table .state.bg-success {
+		background-color:#f8d7da!important;
+	}
+	.tab-content[data-colormode='Saving'] del,
+	.tab-content[data-colormode='Saving'] table .state.bg-danger {
+		background-color:#d4edda !important;
 		text-decoration:none;
 	}
 	.prettyTextDiff .original, 
@@ -70,6 +90,20 @@
 	.table.table-borderless {
 		margin-bottom:3em;
 	}
+	.diffcoloring .form-control {
+		display:flex;
+		justify-content: space-between;
+	}
+	.diffcoloring .form-control span.selected {
+		display: inline-block;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.diffcoloring .form-control small {
+		white-space:nowrap;
+	}
+
 /*-->*/
 </style>
 
@@ -93,8 +127,8 @@
 					dummy0 python:ids.sort();
 					">
 				<div tal:repeat="id ids">
-					<tal:block tal:content="structure python:here.zmi_icon(name='icon-ok text-success')"></tal:block>
-					<a tal:attributes="href python:'%s/manage_main?lang=%s&id=%s'%(provider.absolute_url(),request['lang'],id)" target="_blank"
+					<i class="icon icon-ok fas fa-check-circle text-success"></i>
+					<a tal:attributes="href python:'%s/manage_%s?lang=%s&id=%s'%(provider.absolute_url(), id=='__metas__' and 'metas' or 'main',request['lang'],id)" target="_blank"
 						tal:content="id">id
 					</a>
 				</div>
@@ -102,20 +136,22 @@
 		</div>
 	</tal:block>
 
-	<tal:block tal:condition="provider_diffs_count">
-	<tal:block tal:repeat="provider_diff provider_diffs">
-	<tal:block tal:define="
+	<tal:block tal:condition="provider_diffs_count"
+	><tal:block tal:repeat="provider_diff provider_diffs"
+	><tal:block tal:define="
 			zmscontext python:here.getSelf();
 			provider python:provider_diff[0]; 
 			diffs python:provider_diff[1]; 
 			ids python:standard.distinct_list(map(lambda x:x[2],diffs)); 
-			dummy0 python:ids.sort();">
-	<div class="form-group" tal:condition="ids">
+			dummy0 python:ids.sort();"
+	><div class="form-group" tal:condition="ids">
 		<label class="col-sm-2 text-right" style="margin:0.75em 0 auto 0;">
-			<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"><tal:block tal:content="python:provider.id">the provider</tal:block></a>
+			<a tal:attributes="href python:'%s/manage_main?lang=%s'%(provider.absolute_url(),request['lang'])" target="_blank"
+				tal:content="python:provider.id">the provider_diff
+			</a>
 		</label>
 		<div class="col-sm-10">
-			<table id="repo-diff-files" class="table">
+			<table class="table repo-diff-files">
 			<colgroup>
 				<col width="1em"/>
 				<col width="30%"/>
@@ -125,12 +161,12 @@
 				<tr>
 					<td><input type="checkbox" name="ids:list" tal:attributes="value python:'%s:%s'%(provider.id,id)" checked="checked"></td>
 					<td>
-						<a tal:attributes="href python:'%s/manage_main?lang=%s&id=%s'%(provider.absolute_url(),request['lang'],id)" target="_blank">
+						<a tal:attributes="href python:'%s/manage_%s?lang=%s&id=%s'%(provider.absolute_url(), id=='__metas__' and 'metas' or 'main',request['lang'],id)" target="_blank"> 
 							<strong tal:content="id">the id</strong>
 						</a>
 					</td>
 					<td>
-					<div tal:repeat="diff python:filter(lambda x:x[2]==id,diffs)">
+					<div style="white-space: nowrap;" tal:repeat="diff python:filter(lambda x:x[2]==id,diffs)">
 						<tal:block tal:define="
 								filename python:diff[0];
 								mt python:diff[1];
@@ -149,18 +185,17 @@
 											+[[],['bg-success']][is_new]
 											+[[],['bg-warning']][is_modified]
 											+[[],['bg-danger']][is_removed]
-											);title python: is_incoming and 
-											'INCOMING - ZODB: %s;; Repository: %s'%(
+											);title python: is_incoming and 'INCOMING - ZODB: %s;; Repository: %s'%(
 												str(l.get('version','')),
 												str(r.get('version',''))
-												) or ( 
-											is_outgoing and 
-											'OUTGOING - ZODB: %s;; Repository: %s'%(
+												) or ( is_outgoing and 'OUTGOING - ZODB: %s;; Repository: %s'%(
 												str(l.get('version','')),
 												str(r.get('version',''))
 												) or '')">&nbsp;</span>
 									</tal:block>
-									<a tal:attributes="href python:'#%s'%here.id_quote(filename)" tal:content="python:filename">the filename</a>
+									<a href="#" tal:attributes="onclick python:'javascript:focus_anchorid(\'#%s\');;return false'%(here.id_quote(filename))" 
+										tal:content="python:filename">the filename
+									</a>
 						</tal:block>
 					</div>
 					</td>
@@ -185,16 +220,18 @@
 						rd python:[r.get('data'),''][r.get('data') is None];
 						is_modified python:len(ld)>0 and len(rd)>0;
 						is_text python:mt.startswith('text/') or mt in ['application/javascript']"
-					><table id="repo-changesets" class="table table-borderless" tal:condition="is_modified" tal:attributes="id python:here.id_quote(filename)">
+					><table class="repo-changeset table table-borderless" tal:condition="is_modified" tal:attributes="id python:here.id_quote(filename)">
 						<tr>
 							<td>
-								<strong class="text-primary" tal:content="python:here.get_conf_basepath(provider.id+'/'+filename)"></strong>
-								(<em class="text-muted" tal:content="mt"></em>)
-								<small style="display:block">
-									<tal:block tal:condition="l" tal:content="python:'ZODB: %s;; %i Bytes'%(str(l['version']),len(ld))"></tal:block>
-									<i tal:condition="python:here.get_colormode()=='outgoing'" class="icon-arrow-right fas fa-arrow-right"></i>
-									<i tal:condition="python:here.get_colormode()=='incoming'" class="icon-arrow-left fas fa-arrow-left"></i>
-									<tal:block tal:condition="r" tal:content="python:'Repository: %s;; %i Bytes'%(str(r['version']),len(rd))"></tal:block>
+								<span class="file_name">
+									<strong class="text-primary" tal:content="python:here.get_conf_basepath(provider.id+'/'+filename)"></strong>
+									<em class="text-muted" tal:content="python:'(%s)'%(mt)"></em>
+								</span>
+								<small class="file_details" style="display:block">
+									<tal:block tal:condition="l" tal:content="python:'ZODB: %s;; %i Bytes'%(str(l.get('version','')),len(ld))"></tal:block>
+									<i tal:condition="python:here.get_colormode()=='Saving'" class="icon-arrow-right fas fa-arrow-right"></i>
+									<i tal:condition="python:here.get_colormode()=='Loading'" class="icon-arrow-left fas fa-arrow-left"></i>
+									<tal:block tal:condition="r" tal:content="python:'Repository: %s;; %i Bytes'%(str(r.get('version','')),len(rd))"></tal:block>
 								</small>
 							</td>
 						</tr>
@@ -215,8 +252,9 @@
 </tal:block>
 
 <script>
+//<!--
 	$(function() {
-		if ( $('.prettyTextDiff') ) {
+		if ( $('.prettyTextDiff').length > 0 ) {
 			$('#repo-changesets').prepend('<h4>Changesets</h4>');
 		}
 		$(".prettyTextDiff").each(function() {
@@ -265,4 +303,10 @@
 							});
 			});
 		});
+		function focus_anchorid(anchorid) {
+			$('.table.focus').removeClass('focus');
+			$(document).scrollTop( $(anchorid).offset().top );
+			$(anchorid).addClass('focus');
+		}
+// -->
 </script>
