@@ -115,6 +115,27 @@ textarea.zmi-helper-hidden, textarea.ui-helper-hidden {
 	margin-top:0.5em;
 	padding-left:1em;
 }
+/* Show Config-Menu Accesskeys on Hover */
+.zmi header .navbar-nav ul.dropdown-menu li a[accesskey]:hover:after {
+	content:"\F11C";
+	display:block;
+	float:right;
+	color:#818ea254;
+	font-family: FontAwesome;
+	font-weight: normal;
+	font-style: normal;
+	text-decoration: inherit;
+	-webkit-font-smoothing: antialiased;
+}
+.zmi header .navbar-nav ul.dropdown-menu li a[accesskey]:hover:before {
+	content:attr(accesskey);
+	display:block;
+	float:right;
+	color:#818ea287;
+	font-family:Menlo,Monaco,Consolas,"Courier New",monospace;
+	padding-left:.3rem;
+	margin-right:-.6rem;
+}
 /* BO HORIZONTAL SCROLLING MAIN NAVIGATION */
 nav .wrapper {
 	position:relative;

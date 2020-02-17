@@ -23,7 +23,7 @@
 				titlealt python:childNode.getTitlealt(request).replace(' & ',' &amp; ');
 				title python:childNode.getTitle(request).replace(' & ',' &amp; ');
 				accesskey repeat/childNode/number;" 
-			tal:attributes="href python:'%s/manage_main?lang=%s'%(childNode.absolute_url(),request['lang']);title python:'[%s] %s'%(accesskey,title);accesskey accesskey" 
+			tal:attributes="href python:'%s/manage_main?lang=%s'%(childNode.absolute_url(),request['lang']);title title;accesskey accesskey" 
 			tal:content="structure titlealt">the titlealt
 	</a></li>
 	<li tal:repeat="extra python:options.get('extra',[])">
