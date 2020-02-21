@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "/home/zope/vpy27/lib/python2.7/site-packages/Zope2/Startup/run.py",
-            "module": "Zope2.Startup.run",
+            // "module": "Zope2.Startup.run",
             "console": "integratedTerminal",
             "args": [
                 "-C ../../../instance/zms3_dev/etc/zope.conf",
