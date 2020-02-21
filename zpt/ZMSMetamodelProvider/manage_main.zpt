@@ -314,26 +314,30 @@
 	</div><!-- .form-group -->
 
 	<!-- BO Usage -->
-	<div class="meta-usage" tal:define="l python:[]">
-		<tal:block tal:repeat="metaObj2 metaObjs">
-			<tal:block tal:define="global objAttrIds python:here.getMetaobjAttrIds(metaObj2['id'])">
-				<tal:block tal:repeat="objAttrId objAttrIds">
-					<tal:block tal:define="global objAttr python:here.getMetaobjAttr(metaObj2['id'],objAttrId); isMetaDictAttr python:int(objAttr['meta_type'] not in [0,'',False,None])">
-						<tal:block tal:condition="python:
+	<div class="meta-usage" tal:define="l python:[]"
+		><tal:block tal:repeat="metaObj2 metaObjs"
+			><tal:block tal:define="global objAttrIds python:here.getMetaobjAttrIds(metaObj2['id'])"
+				><tal:block tal:repeat="objAttrId objAttrIds"
+					><tal:block tal:define="global objAttr python:here.getMetaobjAttr(metaObj2['id'],objAttrId); isMetaDictAttr python:int(objAttr['meta_type'] not in [0,'',False,None])"
+						><tal:block tal:condition="python:
 								(objAttr['type']==metaObj['id']) or 
-								(objAttr['type']=='*' and metaObj['id'] in objAttr['keys'])">
-							<strong tal:condition="python:len(l)==0">Usage:</strong>
-							<tal:block tal:condition="not:python:len(l)==0">,</tal:block>
-							<a tal:attributes="href python:'%s?lang=%s&id=%s'%(request['URL'],request['lang'],metaObj2['id']); title python:'%s (%s)'%(metaObj2['name'],objAttr['name'])" target="_blank" tal:define="dummy0 python:l.append(1)">
-								<tal:block tal:content="structure python:here.display_icon(request,metaObj2['id'],zpt=True)">object-icon</tal:block>
-								<tal:block tal:content="python:'%s.%s'%(metaObj2['id'],objAttr['id'])">object-name.attribute-name</tal:block>
-							</a>
-						</tal:block>
-					</tal:block>
-				</tal:block>
-			</tal:block>
-		</tal:block>
-	</div>
+								(objAttr['type']=='*' and metaObj['id'] in objAttr['keys'])"
+							><strong tal:condition="python:len(l)==0">Usage:</strong>
+							<tal:block tal:condition="not:python:len(l)==0">,</tal:block
+							><a tal:attributes="href python:'%s?lang=%s&id=%s'%(request['URL'],request['lang'],metaObj2['id']); title python:'%s (%s)'%(metaObj2['name'],objAttr['name'])" target="_blank" tal:define="dummy0 python:l.append(1)"
+								><tal:block tal:content="structure python:here.display_icon(request,metaObj2['id'],zpt=True)">
+									object-icon
+								</tal:block
+								><tal:block tal:content="python:'%s.%s'%(metaObj2['id'],objAttr['id'])">
+									object-name.attribute-name
+								</tal:block
+							></a>
+						</tal:block
+					></tal:block
+				></tal:block
+			></tal:block
+		></tal:block
+	></div>
 	<!-- EO Usage -->
 
 	<!-- BO Access -->
@@ -501,7 +505,7 @@
 <tal:block tal:content="structure python:here.zmi_body_footer(here,request)">zmi_body_footer</tal:block>
 
 <script>
-
+// <!--
 /**
  *
  */
@@ -701,6 +705,128 @@ $(function(){
 	});
 });
 
+
+/**
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * EXPERIMENTAL: Generator for Default-ZPT-Code.
+ * Code backported from ZMS4
+ * Cave: ZPT Processing in Zope2 works with single $ for JS String Templates 
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+ function set_zmi_code_default(event) {
+	var confirmed = confirm("The Experimental Generator for Default-ZPT-Code asks:\nReally Reset to Default-Code?");
+	if (!confirmed == true) {
+		console.log('INFO: Function get_zmi_code_default() not executed.');
+		return false;
+	}
+	var $target = $('textarea.zpt',event.srcElement.parentNode);
+	var meta_model = {}; // meta_model = {meta_id:{'meta_type':meta_type,'meta_repetitive':meta_repetitive}, ...}
+	const meta_id_ignored = ['standard_html','check_constraints'];
+	const meta_type_ignored = ['delimiter','interface','constant'];
+
+	// Generate Model based on GUI-Form
+	// ZMS4: $('#meta_properties tbody:nth-child(2) tr').each( function() {
+	$('#meta_properties tbody:nth-child(3) tr').each( function() {
+		var meta_id = $('.meta-id input', this).val();
+		var meta_type = $('.meta-type > :first-child', this).val();
+		if (!meta_type ) {
+			meta_type = $('.meta-code > :first-child', this).val();
+		}
+		var meta_repetitive = $('.meta-repetitive > :first-child', this).prop('checked');
+		if ( 
+			meta_id && 
+			meta_type && 
+			meta_id_ignored.indexOf(meta_id)==-1 &&
+			meta_type_ignored.indexOf(meta_type)==-1 
+			) {
+			meta_model[meta_id] = { 'meta_type':meta_type,'meta_repetitive':meta_repetitive };
+		}
+	});
+
+	console.log( 'meta_model = ' + JSON.stringify(meta_model) );
+
+	function shorten_id(str) {
+		// Remove namespace ornaments from meta_id name
+		str = str.split('attr_').reverse()[0];
+		str = str.split('dc_').reverse()[0];
+		return str
+	}
+
+	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	// Construct TAL-Code-Template Parts: [1] Variable Definitions, [2] Content
+	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	var tal_defs='';
+	var tal_content='';
+
+	// [1] Variable Definitions
+	function tal_def_render(item) {
+		var id = String(item);
+		var sid = shorten_id(id);
+		if ( meta_model[id]['meta_type'] =='url' ) {
+			// ATTRTYPE URL 
+			tal_defs += `\n\t\t${sid} python:zmscontext.attr('${id}');`
+			tal_defs += `\n\t\t${sid}_obj python:'{' in ${sid} and zmscontext.getLinkObj(${sid},request) or None;`
+			tal_defs += `\n\t\t${sid}_target python:${sid}_obj and ${sid}_obj.getHref2IndexHtml(request) or ${sid};`
+		} else if ( meta_model[id]['meta_repetitive'] ) {
+			// ATTRTYPE COMPLEX/REPETITIVE 
+			tal_defs +=`\n\t\t${sid}_list python:zmscontext.filteredChildNodes(request,'${meta_model[id]['meta_type']}');`
+		} else {
+			// ATTRTYPE STRING (STANDARD)
+			tal_defs += `\n\t\t${sid} python:zmscontext.attr('${id}');`
+		}
+	}
+
+	// [2] Content
+	function tal_content_render(item) {
+		var id = String(item);
+		var sid = shorten_id(id);
+		if ( meta_model[id]['meta_type']=='image' ) {
+			// ATTRTYPE IMAGE
+			tal_content += `\n\t<img class="${sid}" tal:attributes="src python:${sid}.getHref(request)" alt="Image" />`;
+		} else if ( meta_model[id]['meta_type']=='url' ) {
+			// ATTRTYPE URL 
+			tal_content += `\n\t<a class="${sid}" tal:condition="${sid}" tal:attributes="href python:${sid}_obj and ${sid}_target or ${sid}; target python:${sid}_obj and '_self' or '_blank';">Link...</a>`;
+		} else if ( meta_model[id]['meta_type'] == 'file' ) {
+			// ATTRTYPE FILE
+			tal_content += `\n\t<a class="${sid}" tal:condition="${sid}" tal:attributes="href python:${sid}.getHref(request);title python:'Download-File Size: %s, Type: %s'%(${sid}.getDataSizeStr(),${sid}.getContentType())" tal:content="python:${sid}.getFilename()">Filename</a>`;
+		} else if ( meta_model[id]['meta_type'] == 'richtext' ) {
+			// ATTRTYPE RICHTEXT
+			tal_content += `\n\t<div class="${sid}" tal:content="structure ${sid}">${sid}</div>`;
+		} else if ( meta_model[id]['meta_type'] == 'datetime' ) {
+			// ATTRTYPE DATE/TIME
+			tal_content += `\n\t<div class="${sid}" tal:condition="${sid}" tal:content="python:zmscontext.getLangFmtDate(${sid},request.get('lang'))">${sid}</div>`;
+		} else if ( meta_model[id]['meta_repetitive'] ) {
+			// ATTRTYPE COMPLEX/REPETITIVE 
+			tal_content += `\n\t<div class="${sid} repetitive" tal:condition="${sid}_list">\n\t\t<tal:block tal:repeat="${sid}_listitem ${sid}_list" tal:content="structure python:${sid}_listitem.renderShort(request)">${sid}</tal:block>\n\t</div>`;
+		} else {
+			// ATTRTYPE STRING (STANDARD)
+			tal_content += `\n\t<div class="${sid}" tal:content="${sid}">${sid}</div>`;
+		}
+	}
+
+	// Render TAL-Code-Templates Parts
+	Object.keys(meta_model).forEach(tal_def_render);
+	Object.keys(meta_model).forEach(tal_content_render);
+	
+	// Assemble TAL-Code
+	var default_template = `<div title="EXPERIMENTAL: Generator for Default-ZPT-Code" 
+		tal:define="zmscontext options/zmscontext;
+		id python:zmscontext.getId();
+		css_class python:zmscontext.meta_id;${tal_defs}"
+	tal:attributes="id id;class css_class">${tal_content}\n</div>`;
+
+	// Write TAL-Code into Textarea
+	$target.val(default_template);
+	$target.animate({height: $target.prop('scrollHeight') + 'px'},600);
+
+}
+// Add Execute Button for TAL-Code-Regeneration
+var zmi_code_default_btn = '<i onclick="set_zmi_code_default(event)" title=\"Replace by Default-Code-Template\" class=\"zmi-code-default icon-repeat fas fa-redo-alt text-primary text-center\" style=\"cursor:pointer;display:block;position:absolute;text-align:right !important;right:2.25em;padding:0.55em;z-index: 100;\"></i>';
+$(function(){
+	$('#meta_properties input[name="attr_type_standard_html"] ~ .zmi-code').prepend( zmi_code_default_btn);
+});
+
+// -->
 </script>
 
 </body>

@@ -128,14 +128,14 @@ ol.objlist {
 	position: fixed;
 	overflow-y: scroll;
 	overflow-x: hidden;
-	top: 62px;
-	bottom: 62px;
+	top: 63px;
+	bottom: 63px;
 	right: 20px;
 	padding: .5em 3em;
 	background: #fcfcfc;
 	box-shadow: inset 0 2px 2px rgba(0,0,0,.075);
 	width: auto;
-	height: calc(100vh - 124px);
+	height: calc(100vh - 126px);
 	font-size: 90%;
 	line-height: 1.6;
 }
