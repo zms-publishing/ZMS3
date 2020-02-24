@@ -51,7 +51,7 @@ INSTALL_REQUIRES_CONCRETE = [
   'Acquisition==4.2.2',
   'BTrees==4.2.0',
   'DateTime==4.1.1',
-  'DocumentTemplate==2.13.2',
+  'DocumentTemplate==2.13.5',
   'docutils==0.12',
   'ExtensionClass==4.1.2',  # ExtensionClass>=4.1a1 required by Record-3.0
   'five.globalrequest==1.0',
