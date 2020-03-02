@@ -36,12 +36,14 @@
 					<tal:block tal:define="meta_cmds python:here.getMetaCmds(here,'repository')">
 						<div class="btn-group" tal:condition="not:meta_cmds">
 							<button id="btn_save_to_repo" 
-							type="submit" class="btn btn-default" name="btn" value="commit" title="Save Sources to Filesystem">
+							type="submit" class="btn btn-default" name="btn" value="commit" title="Save Sources to Filesystem"
+								tal:attributes="class python:here.get_update_direction()=='Saving' and 'btn btn-primary' or default">
 								<i class="icon-download-alt"></i>
 								<span>Save</span>
 							</button>
 							<button id="btn_load_from_repo" 
-								type="submit" class="btn btn-default" name="btn" value="update" title="Load Sources from Filesystem">
+								type="submit" class="btn btn-default" name="btn" value="update" title="Load Sources from Filesystem"
+								tal:attributes="class python:here.get_update_direction()=='Loading' and 'btn btn-primary' or default">
 								<i class="icon-upload-alt"></i> 
 								<span>Load</span>
 							</button>
