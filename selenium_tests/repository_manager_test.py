@@ -40,7 +40,7 @@ class RepositoryManagerTest(ZMSTestCase):
         self._show_zmi_nav_tab('Repository')
         
         # wait until opened
-        self._find_element(By.CSS_SELECTOR, 'body.config_manager_main.config')
+        self._find_element(By.CSS_SELECTOR, 'body.repository_manager_main.config')
         
         # open system tab
         self._show_zmi_nav_tab('System')
