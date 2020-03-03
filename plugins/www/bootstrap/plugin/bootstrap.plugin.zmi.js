@@ -772,7 +772,7 @@ ZMI.prototype.initInputFields = function(container) {
 					var ajax_url = $select.attr('data-ajax-url');
 					var obj_id = $select.attr('data-obj-id');
 					var attr_id = $select.attr('data-attr-id');
-					$select.removeClass("form-control").addClass("zmi-select").attr({"data-autocomplete-add":false});
+					$select.addClass("zmi-select").attr({"data-autocomplete-add":false});
 					$select.before('<div class="input-group form-multiautocomplete">'
 						+ '<input type="text" id="_'+id+'" class="form-control form-autocomplete" data-ajax-url="'+ajax_url+'" data-obj-id="'+obj_id+'" data-attr-id="'+attr_id+'"/>'
 						+ '<span class="input-group-addon ui-helper-clickable">'
@@ -790,7 +790,7 @@ ZMI.prototype.initInputFields = function(container) {
 						});
 					$(".input-group-addon",$inputgroup).click(function() {
 							// get value
-							var $input = $(this).prev();
+							var $input = $("input",$inputgroup);
 							var v = $input.val();
 							if (v.length>0) {
 								$input.val("");

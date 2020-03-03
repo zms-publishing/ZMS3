@@ -13,10 +13,17 @@
 /* style icon */
 .inner-addon .fas {
 	position: absolute;
-	margin-top: -1.6em;
+	margin-top: 0.7em;
+	margin-right: 1.4em;
 	pointer-events: none;
+	z-index: 999;
+	color: silver;
 }
-
 /* align icon */
 .left-addon .fas  { left:  1.8em;}
 .right-addon .fas { right: 1.8em;}
+
+/* fix */
+div.form-control.form-multiautocomplete.zmi-select {
+	display:none;
+}
