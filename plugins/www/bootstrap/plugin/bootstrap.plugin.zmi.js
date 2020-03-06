@@ -408,7 +408,7 @@ $(function(){
 			addDnDHandlers(dropElem);
 			var that = this;
 			var c = 0;
-			$(".zmi-sortable > li").each(function() {
+			$('.zmi-sortable > li').each(function() {
 				if ($(this).attr("id") == that.id) {
 					// var pos = $(this).position();
 					var pos = $(this.previousSibling).position();
@@ -416,7 +416,7 @@ $(function(){
 					var href = id+'/manage_moveObjToPos?lang='+getZMILang()+'&pos:int='+c+'&fmt=json';
 					$.get(href,function(result){
 							var message = eval('('+result+')');
-							$ZMI.showMessage(pos,message,"alert-success zmi-dragged-info");
+							$ZMI.showMessage(pos, message, 'alert-success zmi-dragged-info');
 							$('.alert-success button').remove();
 						});
 				}
@@ -1067,7 +1067,7 @@ ZMI.prototype.showMessage = function(pos, message, context) {
 	var html = ''
 		+ '<div class="alert'+(typeof context=='undefined'?'':' '+context)+'" style="position:absolute;left:'+pos.left+'px;top:'+pos.top+'px;">'
 			+ '<button type="button" class="close" data-dismiss="alert">&times;</button>'
-			+ message
+			+ '<span class="message">' + message + '</span>'
 		+ '</div>';
 	$('body').append(html);
 	window.setTimeout('$(".alert").hide("slow")',2000);

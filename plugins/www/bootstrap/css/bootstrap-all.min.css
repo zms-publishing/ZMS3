@@ -2141,22 +2141,39 @@ table.ZMSTable{
  -khtml-user-drag:element;
  -webkit-user-drag:element;}
 
+body.zmi ul.zmi-container .zmi-item.zmi-selected .center{
+ background-color:rgba(0,136,204,0.10);}
 body.zmi ul.zmi-container.zmi-sortable .zmi-item.zmi-data-transfer-drag .center{
  border-top:4px dashed #08c !important;
- transition:border-top 0.5s ease;
- margin-top:-4px;}
+ transition:border-top 0.5s ease;}
+
 body.zmi.properties .alert.zmi-dragged-info{
- width:100%;
- height:30px;
- padding:.35rem 1rem;
+ width:auto;
+ right:21.6%;
  margin:0;
+ padding:0;
  border-radius:0;
  border:none;
- border:1px solid rgba(0,0,0,0.1);
- text-align:right;}
-@media(min-width:768px){
+ background:none;
+ border-top:4px dashed #0088cc !important;
+ transition:border-top 0.5s ease;}
+
+body.zmi.properties .alert.alert-success.zmi-dragged-info span.message{
+ display:block;
+ position:fixed;
+ bottom:0;
+ left:0;
+ object-position:top;
+ width:100%;
+ text-align:center;
+ background:#d4edda;
+ height:42px;
+ line-height:42px;
+ border-top:1px solid #c3e6cb;}
+@media(max-width:767px){
  body.zmi.properties .alert.zmi-dragged-info{
- width:78.4%;}}
+ width:calc(100% - 3rem);
+ right:unset;}}
 .zmi:not(.manage-menu) .navbar-nav .dropdown-menu a[href*="zmi-manage-system=0"]{
  background:rgba(53,79,103,0.15);}
 
