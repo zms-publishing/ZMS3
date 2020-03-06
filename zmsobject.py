@@ -1375,9 +1375,10 @@ class ZMSObject(ZMSItem.ZMSItem,
       """ ZMSObject.manage_moveObjToPos """
       parent = self.getParentNode()
       if parent is not None:
-      	childNodes = parent.getChildNodes(REQUEST)
-      	old = childNodes.index(self)
-        sibling_sort_ids = map(lambda x: x.sort_id,childNodes)
+        id_prefix = standard.id_prefix(self.id)
+        childNodes = parent.getObjChildren(id_prefix,REQUEST)
+        old = childNodes.index(self)
+        sibling_sort_ids = [x.sort_id for x in childNodes]
         sibling_sort_ids.remove(self.sort_id)
         pos = pos - 1
         if pos < len(sibling_sort_ids):
@@ -1385,7 +1386,7 @@ class ZMSObject(ZMSItem.ZMSItem,
         else:
           new_sort_id = int(sibling_sort_ids[-1][1:])+1
         self.setSortId(new_sort_id)
-        parent.normalizeSortIds(standard.id_prefix(self.id))
+        parent.normalizeSortIds(id_prefix)
       else:
         id = REQUEST['URL'].split('/')[-2]
         ids = self.getConfProperty('Portal.Clients',[])
