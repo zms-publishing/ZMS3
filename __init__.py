@@ -63,6 +63,7 @@ try:
   registerFileExtension('woff2', FSFile)
   registerFileExtension('mp3', FSFile)
   registerFileExtension('mp4', FSFile)
+  registerFileExtension('json', FSFile)
 except:
   pass
 
