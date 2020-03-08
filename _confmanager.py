@@ -865,28 +865,46 @@ class ConfManager(
       """ ConfManager.manage_customizeDesign """
       message = ''
       home = self.getHome()
-      id = REQUEST.get('id','')
-      
-      # Save.
+      section = REQUEST.get('section','')
+
+      # Save css.
       # -----
-      if btn == self.getZMILangStr('BTN_SAVE'):
-        self.setConfProperty('ZMS.theme',id)
+      if btn == self.getZMILangStr('BTN_SAVE') and section == 'css':
+        css_id = REQUEST.get('id', '')
+        href = self.getConfProperty(css_id).replace('$ZMS_HOME/',self.getHome().id+'/')
+        href = href.replace('$ZMS_THEME/',[self.getConfProperty('ZMS.theme','')+'/',''][len(self.getConfProperty('ZMS.theme',''))==0])
+        # Traverse to get object.
+        ob = self.getHome()
+        for id in href.split('/'):
+          ob = getattr(ob,id,None)
+          if ob is None:
+            break
+        # Set object
+        if ob is not None:
+          ob.manage_edit(title=ob.title, content_type=ob.content_type, filedata=REQUEST[css_id])
         message = self.getZMILangStr('MSG_CHANGED')
       
-      # Delete.
+      # Save theme.
+      # -----
+      elif btn == self.getZMILangStr('BTN_SAVE'):
+        id = REQUEST.get('id', '')
+        self.setConfProperty('ZMS.theme', id)
+        message = self.getZMILangStr('MSG_CHANGED')
+      
+      # Delete theme.
       # -------
       elif btn == self.getZMILangStr('BTN_DELETE'):
         ids = REQUEST.get('ids',[])
         home.manage_delObjects(ids)
         message = self.getZMILangStr('MSG_DELETED')%int(len(ids))
       
-      # Copy.
+      # Copy theme.
       # -----
       elif btn == self.getZMILangStr('BTN_COPY'):
         self.metaobj_manager.importTheme(id)
         message = self.getZMILangStr('MSG_IMPORTED')%('<code class="alert-success">'+id+'</code>')
       
-      # Import.
+      # Import theme.
       # -------
       elif btn == self.getZMILangStr('BTN_IMPORT'):
         file = REQUEST['file']
@@ -898,7 +916,7 @@ class ConfManager(
         _fileutil.remove( filepath)
         message = self.getZMILangStr('MSG_IMPORTED')%('<code class="alert-success">'+filename+'</code>')
       
-      # Insert.
+      # Insert theme.
       # -------
       elif btn == self.getZMILangStr('BTN_INSERT'):
         newId = REQUEST['newId']
