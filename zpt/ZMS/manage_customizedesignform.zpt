@@ -58,7 +58,8 @@
 	<legend tal:content="python:here.getZMILangStr('CAPTION_THEME')">Theme</legend>
 	<table class="table table-striped table-bordered table-hover mb-0">
 	<colgroup>
-		<col width="40"/>
+		<col width="56"/>
+		<col width="*"/>
 	</colgroup>
 	<thead>
 	<tr>
@@ -97,6 +98,10 @@
 <div class="form-horizontal added_css card mt-5">
 	<legend>Additional CSS</legend>
 	<table class="table table-striped table-bordered table-hover mb-0">
+	<colgroup>
+		<col width="56"/>
+		<col width="*"/>
+	</colgroup>
 	<thead>
 		<tr>
 			<th></th>
@@ -117,20 +122,28 @@
 				></tal:block>
 				<tr>
 					<td></td>
-					<td>
-						<tal:block on-error="string:Icon-Error">
-							<tal:block tal:condition="css"><i class="icon-file-alt"></i></tal:block>
-							<tal:block tal:condition="not:css"><i class="icon-bug text-danger"></i></tal:block>
-						</tal:block>
-						<a tal:content="href" 
-							tal:define="missing_msg string:javascript:alert('Please, add CSS objects at configured path as a system-property, e.g. zmi.css.added_zmi = $$ZMS_HOME/$$ZMS_THEME/common/css/added_zmi.css ')"
-							tal:attributes="href python:css is None and missing_msg or '?id=%s'%css_id;
-								title python:css is None and 'CSS-Object is missing!' or '%s/manage'%(href);
-								class python:css is None and 'text-danger alert-danger' or ''">href</a>
-						<a tal:condition="css" target="_blank" tal:attributes="href python:'%s/manage'%href"
+					<td tal:define="missing_msg string:javascript:alert('Please, add CSS objects at configured path as a system-property, e.g. zmi.css.added_zmi = $$ZMS_HOME/$$ZMS_THEME/common/css/added_zmi.css ');
+							cssedit_href python:css is None and missing_msg or '?id=%s'%css_id;
+							cssedit_title python:css is None and 'CSS-Object is missing!' or 'CSS-Code-Editor for %s/manage'%(href);
+							csssedit_class python:css is None and 'text-danger alert-danger' or ''"
+						tal:attributes="class csssedit_class; id python:css_id.split('.')[-1]">
+						<a href="#" tal:attributes="
+								class python:css is None and 'text-danger' or '';
+								title python:css is None and 'CSS-Object is missing!' or 'CSS-Code-Preview';
+								onclick python:css is None and cssedit_href or 'zmiPreviewBtnClick(this)'">
+							<i tal:condition="css" class="icon-caret-right"></i>
+							<i tal:condition="not:css" class="icon-bug text-danger"></i>
+							<span tal:content="href">href</span>
+						</a>
+						<a tal:attributes="href cssedit_href; title cssedit_title; class csssedit_class">
+							<i class="icon-pencil"></i>
+						</a>
+						<a tal:condition="css" target="_blank" class="pull-right"
+							title="Link to Zope Object Editor"
+							tal:attributes="href python:'%s/manage'%href"
 							><i class="icon-external-link fas fa-external-link-alt"></i>
 						</a>
-
+						<pre class="alert alert-info preview" style="display:none;"></pre>
 						<div class="d-none" tal:condition="python:request.get('id')==css_id">
 							<div id="editObj" class="inner">
 								<form id="editForm" name="editForm" class="form-horizontal" action="manage_customizeDesign" method="post" enctype="multipart/form-data">
@@ -211,6 +224,19 @@ function zmiArchiveBtnClick(sender) {
 	return false;
 }
 
+/**
+ * Show CSS Preview.
+ */
+function zmiPreviewBtnClick(sender) {
+	var container = $(sender).parent('td')
+	var css_url = $('a span',container).text(); 
+	// alert(css_url);
+	$.get( css_url, function( data ) {
+		$('pre',container).html( data ).toggle();
+		$('i.icon-caret-right',container).toggleClass('icon-rotate-90')
+	});
+}
+
 $(function(){
 		zmiModal('#editObj',{title:getZMILangStr('BTN_EDIT'),minWidth:800,remove:true});
 		$('button[name=btn][value='+getZMILangStr('BTN_CLOSE')+']').click(function() {
@@ -223,5 +249,24 @@ $(function(){
 
 <tal:block tal:content="structure python:here.zmi_body_footer(here,request)">zmi_body_footer</tal:block>
 
+<style>
+	.zmi.design .added_css i.icon-caret-right {
+		cursor:pointer;
+		width: .75em;
+		display: inline-block;
+	}
+	.zmi.design .added_css a:focus,
+	.zmi.design .added_css a:hover {
+		text-decoration: none !important;
+	}
+	.zmi.design .added_css a span,
+	.zmi.design .added_css a span {
+		display: inline-block;
+		margin-right: .5em;
+	}
+	.zmi.design .added_css pre.preview {
+		margin: .5em 0 0;
+	}
+</style>
 </body>
 </html>
