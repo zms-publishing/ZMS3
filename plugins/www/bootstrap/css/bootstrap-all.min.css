@@ -2246,8 +2246,7 @@ body.zmi.properties .alert.alert-success.zmi-dragged-info span.message{
  font-weight:bold;}
 
 .zmi.design .added_css i.icon-caret-right{
- cursor:pointer;
- width:.75em;
+ margin-right:.5em;
  display:inline-block;}
 .zmi.design .added_css a:focus,
 .zmi.design .added_css a:hover{

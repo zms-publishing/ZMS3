@@ -38,7 +38,7 @@
 			<input type="hidden" name="lang" tal:attributes="value request/lang">
 			<div class="form-group">
 				<label for="file" class="col-lg-2 control-label">
-					<tal:block tal:content="structure python:here.zmi_icon(name='icon-folder-open-alt')"></tal:block>
+					<i class="icon-folder-open-alt fas fa-folder far fa-folder"></i>
 					<span tal:content="python:here.getZMILangStr('ATTR_FILE')">File</span>
 				</label>
 				<div class="col-lg-10"><input class="btn btn-file" name="file" type="file" /></div><!-- .col-lg-10 -->
@@ -87,7 +87,7 @@
 		<td>
 			<input onchange="zmiSaveBtnClick(this)" type="radio" name="id" tal:attributes="value python:si.id; checked python:here.getConfProperty('ZMS.theme','')==si.id" />
 			<img tal:on-error="string:Icon Error" tal:attributes="src python:si.icon"/>
-			<a tal:attributes="href python:'%s/manage_main'%si.id" tal:content="python:si.id">id</a>
+			<a target="_blank" tal:attributes="href python:'%s/manage_main'%si.id" tal:content="python:si.id">id</a>
 			(<tal:block tal:content="python:(si.meta_type=='Filesystem Directory View' and si.getDirPath() or si.title)">title</tal:block>)
 		</td>
 	</tr>
@@ -131,12 +131,12 @@
 								class python:css is None and 'text-danger' or '';
 								title python:css is None and 'CSS-Object is missing!' or 'CSS-Code-Preview';
 								onclick python:css is None and cssedit_href or 'zmiPreviewBtnClick(this)'">
-							<i tal:condition="css" class="icon-caret-right"></i>
-							<i tal:condition="not:css" class="icon-bug text-danger"></i>
+							<i tal:condition="css" class="icon-caret-right fas fa-caret-right"></i>
+							<i tal:condition="not:css" class="icon-bug fas fa-bug text-danger"></i>
 							<span tal:content="href">href</span>
 						</a>
 						<a tal:attributes="href cssedit_href; title cssedit_title; class csssedit_class">
-							<i class="icon-pencil"></i>
+							<i class="icon-pencil fas fa-pen"></i>
 						</a>
 						<a tal:condition="css" target="_blank" class="pull-right"
 							title="Link to Zope Object Editor"
