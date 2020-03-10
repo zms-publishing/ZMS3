@@ -121,7 +121,7 @@
 					></tal:block
 				></tal:block>
 				<tr>
-					<td></td>
+					<th class="text-center text-muted" tal:content="python:css_id.split('_')[1]"></th>
 					<td tal:define="missing_msg string:javascript:alert('Please, add CSS objects at configured path as a system-property, e.g. zmi.css.added_zmi = $$ZMS_HOME/$$ZMS_THEME/common/css/added_zmi.css ');
 							cssedit_href python:css is None and missing_msg or '?id=%s'%css_id;
 							cssedit_title python:css is None and 'CSS-Object is missing!' or 'CSS-Code-Editor for %s/manage'%(href);
