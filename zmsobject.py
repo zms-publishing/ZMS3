@@ -804,13 +804,17 @@ class ZMSObject(ZMSItem.ZMSItem,
         except:
           message = standard.writeError(self,"[manage_changeProperties]")
           messagekey = 'manage_tabs_error_message'
-        message += ' (in '+str(int((time.time()-t0)*100.0)/100.0)+' secs.)'
+        message += ' (in ' + str(int((time.time()-t0)*100.0)/100.0)+' secs.)'
       
       # Return with message.
-      target_ob = self.getParentNode()
-      if redirect_self or target_ob is None:
+      if REQUEST.get('menulock',0) == 1:
         target_ob = self
-      target = REQUEST.get( 'manage_target', '%s/manage_main'%target_ob.absolute_url())
+        target = REQUEST.get( 'manage_target', '%s/manage_properties'%target_ob.absolute_url())
+      else:
+        target_ob = self.getParentNode()
+        if redirect_self or target_ob is None:
+          target_ob = self
+        target = REQUEST.get( 'manage_target', '%s/manage_main'%target_ob.absolute_url())
       target = self.url_append_params( target, { 'lang': lang, messagekey: message})
       target = '%s#zmi_item_%s'%( target, self.id)
       if RESPONSE is not None:
