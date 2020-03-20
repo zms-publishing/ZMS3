@@ -1105,6 +1105,39 @@ zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
               </item>
               <item type="dictionary">
                 <dictionary>
+                  <item key="custom"><![CDATA[## Script (Python) "ZMSIndexZCatalog.onImportObjEvt"
+##bind container=container
+##bind context=context
+##bind namespace=
+##bind script=script
+##bind subpath=traverse_subpath
+##parameters=zmscontext=None,options=None
+##title=py: Event: onImportObj
+##
+# --// onImportObjEvt //--
+
+zmscontext.ZMSIndexZCatalog_func_(zmscontext,'reindex')
+zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
+
+# --// /onImportObjEvt //--
+]]>
+                  </item>
+                  <item key="default"></item>
+                  <item key="id">onImportObjEvt</item>
+                  <item key="keys" type="list">
+                    <list>
+                    </list>
+                  </item>
+                  <item key="mandatory" type="int">0</item>
+                  <item key="meta_type"></item>
+                  <item key="multilang" type="int">0</item>
+                  <item key="name"><![CDATA[Event: onCreateObj]]></item>
+                  <item key="repetitive" type="int">0</item>
+                  <item key="type">py</item>
+                </dictionary>
+              </item>
+              <item type="dictionary">
+                <dictionary>
                   <item key="custom"><![CDATA[## Script (Python) "ZMSIndexZCatalog.ObjectAdded"
 ##bind container=container
 ##bind context=context

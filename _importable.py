@@ -112,6 +112,7 @@ def importContent(self, file):
   
   # Cleanup.
   self.setConfProperty('ZMS.CatalogAwareness.active',catalog_awareness)
+  standard.triggerEvent( self, '*.onImportObjEvt')
   
   # Return imported object.
   return ob
