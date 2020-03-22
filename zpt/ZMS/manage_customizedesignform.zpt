@@ -116,7 +116,7 @@
 		><tal:block tal:repeat="css_id css_ids"
 			><tal:block tal:define="
 					fname python:'added_%s.css'%(css_id.split('_')[1]);
-					href python:here.getConfProperty(css_id,'$ZMS_HOME/$ZMS_THEME/common/css/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
+					href python:here.getConfProperty(css_id,'$ZMS_HOME/$ZMS_THEME/common/styles/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
 					href python:href.replace('$ZMS_THEME/',[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0]);
 					global css python:here.getHome()"
 				><tal:block tal:repeat="id python:href.split('/')"
