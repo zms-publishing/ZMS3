@@ -116,7 +116,7 @@
 		><tal:block tal:repeat="css_id css_ids"
 			><tal:block tal:define="
 					fname python:'%s.css'%(css_id.split('.')[-1]);
-					href python:here.getConfProperty(css_id,'$ZMS_HOME/$ZMS_THEME/common/added/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
+					href python:here.getConfProperty(css_id,'%s/$ZMS_THEME/common/added/%s'%(here.getHome().id,fname));
 					href python:href.replace('$ZMS_THEME/',[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0]);
 					global css python:here.getHome()"
 				><tal:block tal:repeat="id python:href.split('/')"
@@ -156,7 +156,7 @@
 						<div class="d-none" tal:condition="python:request.get('id')==css_id">
 							<div id="editObj" class="inner">
 								<form id="editForm" name="editForm" class="form-horizontal" action="manage_customizeDesign" method="post" enctype="multipart/form-data">
-									<input type="hidden" name="section" value="css" />
+									<input type="hidden" name="section" value="added" />
 									<input type="hidden" name="id" tal:attributes="value request/id" />
 									<input type="hidden" name="lang" tal:attributes="value request/lang" />
 									<!-- ACE Editor -->
@@ -209,7 +209,7 @@
 		><tal:block tal:repeat="js_id js_ids"
 			><tal:block tal:define="
 					fname python:'%s.js'%(js_id.split('.')[-1]);
-					href python:here.getConfProperty(js_id,'$ZMS_HOME/$ZMS_THEME/common/added/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
+					href python:here.getConfProperty(js_id,'%s/$ZMS_THEME/common/added/%s'%(here.getHome().id,fname));
 					href python:href.replace('$ZMS_THEME/',[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0]);
 					global js python:here.getHome()"
 				><tal:block tal:repeat="id python:href.split('/')"
@@ -249,7 +249,7 @@
 						<div class="d-none" tal:condition="python:request.get('id')==js_id">
 							<div id="editObj" class="inner">
 								<form id="editForm" name="editForm" class="form-horizontal" action="manage_customizeDesign" method="post" enctype="multipart/form-data">
-									<input type="hidden" name="section" value="js" />
+									<input type="hidden" name="section" value="added" />
 									<input type="hidden" name="id" tal:attributes="value request/id" />
 									<input type="hidden" name="lang" tal:attributes="value request/lang" />
 									<!-- ACE Editor -->
