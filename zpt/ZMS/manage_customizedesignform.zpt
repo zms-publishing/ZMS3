@@ -112,11 +112,11 @@
 		</tr>
 	</thead>
 	<tbody>
-	<tal:block tal:define="css_ids python:['zmi.css.added_zmi','zmi.css.added_web']"
+	<tal:block tal:define="css_ids python:['ZMS.added.css.zmi','ZMS.added.css.web']"
 		><tal:block tal:repeat="css_id css_ids"
 			><tal:block tal:define="
-					fname python:'added_%s.css'%(css_id.split('_')[1]);
-					href python:here.getConfProperty(css_id,'$ZMS_HOME/$ZMS_THEME/common/styles/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
+					fname python:'%s.css'%(css_id.split('.')[-1]);
+					href python:here.getConfProperty(css_id,'$ZMS_HOME/$ZMS_THEME/common/added/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
 					href python:href.replace('$ZMS_THEME/',[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0]);
 					global css python:here.getHome()"
 				><tal:block tal:repeat="id python:href.split('/')"
@@ -125,8 +125,8 @@
 					></tal:block
 				></tal:block>
 				<tr>
-					<th class="text-center text-muted" tal:content="python:css_id.split('_')[1]"></th>
-					<td tal:define="missing_msg string:javascript:alert('Please, add CSS objects at configured path as a system-property, e.g. zmi.css.added_zmi = $$ZMS_HOME/$$ZMS_THEME/common/css/added_zmi.css ');
+					<th class="text-center text-muted" tal:content="python:css_id.split('.')[-1]"></th>
+					<td tal:define="missing_msg string:javascript:alert('Please, add CSS objects at configured path as a system-property, e.g. ZMS.added.css.zmi = $$ZMS_HOME/$$ZMS_THEME/common/added/zmi.css ');
 							cssedit_href python:css is None and missing_msg or '?id=%s'%css_id;
 							cssedit_title python:css is None and 'CSS-Object is missing!' or 'CSS-Code-Editor for %s/manage'%(href);
 							cssedit_class python:css is None and 'text-danger alert-danger' or ''"
@@ -139,7 +139,8 @@
 							<i tal:condition="not:css" class="icon-bug fas fa-bug text-danger"></i>
 							<span tal:content="href">href</span>
 						</a>
-						<span tal:define="fs_located python:'Filesystem' in css.meta_type"
+						<span tal:on-error="nothing"
+								tal:define="fs_located python:'Filesystem' in css.meta_type"
 								tal:omit-tag="not:fs_located" title="Filessystem-Object: Not Editable">
 							<a tal:omit-tag="fs_located"
 								tal:attributes="href cssedit_href; title cssedit_title; class cssedit_class;">
@@ -204,11 +205,11 @@
 		</tr>
 	</thead>
 	<tbody>
-	<tal:block tal:define="js_ids python:['zmi.js.added_zmi','zmi.js.added_web']"
+	<tal:block tal:define="js_ids python:['ZMS.added.js.zmi','ZMS.added.js.web']"
 		><tal:block tal:repeat="js_id js_ids"
 			><tal:block tal:define="
-					fname python:'added_%s.js'%(js_id.split('_')[1]);
-					href python:here.getConfProperty(js_id,'$ZMS_HOME/$ZMS_THEME/common/js/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
+					fname python:'%s.js'%(js_id.split('.')[-1]);
+					href python:here.getConfProperty(js_id,'$ZMS_HOME/$ZMS_THEME/common/added/%s'%(fname)).replace('$ZMS_HOME/',here.getHome().id+'/');
 					href python:href.replace('$ZMS_THEME/',[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0]);
 					global js python:here.getHome()"
 				><tal:block tal:repeat="id python:href.split('/')"
@@ -217,8 +218,8 @@
 					></tal:block
 				></tal:block>
 				<tr>
-					<th class="text-center text-muted" tal:content="python:js_id.split('_')[1]"></th>
-					<td tal:define="missing_msg string:javascript:alert('Please, add JS objects at configured path as a system-property, e.g. zmi.js.added_zmi = $$ZMS_HOME/$$ZMS_THEME/common/js/added_zmi.js ');
+					<th class="text-center text-muted" tal:content="python:js_id.split('.')[-1]"></th>
+					<td tal:define="missing_msg string:javascript:alert('Please, add JS objects at configured path as a system-property, e.g. ZMS.added.js.zmi = $$ZMS_HOME/$$ZMS_THEME/common/added/zmi.js ');
 							jsedit_href python:js is None and missing_msg or '?id=%s'%js_id;
 							jsedit_title python:js is None and 'JS-Object is missing!' or 'JS-Code-Editor for %s/manage'%(href);
 							jsedit_class python:js is None and 'text-danger alert-danger' or ''"
@@ -288,10 +289,10 @@
 		the locations can be configured by the following keys: 
 	</span>
 	<code class="alert-info">
-		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=zmi.css.added_zmi#Custom'%(context.getHome().absolute_url())">zmi.css.added_zmi</a>,
-		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=zmi.css.added_web#Custom'%(context.getHome().absolute_url())">zmi.css.added_web</a>,
-		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=zmi.js.added_zmi#Custom'%(context.getHome().absolute_url())">zmi.js.added_zmi</a>,
-		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=zmi.js.added_web#Custom'%(context.getHome().absolute_url())">zmi.js.added_web</a>
+		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=ZMS.added.css.zmi#Custom'%(context.getHome().absolute_url())">ZMS.added.css.zmi</a>,
+		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=ZMS.added.css.added.web#Custom'%(context.getHome().absolute_url())">ZMS.added.css.web</a>,
+		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=ZMS.added.js.zmi#Custom'%(context.getHome().absolute_url())">ZMS.added.js.zmi</a>,
+		<a href="#" tal:attributes="href python:'%s/content/manage_customize?lang=ger&conf_key=ZMS.added.js.web#Custom'%(context.getHome().absolute_url())">ZMS.added.js.web</a>
 	</code>
 </section>
 
