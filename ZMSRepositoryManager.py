@@ -131,6 +131,13 @@ class ZMSRepositoryManager(
 
 
     """
+    Returns ignore-orphans.
+    """
+    def get_ignore_orphans(self):
+      return getattr(self, 'ignore_orphans', True)
+
+
+    """
     Returns conf-basepath.
     """
     def get_conf_basepath(self, id='conf'):
@@ -209,7 +216,7 @@ class ZMSRepositoryManager(
         self.writeLog("[exec_auto_update]: %s"%str(time.time()-current_time))
 
 
-    def getDiffs(self, provider):
+    def getDiffs(self, provider, ignore=True):
       self.writeBlock("[getDiffs]: provider=%s"%str(provider))
       diff = []
       local = self.localFiles(provider)
@@ -217,6 +224,10 @@ class ZMSRepositoryManager(
       filenames = list(set(local.keys()+remote.keys()))
       filenames.sort()
       for filename in filenames:
+        if ignore and filename not in local.keys():
+          # ignore orphaned files in filesystem
+          # if there are no references in model
+          continue
         l = local.get(filename,{})
         r = remote.get(filename,{})
         if l.get('data','') != r.get('data',''):
@@ -486,6 +497,7 @@ class ZMSRepositoryManager(
       if btn == 'save':
         self.auto_update = REQUEST.get('auto_update','')!=''
         self.last_update = self.parseLangFmtDate(REQUEST.get('last_update',''))
+        self.ignore_orphans = REQUEST.get('ignore_orphans','')!=''
         self.setConfProperty('ZMS.conf.path',REQUEST.get('basepath',''))
         self.update_direction = REQUEST.get('update_direction','Loading')
         message = self.getZMILangStr('MSG_CHANGED')

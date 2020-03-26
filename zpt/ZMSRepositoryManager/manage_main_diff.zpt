@@ -146,7 +146,7 @@
 		,'/++resource++zms_/jquery/diff/jquery.pretty-text-diff.min.js'
 		]);
 	standard modules/Products.zms/standard;
-	provider_diffs python:map(lambda x:(x,here.getDiffs(x)),here.getRepositoryProviders());
+	provider_diffs python:map(lambda x:(x,here.getDiffs(x,here.get_ignore_orphans())),here.getRepositoryProviders());
 	provider_diffs_count python:sum(map(lambda x:len(x[1]),provider_diffs)+[0])">
 
 	<tal:block tal:condition="not:provider_diffs_count">
