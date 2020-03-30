@@ -22,8 +22,3 @@
 /* align icon */
 .left-addon .fas  { left:  1.8em;}
 .right-addon .fas { right: 1.8em;}
-
-/* fix */
-div.form-control.form-multiautocomplete.zmi-select {
-	display:none;
-}
