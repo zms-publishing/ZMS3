@@ -25,7 +25,7 @@ ZMI.prototype.multiselect = function(context) {
 					$select.next(".zmi-select-container").remove();
 					var html = ''
 						+ '<div class="zmi-select-container">'
-						+ '<div class="'+$select.attr('class').replace('form-control')+'">'
+						+ '<div class="'+$select.attr('class').replace('form-control','')+'">'
 						+ '</div>'
 						+ '<div class="btn-group btn-group-sortable">\n'
 						+ '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n'
