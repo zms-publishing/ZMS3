@@ -405,7 +405,7 @@
 	<input type="hidden" name="lang" tal:attributes="value request/lang"/>
 	<legend tal:content="python:here.getZMILangStr('TAB_METAOBJ')">Metaobj</legend>
 	<p class="well well-small" tal:content="structure python:here.getZMILangStr('MSG_METAOBJ')">well</p>
-	<table class="table table-striped table-hover table-bordered">
+	<table id="meta_overview" class="table table-striped table-hover table-bordered">
 	<colgroup>
 		<col width="40"/>
 	</colgroup>
@@ -413,19 +413,19 @@
 		<tr>
 			<th>
 				<div class="btn-group">
-					<span class="btn btn-default" tal:attributes="title python:'%s/%s'%(here.getZMILangStr('BTN_SLCTALL'),here.getZMILangStr('BTN_SLCTNONE'))" onclick="zmiToggleSelectionButtonClick(this)"><tal:block tal:content="structure python:here.zmi_icon(name='icon-check')"></tal:block></span>
+					<button class="btn btn-default" tal:attributes="title python:'%s/%s'%(here.getZMILangStr('BTN_SLCTALL'),here.getZMILangStr('BTN_SLCTNONE'))" onclick="zmiToggleSelectionButtonClick(this);return false"><i class="far fa-check-square icon-check"></i></button>
 				</div>
 			</th>
 			<th colspan="2">
 				<div class="btn-toolbar" role="toolbar">
-					<div class="btn-group">
-						<span class="btn btn-primary" tal:attributes="title python:here.getZMILangStr('BTN_INSERT')+'...'" onclick="zmiModal('#insertObj',{title:$(this).attr('title')})"><tal:block tal:content="structure python:here.zmi_icon(name='icon-plus')"></tal:block></span>
-						<span class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_DELETE')+'...'" onclick="zmiDeleteObjBtnClick(this,{btn:getZMILangStr('BTN_DELETE'),key:'obj'})"><tal:block tal:content="structure python:here.zmi_icon(name='icon-remove')"></tal:block></span>
+					<div class="btn-group managing">
+						<button class="btn btn-primary" tal:attributes="title python:here.getZMILangStr('BTN_INSERT')+'...'" onclick="zmiModal('#insertObj',{title:$(this).attr('title')});return false"><i class="fas fa-plus icon-plus"></i></button>
+						<button class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_DELETE')+'...'" onclick="zmiDeleteObjBtnClick(this,{btn:getZMILangStr('BTN_DELETE'),key:'obj'});return false"><tal:block tal:content="structure python:here.zmi_icon(name='icon-remove')"></tal:block></button>
 					</div><!-- .btn-group -->
-					<div class="btn-group">
-						<span class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_ACQUIRE')+'...'" onclick="$ZMI.iframe('manage_main_acquire',{lang:getZMILang()},{iframe:true,height:'600',title:$(this).attr('title')})" tal:condition="python:here.getPortalMaster() is not None"><tal:block tal:content="structure python:here.zmi_icon(name='icon-share')"></tal:block></span>
-						<span class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_IMPORT')+'...'" onclick="$ZMI.iframe('manage_main_import',{lang:getZMILang()},{iframe:true,height:'600',title:$(this).attr('title')})"><tal:block tal:content="structure python:here.zmi_icon(name='icon-upload-alt')"></tal:block></span>
-						<span class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_EXPORT')+'...'" onclick="zmiExportBtnClick(this)"><tal:block tal:content="structure python:here.zmi_icon(name='icon-download-alt')"></tal:block></span>
+					<div class="btn-group packaging">
+						<button class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_ACQUIRE')+'...'" onclick="$ZMI.iframe('manage_main_acquire',{lang:getZMILang()},{iframe:true,height:'600',title:$(this).attr('title')});return false" tal:condition="python:here.getPortalMaster() is not None"><i class="fas fa-share icon-share"></i></button>
+						<button class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_IMPORT')+'...'" onclick="$ZMI.iframe('manage_main_import',{lang:getZMILang()},{iframe:true,height:'600',title:$(this).attr('title')});return false"><i class="fas fa-upload icon-upload-alt"></i></button>
+						<button class="btn btn-default" tal:attributes="title python:here.getZMILangStr('BTN_EXPORT')+'...'" onclick="zmiExportBtnClick(this);return false"><i class="fas fa-download icon-download-alt"></i></button>
 					</div><!-- .btn-group -->
 				</div><!-- .btn-toolbar -->
 			</th>
@@ -434,34 +434,36 @@
 	<tbody>
 	<tal:block tal:repeat="metaObjPackage python:here.sort_list(metaObjPackages+metaObjPackages2)">
 		<tal:block tal:condition="python:metaObjPackage in metaObjPackages">
-			<tr class="zmi-selectable" tal:define="global metaObj python:here.getMetaobj(metaObjPackage)"
-				id="pack_default" tal:attributes="id python:'pack_%s'%(metaObjPackage and metaObjPackage or 'default')">
-				<td style="text-align:center;">
+			<tr id="pack_default" class="meta-package" 
+				tal:define="global metaObj python:here.getMetaobj(metaObjPackage)"
+				tal:attributes="id python:'pack_%s'%(metaObjPackage and metaObjPackage or 'default')">
+				<td style="text-align:center;" class="meta-check">
 					<input tal:condition="python:metaObjPackage" type="checkbox" name="ids:list" tal:attributes="value metaObjPackage"/>
 				</td>
-				<td colspan="2">
+				<td colspan="2" class="meta-id">
 					<tal:block tal:condition="python:metaObjPackage"
-						><tal:block tal:condition="python:metaObj.get('acquired',0)" 
-							tal:content="structure python:here.zmi_icon(name='icon-share',extra='title=\042acquired\042')"
-						></tal:block
-						><a tal:condition="python:metaObjPackage" tal:attributes="href python:'manage_bigpicture?lang=%s&id=%s'%(request['lang'],metaObjPackage); title python:'%s - Click for big picture...'%metaObjPackage" target="_blank"
-							><tal:block tal:content="structure python:here.zmi_icon(name='icon-briefcase')"></tal:block
-						></a>&nbsp;
-						<a tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],metaObj['id'])"><strong tal:on-error="string:ERROR" tal:content="metaObjPackage">the id</strong></a>
+						><i tal:condition="python:metaObj.get('acquired',None)" class="fas fa-share icon-share" title="acquired"></i>
+						<a tal:condition="python:metaObjPackage" 
+							tal:attributes="href python:'manage_bigpicture?lang=%s&id=%s'%(request['lang'],metaObjPackage); title python:'%s - Click for big picture...'%metaObjPackage" target="_blank"
+							><i class="fas fa-briefcase icon-briefcase"></i></a>
+						&nbsp;
+						<a tal:omit-tag="python:metaObj.get('acquired',None)"
+							tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],metaObj['id'])"
+							><strong tal:on-error="string:ERROR metaObjPackage"
+							tal:content="metaObjPackage">the id</strong></a>
 					</tal:block>
 					<tal:block tal:condition="python:not metaObjPackage"
-						><tal:block tal:content="structure python:here.zmi_icon(name='icon-briefcase')"></tal:block
-							>&nbsp;&nbsp;<strong>[default package]</strong>
+						><i class="fas fa-briefcase icon-briefcase"></i>&nbsp;&nbsp;<strong>[default package]</strong>
 					</tal:block
-					><tal:block tal:content="python:metaObj.get('revision',['',here.getMetaobjRevision(metaObjPackage)][int(len(metaObjPackage)>0)])">the revision</tal:block
+					><span class="meta-id-info" tal:content="python:metaObj.get('revision',['',here.getMetaobjRevision(metaObjPackage)][int(len(metaObjPackage)>0)])">the revision</span
 				></td>
 			</tr>
 		</tal:block>
 		<tal:block tal:condition="not:python:metaObjPackage in metaObjPackages">
-			<tr class="zmi-selectable">
-				<td>&nbsp;</td>
-				<td colspan="2" style="text-decoration:line-through">
-					<tal:block tal:content="structure python:here.zmi_icon(name='icon-briefcase')"></tal:block>
+			<tr class="meta-package">
+				<td class="meta-select">&nbsp;</td>
+				<td class="meta-id" colspan="2" style="text-decoration:line-through">
+					<i class="fas fa-briefcase icon-briefcase"></i>
 					<strong tal:content="metaObjPackage">the id</strong>
 				</td>
 			</tr>
@@ -470,23 +472,25 @@
 		<tal:block tal:define="
 				metaObj python:metaObjs[i];
 				revision python:here.getMetaobjRevision(metaObj['id']);">
-			<tr class="zmi-selectable" tal:condition="python:metaObj.get('type','')!='ZMSPackage' and metaObj.get('package')==metaObjPackage">
-				<td style="text-align:center;">
-					<input type="checkbox" name="ids:list" tal:attributes="value python:metaObj['id']"/>
+			<tr tal:condition="python:metaObj.get('type','')!='ZMSPackage' and metaObj.get('package','')==metaObjPackage">
+				<td style="text-align:center;" class="meta-select">
+					<input type="checkbox" name="ids:list" tal:attributes="value python:metaObj.get('id','')" />
 				</td>
-				<td></td>
-				<td>
+				<td class="meta-space"></td>
+				<td class="meta-id">
 					<span tal:attributes="id python:metaObj['id'];title python:metaObj['id'];class python:' '.join([[''],['enabled']][metaObj.get('enabled',0) in [1,True]])">
-						<i tal:condition="python:metaObj.get('acquired',None)" class="icon-share" title="acquired"></i>
-						<i tal:attributes="class python:' '.join(['enabled-toggle','ui-helper-clickable']+[['icon-check-empty'],['icon-check']][metaObj.get('enabled',0) in [1,True]])" onclick="zmiEnabledBtnClick(this)"></i>
-						<a tal:attributes="href python:'manage_analyze?lang=%s&id=%s'%(request['lang'],metaObj['id']); title python:'%s - Click for content analysis...'%metaObj['id']" target="_blank">
-							<span tal:on-error="string:ERROR" tal:replace="structure python:here.display_icon(request,metaObj['id'],zpt=True)">the icon</span>
-						</a>
-						<a tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],metaObj['id'])">
-							<span tal:on-error="string:ERROR Name" tal:replace="metaObj/name">the name</span>
-						</a>
-						<tal:block tal:content="revision">the revision</tal:block>
-						(<tal:block tal:content="python:here.getZMILangStr('SOTYPE_%s'%metaObj.get('type','unknown').upper())">the type</tal:block>)
+						<a tal:condition="python:metaObj.get('acquired',None)" target="_blank"
+							tal:attributes="
+								href python:'%s/metaobj_manager/manage_main?lang=%s&id=%s'%(context.getRootElement().absolute_url(),request['lang'],metaObj['id']);
+								title python:'acquired from: %s (%s)'%(context.getRootElement().getHome().id, context.getRootElement().attr('titlealt'))"
+							><i class="fas fa-share icon-share"></i></a>
+						<a title="Enabled" href="javascript:;" onclick="zmiEnabledBtnClick(this)"><i tal:attributes="class python:' '.join(['enabled-toggle']+[['far fa-square icon-check-empty'],['far fa-check-square icon-check']][metaObj.get('enabled',0) in [1,True]])"></i></a>
+						<a tal:attributes="href python:'manage_analyze?lang=%s&id=%s'%(request['lang'],metaObj['id']); title python:'%s - Click for content analysis...'%metaObj['id']" target="_blank"><i tal:on-error="string:ERROR" tal:replace="structure python:here.display_icon(request,metaObj['id'],zpt=True)">the icon</i></a>
+						<a tal:omit-tag="python:metaObj.get('acquired',None)" tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],metaObj['id'])"><span tal:on-error="string:ERROR Name" tal:replace="metaObj/name">the name</span></a>
+						<span class="meta-id-info">
+							<tal:block tal:content="revision">the revision</tal:block>
+							(<tal:block tal:content="python:here.getZMILangStr('SOTYPE_%s'%metaObj.get('type','unknown').upper())">the type</tal:block>)
+						</span>
 					</span>
 				</td>
 			</tr>

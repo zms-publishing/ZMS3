@@ -1136,6 +1136,20 @@ div.pull-left div.single-line.input-append.zmi-nodes textarea {
 .zmi.metas table.table-striped .row_insert td.meta-id input {
 	background: #fff;
 }
+.zmi table#meta_overview.table tr > :first-child,
+.zmi table#meta_overview.table td.meta-space  {
+	text-align:center;
+	width:3em;
+}
+.zmi.metas table#meta_overview td.meta-id {
+	width:auto !important;
+}
+.zmi.metas table#meta_overview td.meta-id i {
+	margin:0 .5em;
+}
+.zmi.metas table#meta_overview td.meta-id a:hover i {
+	text-decoration: none;
+}
 @media (max-width: 767px) {
 	.zmi.metas table#meta_properties {
 		display: inline-table;
@@ -1169,6 +1183,9 @@ div.pull-left div.single-line.input-append.zmi-nodes textarea {
 	.zmi.metas table#meta_properties td span.title {
 		display:block;
 		margin-right:1em;
+	}
+	.zmi.metas table#meta_overview span.meta-id-info {
+		display:none;
 	}
 }
 .zmi.metas div.meta-access {
