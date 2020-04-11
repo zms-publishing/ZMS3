@@ -199,8 +199,10 @@
 						</a>
 					</td>
 					<td>
-					<div style="white-space: nowrap;" tal:repeat="diff python:filter(lambda x:x[2]==id,diffs)">
-						<tal:block tal:define="
+					<div style="white-space: nowrap;" 
+						tal:repeat="diff python:filter(lambda x:x[2]==id,diffs)">
+						<tal:block tal:on-error="structure python:'<code><i class=\042icon-warning-sign\042></i> ERROR: %s</code>'%(diff[0])"
+							tal:define="
 								filename python:diff[0];
 								mt python:diff[1];
 								l python:diff[3];
@@ -209,26 +211,26 @@
 								rd python:[r.get('data'),''][r.get('data') is None];
 								is_new python:len(ld)==0 and len(rd)>0;
 								is_modified python:len(ld)>0 and len(rd)>0;
-								is_incoming python:is_modified and l.get('version')<r.get('version');
-								is_outgoing python:is_modified and l.get('version')>r.get('version');
+								is_incoming python:is_modified and l.get('version',0)<r.get('version',0);
+								is_outgoing python:is_modified and l.get('version',0)>r.get('version',0);
 								is_removed python:len(ld)>0 and len(rd)==0;">
-									<tal:block tal:condition="python:l and l.get('data') is None" tal:content="structure python:zmscontext.zmi_icon(name='icon-warning-sign text-danger',extra=' title=\042not found!\042')">icon-alert</tal:block>
-									<tal:block tal:condition="not:python:l and l.get('data') is None">
-										<span tal:attributes="class python:' '.join(['state']
-											+[[],['bg-success']][is_new]
-											+[[],['bg-warning']][is_modified]
-											+[[],['bg-danger']][is_removed]
-											);title python: is_incoming and 'INCOMING - ZODB: %s;; Repository: %s'%(
-												str(l.get('version','')),
-												str(r.get('version',''))
-												) or ( is_outgoing and 'OUTGOING - ZODB: %s;; Repository: %s'%(
-												str(l.get('version','')),
-												str(r.get('version',''))
-												) or '')">&nbsp;</span>
-									</tal:block>
-									<a href="#" tal:attributes="onclick python:'javascript:focus_anchorid(\'#%s\');;return false'%(here.id_quote(filename))" 
-										tal:content="python:filename">the filename
-									</a>
+							<i tal:condition="python:l and l.get('data') is None" class="icon-warning-sign text-danger" title="not found!"></i>
+							<tal:block tal:condition="not:python:l and l.get('data') is None">
+								<span tal:attributes="class python:' '.join(['state']
+									+[[],['bg-success']][is_new]
+									+[[],['bg-warning']][is_modified]
+									+[[],['bg-danger']][is_removed]
+									);title python: is_incoming and 'INCOMING - ZODB: %s;; Repository: %s'%(
+										str(l.get('version','')),
+										str(r.get('version',''))
+										) or ( is_outgoing and 'OUTGOING - ZODB: %s;; Repository: %s'%(
+										str(l.get('version','')),
+										str(r.get('version',''))
+										) or '')">&nbsp;</span>
+							</tal:block>
+							<a href="#" tal:attributes="onclick python:'javascript:focus_anchorid(\'#%s\');;return false'%(here.id_quote(filename))" 
+								tal:content="python:filename">the filename
+							</a>
 						</tal:block>
 					</div>
 					</td>
