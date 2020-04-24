@@ -128,3 +128,54 @@ function zmiDelBlobBtnClick(elName) {
 	// Refresh buttons.
 	zmiSwitchBlobButtons(elName);
 }
+
+/**
+ * File Upload Warning:
+ * Max file size can be optionally set by config params
+ *   ZMS.input.file.maxlength (bytes), e.g. 100000
+ *   ZMS.input.image.maxlength (bytes), e.g. 100000
+ * Accepted file types can be optionally set by config params
+ *   ZMS.input.file.types (str), e.g. .pdf,.doc,.docx
+ *   ZMS.input.image.types (str), e.g. .gif,.jpg,.svg
+ * Reference:
+ * https://html.spec.whatwg.org/multipage/input.html#attr-input-accept
+ */
+$(function(){
+	$('.zmi-input-file input').on('change', function(){
+		var fp = $(this);
+		var fs = fp[0].files[0]['size'];
+		var ft = fp[0].files[0]['type'];
+		var fn = fp[0].files[0]['name'];
+		var fs_max = $(this).attr('data-maxlength');
+		var fn_acc = $(this).attr('accept');
+		var fn_ext = '';
+		if (fn.split('.').length > 0 ) {
+			var fn_ext = fn.split('.')[fn.split('.').length-1];
+		}
+		if ( fs_max!='' && fs_max!=undefined ) {
+			if ( fs_max < fs ) {
+				$(this).removeClass('alert-success');
+				$(this).addClass('alert-danger');
+				alert('File Size ' + fs/1000 + 'kb not allowed (max.' + fs_max/1000 + 'kb)');
+				$('.controls.save .btn.btn-primary').attr('disabled','disabled');
+			} else {
+				$(this).removeClass('alert-danger');
+				$(this).addClass('alert-success');
+				$('.controls.save .btn.btn-primary').removeAttr('disabled');
+			}
+		}
+		if ( fn_acc!='' && fn_acc!=undefined ) {
+			if ( fn_acc.search(fn_ext) < 0 || fn_ext=='' ) {
+				$(this).removeClass('alert-success');
+				$(this).addClass('alert-danger');
+				alert('File Type ' + fn_ext + ' is not allowed, please use ' + fn_acc );
+				$('.controls.save .btn.btn-primary').attr('disabled','disabled');
+			} else {
+				$(this).removeClass('alert-danger');
+				$(this).addClass('alert-success');
+				$('.controls.save .btn.btn-primary').removeAttr('disabled');
+			}
+		}
+
+	})
+})

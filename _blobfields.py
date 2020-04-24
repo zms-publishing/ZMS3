@@ -181,8 +181,8 @@ def uploadBlobField(self, clazz, file='', filename=''):
     maxlength = self.getConfProperty(maxlength_prop,'')
     if len(maxlength) > 0:
       size = blob.get_size()
-      if size > int(maxlength):
-        raise zExceptions.Forbidden('size=%i > %s=%i' %(size,maxlength_prop,int(maxlength)))
+      if int(size) > int(maxlength):
+        raise zExceptions.Forbidden('file upload size=%i > %s=%i' %(size,maxlength_prop,int(maxlength)))
   return blob
 
 

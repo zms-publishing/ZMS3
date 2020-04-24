@@ -32,8 +32,11 @@
 
 			<div class="zmi-input-file"
 					tal:condition="python:request['lang'] in here.getLanguages(request)"
-					tal:define="dummy0 python:request.set('ZMS_ALLOWED_EXTENSIONS',[])"
-					tal:content="structure python:standard.getPlugin(here,'fileupload/'+here.getConfProperty('ZMS.input.file.plugin','input_file')+'/input.zpt',{'elName':elName,'elMaxlength':here.getConfProperty('ZMS.input.file.maxlength',''),'key':key})">
+					tal:define="
+						input_file_plugin python:here.getConfProperty('ZMS.input.file.plugin','input_file');
+						data_maxlength python:here.getConfProperty('ZMS.input.file.maxlength',None);
+						data_accept python:here.getConfProperty('ZMS.input.file.types',None);"
+					tal:content="structure python:standard.getPlugin(here,'fileupload/'+input_file_plugin+'/input.zpt',{'elName':elName,'data_maxlength':data_maxlength,'data_accept':data_accept,'key':key})">
 				the input-file
 			</div>
 
