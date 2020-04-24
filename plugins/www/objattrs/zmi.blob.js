@@ -152,30 +152,27 @@ $(function(){
 		if (fn.split('.').length > 0 ) {
 			var fn_ext = fn.split('.')[fn.split('.').length-1];
 		}
+		var allow_upload = true;
 		if ( fs_max!='' && fs_max!=undefined ) {
 			if ( fs_max < fs ) {
-				$(this).removeClass('alert-success');
-				$(this).addClass('alert-danger');
 				alert('File Size ' + fs/1000 + 'kb not allowed (max.' + fs_max/1000 + 'kb)');
-				$('.controls.save .btn.btn-primary').attr('disabled','disabled');
-			} else {
-				$(this).removeClass('alert-danger');
-				$(this).addClass('alert-success');
-				$('.controls.save .btn.btn-primary').removeAttr('disabled');
+				allow_upload = false;
 			}
 		}
 		if ( fn_acc!='' && fn_acc!=undefined ) {
 			if ( fn_acc.search(fn_ext) < 0 || fn_ext=='' ) {
-				$(this).removeClass('alert-success');
-				$(this).addClass('alert-danger');
 				alert('File Type ' + fn_ext + ' is not allowed, please use ' + fn_acc );
-				$('.controls.save .btn.btn-primary').attr('disabled','disabled');
-			} else {
-				$(this).removeClass('alert-danger');
-				$(this).addClass('alert-success');
-				$('.controls.save .btn.btn-primary').removeAttr('disabled');
+				allow_upload = false;
 			}
 		}
-
+		if (!allow_upload) {
+			$(this).removeClass('alert-success');
+			$(this).addClass('alert-danger');
+			$('.controls.save .btn.btn-primary').attr('disabled','disabled');
+		} else {
+			$(this).removeClass('alert-danger');
+			$(this).addClass('alert-success');
+			$('.controls.save .btn.btn-primary').removeAttr('disabled');
+		}
 	})
 })
