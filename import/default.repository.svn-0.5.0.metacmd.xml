@@ -44,6 +44,8 @@ def manage_repository_collect_artefacts(self, request=None):
 					newName = path
 					newType = node.meta_type
 					newCustom = zopeutil.readData(node)
+					if type(newCustom) is not str:
+						newCustom = str(newCustom)
 					self.metaobj_manager.setMetaobjAttr(id=id, oldId=oldId, newId=newId, newName=newName, newType=newType, newCustom=newCustom)
 					i['status'].append(newId)
 				rtn.append(i)
