@@ -584,11 +584,13 @@ nav .scroller-left{
 .zmi:not(.manage-menu) footer{
  left:0;
  bottom:0;
- height:26px;
  width:100%;
- padding:0.5em;
  font-size:11px !important;
- color:#999;}
+ color:#999;
+ padding:0.75em 0 0.75em 1.65em;
+ height:2.5em;
+ line-height:1em;
+ background:#f5f5f5!important;}
 .zmi footer a{
  color:inherit;}
 .zmi footer .back-to-top{
@@ -718,7 +720,7 @@ ul.nav-buttons li{
  list-style-type:none;}
 div#zmi-tab{
  background-color:#f5f5f5!important;
- border-bottom:1px solid #ddd;
+ 
  min-height:calc(100vh - 112px);}
 div.alert{
  margin:1em 1.5em;}
@@ -855,6 +857,8 @@ ul.zmi-container .zmi-item .center .contentEditable{
  border-bottom:none !important;
  border-top:1px dotted #ccc !important;
  padding-top:0.2em;}
+ul.zmi-container.zmi-sortable.pages .zmi-item:last-child .center .contentEditable{
+ border-bottom:1px dotted #ccc !important}
 .zmi-container li.zmi-item .center .contentEditable .contentEditable{
  padding:0;
  margin:0;
