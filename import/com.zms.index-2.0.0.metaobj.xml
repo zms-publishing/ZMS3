@@ -45,32 +45,17 @@ function openWindow(url) {
 				class="btn btn-danger col-sm-1" name="btn" style="margin-left:1em"
 				onclick="return openWindow('zmsindex/ZMSIndexZCatalog_func_?func_=activate'+'&loglevel='+$('#reindex-loglevel').val());">Activate
 			</button>
-			<button tal:condition="python: context.getDocumentElement().getConfProperty('ExtensionPoint.ZMSObject.get_uid')!=None"
-				title="DEACTIVATE: Deactivate ZCatalog index for links."
-				class="btn btn-basic col-sm-1" name="btn" style="margin-left:1em"
-				onclick="return openWindow('zmsindex/ZMSIndexZCatalog_func_?func_=deactivate'+'&loglevel='+$('#reindex-loglevel').val());">Deactivate
-			</button>
-			<button title="INIT-DB: Init SQLite-Database for logging resync."
-				class="btn btn-basic col-sm-1" name="btn" style="margin-left:1em"
-				onclick="return openWindow('zmsindex/ZMSIndexZCatalog_func_?func_=initDb'+'&loglevel='+$('#reindex-loglevel').val());">Init Db
-			</button>
 		</div>
 	</div><!-- .form-group -->
 	<div class="form-group zms4-row" style="padding:.5em 0;" tal:condition="python:initialized and active">
 		<label class="col-sm-2 control-label">References</label>
 		<div class="col-sm-10 row">
-			<div class="zms4-row col-sm-2">
+			<div class="zms4-row col-sm-4">
 				<div class="btn btn-default">
 					<input id="zmi-sitemap-select" type="checkbox" checked="checked"
 					onclick="if( this.checked ){ $('.zmi-sitemap ul input').prop('checked', true) } else { $('.zmi-sitemap ul input').prop('checked', false) }" />
 				</div>
 				<label class="control-label">&nbsp;All Clients</label>
-			</div>
-			<div class="zms4-row col-sm-2">
-				<div class="btn btn-default">
-					<input type="checkbox" checked="checked" id="resync-dryrun" name="resync-dryrun"/>
-				</div>
-				<label class="control-label">&nbsp;Dry Run</label>
 			</div>
 			<div class="zms4-row col-sm-2">
 				<select class="form-control" id="resync-loglevel" name="resync-loglevel">
@@ -146,7 +131,7 @@ function zmiFuncIndex(func_) {
 			if (i < $inputs.length) {
 				var $input = $($inputs[i]);
 				var uid = $input.val();
-				var data = {func_:func_,url:uid,loglevel:$('#'+func_+'-loglevel').val(),dryrun:''+$('#'+func_+'-dryrun').prop('checked'),i:i};
+				var data = {func_:func_,url:uid,loglevel:$('#'+func_+'-loglevel').val(),i:i};
 				var $a = $input.next("a");
 				var viewport_pos = $(window).scrollTop();
 				var btn_close = '<' + 'a class="close" data-dismiss="alert" href="#"' + '>' + '×' + '<' + '/a' + '>';
@@ -389,7 +374,8 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
     # Sanity check: if uid is already catalogued we have to generate new uid
     q = catalog({'get_uid':node.get_uid()})
     if len(q) > 0:
-      node._uid = str(uuid.uuid4())
+      #node._uid = str(uuid.uuid4())
+      writeError(node,'[ZMSIndexZCatalog_func_] WARNING duplicate uid: %s'%node.get_uid())
     # Catalog object.
     catalog.catalog_object(node, path)
     # Unprepare object.
@@ -406,57 +392,6 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
     else:
       func_ = request.get('func_')
     writeDebug(self,'ZMSIndexZCatalog.%s:'%(func_))
-
-    # Log-Db
-    inst_home = self.Control_Panel.getINSTANCE_HOME()
-    db_home = os.path.join(inst_home,'var','sqlite')
-    db_id = 'zcatalog_index_%s'%(self.getHome().id)
-    db_path = '%s/%s.sqlite'%(db_home,db_id)
-    def db_exec(s):
-      import sqlite3 as sqlite
-      con = sqlite.connect(db_path)
-      writeDebug(self,s)
-      c = con.cursor()
-      c.execute(s)
-      c.close()
-      con.commit()
-    def db_init():
-      try:
-        sql = []
-        sql.append('UPDATE t_resync SET runid = runid+1')
-        db_exec('\n'.join(sql))
-      except:
-        pass
-    def db_resync(node, handle, old_data_id, old_url, new_data_id):
-      try:
-        try:
-          new_url = None
-          if new_data_id is not None:
-            new_ob = node.getLinkObj(new_data_id)
-            new_url = '/'.join(new_ob.getPhysicalPath())
-        except:
-          new_url = 'can\'t get new_url'
-        sql = []
-        sql.append('INSERT INTO t_resync (')
-        sql.append('idrun,')
-        sql.append('phys_path,')
-        sql.append('handle,')
-        sql.append('old_data_id,')
-        sql.append('old_url,')
-        sql.append('new_data_id,')
-        sql.append('new_url')
-        sql.append(') VALUES (')
-        sql.append('0,')
-        sql.append('\'%s\','%('/'.join(node.getPhysicalPath())))
-        sql.append('\'%s\','%handle)
-        sql.append(['\'%s\''%str(old_data_id),'NULL'][old_data_id is None]+',')
-        sql.append(['\'%s\''%str(old_url),'NULL'][old_url is None]+',')
-        sql.append(['\'%s\''%str(new_data_id),'NULL'][new_data_id is None]+',')
-        sql.append(['\'%s\''%str(new_url),'NULL'][new_url is None])
-        sql.append(')')
-        db_exec('\n'.join(sql))
-      except:
-        pass
 
     ##############################################################################
     # Get uid
@@ -493,19 +428,18 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
         writeInfo(self,'[ZMSIndexZCatalog_func_] ### recreate catalog')
         rootelmnt = self.getRootElement()
         home = rootelmnt.getHome()
-        # (Re-)create catalog.)
-        if id in home.objectIds(['ZCatalog']):
-          home.manage_delObjects(ids=[id])
-        catalog = ZCatalog.ZCatalog(id=id, title=self.meta_id, container=home)
-        home._setObject(catalog.id, catalog)
-        catalog = getattr(home,id,None)
-        # Add indices.
-        for index_name in index_names:
-          catalog.manage_addIndex(index_name,'FieldIndex')
-        catalog.manage_addIndex('path','PathIndex')
-        # Add columns
-        for index_name in index_names + ['getPath']:
-          catalog.manage_addColumn(index_name)
+        # Create catalog.)
+        if id not in home.objectIds(['ZCatalog']):
+          catalog = ZCatalog.ZCatalog(id=id, title=self.meta_id, container=home)
+          home._setObject(catalog.id, catalog)
+          catalog = getattr(home,id,None)
+          # Add indices.
+          for index_name in index_names:
+            catalog.manage_addIndex(index_name,'FieldIndex')
+          catalog.manage_addIndex('path','PathIndex')
+          # Add columns
+          for index_name in index_names + ['getPath']:
+            catalog.manage_addColumn(index_name)
         return catalog
 
       # Visit tree
@@ -559,71 +493,12 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
       writeInfo(self,'[ZMSIndexZCatalog_func_] activate done: %i in %.2fsecs.'%(len(index),time.time()-t0))
 
     ##############################################################################
-    # Deactivate
-    ##############################################################################
-    elif func_ == 'deactivate':
-      rootelmnt = self.getRootElement()
-      home = rootelmnt.getHome()
-      # Visit tree
-      def visit(node):
-        l = []
-        l.append(1)
-        writeInfo(self,'[ZMSIndexZCatalog_func_] deactivate_object %s'%node.getPath())
-        node.delConfProperty('ExtensionPoint.ZMSObject.get_uid')
-        node.delConfProperty('ExtensionPoint.ZReferableItem.getRefObjPath')
-        node.delConfProperty('ExtensionPoint.ZReferableItem.getLinkObj')
-        return l
-      t0 = time.time()
-      index = visit(self.getDocumentElement())
-      writeInfo(self,'[ZMSIndexZCatalog_func_] deactivate done: %i in %.2fsecs.'%(len(index),time.time()-t0))
-
-    ##############################################################################
-    # Init DB
-    ##############################################################################
-    elif func_ == 'initDb':
-
-      sql = """
-      DROP TABLE t_resync;
-      CREATE TABLE t_resync(
-        idresync INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        idrun INTEGER NOT NULL,
-        ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        phys_path VARCHAR(2000) NOT NULL,
-        handle VARCHAR(20) NOT NULL,
-        old_data_id VARCHAR(2000),
-        old_url VARCHAR(2000),
-        new_data_id VARCHAR(2000),
-        new_url VARCHAR(2000)
-      );"""
-
-      # Create SQLite.
-      for s in sql.split(";"):
-        try:
-          db_exec(s)
-        except:
-          pass
-    
-      # Create ZSQLiteDA
-      root = self.breadcrumbs_obj_path()[0].getHome()
-      new_id = '%s_da'%(db_id)
-      if new_id in root.objectIds():
-        root.manage_delObjects(ids=[new_id])
-      new_title = ''
-      new_connection = '%s.sqlite'%(db_id)
-      root.manage_addProduct["ZSQLiteDA"].manage_addZSQLiteConnection(id=new_id,title=new_title,connection=new_connection)
-  
-      # Open connection.
-      new_da = getattr(root,new_id)
-      new_da.manage_open_connection()
-
-    ##############################################################################
     # Resync
     ##############################################################################
     elif func_ == 'resync':
       if catalog is not None:
         zmsroot = self.getRootElement()
         domains = {request['SERVER_URL']:''}
-        dryrun = request.get('dryrun')=='true'
 
         def query(k,v):
           return catalog({k:v})
@@ -764,12 +639,10 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
               title = f[1]
               new = '<a %s>%s</a>'%(' '.join(['%s="%s"'%(x,d[x]) for x in d]),title)
               if old != new:
-                if not dryrun:
-                  ref = getLinkObj('{$%s}'%brain['get_uid'])
-                  ref.registerRefObj(node)
+                ref = getLinkObj('{$%s}'%brain['get_uid'])
+                ref.registerRefObj(node)
                 writeInfo(node,'[ZMSIndexZCatalog_func_] handleInline %s->%s'%(old,new))
                 v = v.replace(old,new)
-            db_resync(node, 'inline', old_data_id, old_url, data_id)
           return v
 
         def handleUrl(node,v):
@@ -788,13 +661,11 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
                 if old != new:
                   writeInfo(node,'[ZMSIndexZCatalog_func_] handleUrl %s->%s'%(old,new))
                   v = new
-                  if not dryrun:
-                    ref = getLinkObj('{$%s}'%brain['get_uid'])
-                    ref.registerRefObj(node)
+                  ref = getLinkObj('{$%s}'%brain['get_uid'])
+                  ref.registerRefObj(node)
               else:
                 writeError(node,'[ZMSIndexZCatalog_func_] handleUrl ### MISSING LINKTARGET %s'%(v))
                 v = '{$__%s__}'%v[2:-1]
-            db_resync(node, 'url', old, None, v)
           return v
 
         def handleItem(node,v):
@@ -873,7 +744,7 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
                       else:
                         if type(v) in [bytes,dict,list,str]:
                           v = handleItem(node,v)
-                      if not dryrun and o != v:
+                      if o != v:
                         self.operator_setattr(obj_vers,'%s%s'%(key,lang_suffix),v)
           except:
             t,v,tb = sys.exc_info()
@@ -881,15 +752,14 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
             writeError(node,'[ZMSIndexZCatalog_func_] can\'t visit %s'%msg)
 
           # premature commit
-          if not dryrun:
-            req_key = 'ZMSIndexZCatalog.resync.transaction_count'
-            cfg_key = 'ZMSIndexZCatalog.resync.transaction_size'
-            if request.get(req_key,0)>=int(self.getConfProperty(cfg_key,1000000)):
-              writeInfo(node,'[ZMSIndexZCatalog_func_] +++ COMMIT +++')
-              import transaction
-              transaction.commit()
-              request.set(req_key,0)
-            request.set(req_key,request.get(req_key,0)+1)
+          req_key = 'ZMSIndexZCatalog.resync.transaction_count'
+          cfg_key = 'ZMSIndexZCatalog.resync.transaction_size'
+          if request.get(req_key,0)>=int(self.getConfProperty(cfg_key,1000000)):
+            writeInfo(node,'[ZMSIndexZCatalog_func_] +++ COMMIT +++')
+            import transaction
+            transaction.commit()
+            request.set(req_key,0)
+          request.set(req_key,request.get(req_key,0)+1)
 
           for childNode in node.objectValues(meta_types):
             count.extend(visit(childNode))
@@ -912,16 +782,6 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
           init_domains(self.getRootElement(),domains)
           request.SESSION.set('ZMSIndexZCatalog_func_domains',domains)
         domains = request.SESSION.get('ZMSIndexZCatalog_func_domains')
-
-        writeInfo(self,'[ZMSIndexZCatalog_func_] ### resync dryrun=%s'%str(dryrun))
-        db_init()
-        for url in request['url'].split(','):
-          writeInfo(self,'[ZMSIndexZCatalog_func_] ### resync for %s'%url)
-          t0 = time.time()
-          base = self.getLinkObj(url)
-          if base is not None:
-            count = visit(base)
-            writeInfo(self,'[ZMSIndexZCatalog_func_] resync for %s done: %i in %.2fsecs.'%(url,len(count),time.time()-t0))
 
   except:
     t,v,tb = sys.exc_info()
@@ -1375,7 +1235,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">ZMSIndexZCatalog</item>
           <item key="name">ZMSIndexZCatalog</item>
           <item key="package">com.zms.index</item>
-          <item key="revision">1.5.4</item>
+          <item key="revision">2.0.0</item>
           <item key="type">ZMSResource</item>
         </dictionary>
       </item>
@@ -1394,7 +1254,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">com.zms.index</item>
           <item key="name">com.zms.index</item>
           <item key="package"></item>
-          <item key="revision">1.5.4</item>
+          <item key="revision">2.0.0</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
