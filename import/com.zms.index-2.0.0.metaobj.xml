@@ -79,7 +79,6 @@ function openWindow(url) {
 		</div><!-- .col-sm-10 -->
 	</div><!-- .form-group -->
 
-
 	<div class="form-group zms4-row">
 		<label class="col-sm-2 control-label">Attributes</label>
 		<div class="col-sm-5">
@@ -98,29 +97,6 @@ function openWindow(url) {
 			</div><!-- .input-group -->
 		</div><!-- .col-sm-5-->
 	</div><!-- .form-group -->
-
-	<div class="form-group zms4-row" tal:condition="initialized">
-		<label class="col-sm-2 control-label">Uid</label>
-		<div class="col-sm-5">
-			<div class="input-group" title="SEARCH for a given uid and show the index details.">
-				<input class="form-control" type="text" name="uid" tal:attributes="value uid" placeholder="Enter uid"/>
-				<div class="input-group-append input-group-btn">
-					<button class="btn btn-primary" name="btn" value="search"
-						onclick="$(this).parents('form').attr({action:self.location.href})" tal:content="structure python:zmscontext.zmi_icon(name='icon-search')">search</button>
-				</div>
-			</div><!-- .input-group -->
-		</div>
-	</div><!-- .form-group -->
-	<div class="well" tal:condition="uid">
-		<tal:block tal:define="q python:zmscontext.zcatalog_index({'get_uid':uid[2:-1]})">
-			<strong><tal:block tal:content="python:zmscontext.getZMILangStr('SEARCH_RETURNEDRESULTS')">returned results</tal:block>: <tal:block tal:content="python:len(q)">#q</tal:block></strong>
-			<ul>
-				<tal:block tal:repeat="r q">
-					<li><a tal:attributes="href python:'%s/manage'%r['getPath']" target="_blank" tal:content="python:r['getPath']">the path</a></li>
-				</tal:block>
-			</ul>
-		</tal:block>
-	</div>
 
 <script>
 function zmiFuncIndex(func_) {
@@ -1012,6 +988,9 @@ zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
 ##
 # --// onImportObjEvt //--
 
+base = list(context.getRootElement().getPhysicalPath())[:-1]
+url = list(context.getDocumentElement().getPhysicalPath())[len(base):-1]
+request.set('url','{$'+'/'.join(url))+'@}')
 zmscontext.ZMSIndexZCatalog_func_(zmscontext,'reindex')
 zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
 
