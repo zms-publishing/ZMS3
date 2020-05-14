@@ -36,7 +36,7 @@ function openWindow(url) {
 					<option tal:repeat="loglevel loglevels" tal:attributes="selected python:['','selected'][int(loglevel=='INFO')]" tal:content="loglevel">the loglevel</option>
 				</select>
 			</div>
-			<button title="REINDEX: Fully rebuilding the ZCatalog index of all (multisite) hierarchy objects."
+			<button title="REINDEX: Rebuilding the ZCatalog index of all selected (multisite) hierarchy objects."
 				class="btn btn-danger col-sm-2" name="btn" style="margin-left:1em"
 				onclick="return zmiFuncIndex('reindex');">Reindex
 			</button>
