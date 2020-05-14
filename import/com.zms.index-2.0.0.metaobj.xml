@@ -474,7 +474,7 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
           l.extend(visit(childNode))
         return l
       
-      urls = [x for x in request.get('url','').split(',') if x]
+      urls = [x for x in request['url'].split(',') if x]
       for url in urls:
         if url == '{$}':
           catalog = recreate_catalog()
@@ -794,6 +794,15 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
           init_domains(self.getRootElement(),domains)
           request.SESSION.set('ZMSIndexZCatalog_func_domains',domains)
         domains = request.SESSION.get('ZMSIndexZCatalog_func_domains')
+
+        urls = [x for x in request['url'].split(',') if x]
+        for url in urls:
+          writeInfo(self,'[ZMSIndexZCatalog_func_] ### resync for %s'%url)
+          t0 = time.time()
+          base = self.getLinkObj(url)
+          if base is not None:
+            count = visit(base)
+            writeInfo(self,'[ZMSIndexZCatalog_func_] resync for %s done: %i in %.2fsecs.'%(url,len(count),time.time()-t0))
 
   except:
     t,v,tb = sys.exc_info()
