@@ -1298,7 +1298,12 @@ tr.row_insert td.meta-sort {
 		overflow:hidden;
 	}
 }
-
+.zmi.metas_acquire .checkbox i {
+	margin: 0 .5em;
+}
+.zmi.metas_acquire .checkbox {
+	margin: 0 0 0 2em;
+}
 div.zmi-nodes span {
 	cursor:pointer;
 }
