@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?zms version='ZMS3-3.4.2dev (snapshot #5596:5597)'?>
+<?zms version='ZMS3-3.4.2dev (snapshot #5596:5598)'?>
 <list>
   <item type="dictionary">
     <dictionary>
@@ -30,27 +30,38 @@ function openWindow(url) {
 				<input id="zmi-sitemap-select" type="checkbox" checked="checked"
 					onclick="if( this.checked ){ $('.zmi-sitemap ul input').prop('checked', true) } else { $('.zmi-sitemap ul input').prop('checked', false) }" />
 			</div>
-			<a class="btn btn-default btn-secondary" tal:condition="initialized" style="margin-right:1em"
-				tal:attributes="href python:'%s/manage_catalogView'%zmscontext.zcatalog_index.absolute_url()" target="_blank"
-				><i class="icon icon-search fas fa-search"></i>
-				zcatalog_index
+			<a tal:condition="initialized"
+				class="btn btn-default btn-secondary" target="_blank" style="margin-right:1em"
+				tal:attributes="href python:'%s/manage_catalogView'%zmscontext.zcatalog_index.absolute_url()">
+					<i class="icon icon-search fas fa-search"></i> zcatalog_index
+			</a>
+			<a tal:condition="not: initialized"
+				class="btn btn-default btn-secondary" style="margin-right:1em" href="#">
+					<i class="icon icon-remove fas fa-times"></i> no index
 			</a>
 			<button name="btn" class="btn btn-warning" style="margin-right:1em"
 				title="REINDEX: Rebuilding the ZCatalog index of all selected (multisite) hierarchy objects."
+				tal:attributes="disabled python:active==False and 'disabled' or None"
 				onclick="return zmiFuncIndex('reindex');">Reindex
 			</button>
-			<button tal:condition="initialized"
-				name="btn" class="btn btn-danger" style="margin-right:1em"
+			<button name="btn" class="btn btn-danger" style="margin-right:1em"
 				title="RESYNC: Validating and refreshing link objects, inline links and backlink on the selected node (default: full hierarchy)."
+				tal:attributes="disabled python:active==False and 'disabled' or None"
 				onclick="return zmiFuncIndex('resync');">Resync
 			</button>
-			<select class="form-control" id="loglevel" name="loglevel" style="display:inline-block;width:unset;"
-				title="Select the Debug-Level for Logging Messages while Indexing">
-				<option tal:repeat="loglevel loglevels" tal:attributes="selected python:['','selected'][int(loglevel=='INFO')]" tal:content="loglevel">the loglevel</option>
-			</select>
-			<button tal:condition="python: context.getDocumentElement().getConfProperty('ExtensionPoint.ZMSObject.get_uid')==None"
+			<div class="input-group">
+				<select class="form-control" id="loglevel" name="loglevel" style="display:inline-block;width:unset;"
+					title="Select the Debug-Level for Logging Messages while Indexing">
+					<option tal:repeat="loglevel loglevels" tal:attributes="selected python:['','selected'][int(loglevel=='INFO')]" tal:content="loglevel">the loglevel</option>
+				</select>
+				<div class="btn btn-default input-group-addon" style="margin-left:1em;"
+					title="Show all Logging Info Directly ">
+					<input id="logshow" name="logshow" type="checkbox" />
+				</div>
+			</div>
+			<button tal:condition="not: active"
 				title="ACTIVATE: Activate ZCatalog index for links."
-				class="btn btn-danger col-sm-1" name="btn" style="margin-left:1em"
+				class="btn btn-success" name="btn" style="margin-left:1em"
 				onclick="return openWindow('zmsindex/ZMSIndexZCatalog_func_?ZMSIndexZCatalog_func_=activate'+'&loglevel='+$('#loglevel').val());">Activate
 			</button>
 		</div>
@@ -145,7 +156,9 @@ function zmiFuncIndex(func_) {
 					data:data,
 					error: function (xhr, ajaxOptions, thrownError) {
 							$a.next('.response').addClass('alert modal-content alert-danger text-danger').html( btn_close + '( '+thrownError+' )' );
-							$(".zmi-sitemap .response").remove();
+							if ( !$('#logshow').prop('checked') ) {
+								$(".zmi-sitemap .response").remove();
+							}
 							i++;
 							console.log(i);
 							set_progress( v=(i/n), func_name=func_ );
@@ -153,7 +166,9 @@ function zmiFuncIndex(func_) {
 						},
 					success:function(response) {
 							$a.next('.response').addClass('alert modal-content alert-success text-success').html( btn_close + '( '+response+' )' );
-							$(".zmi-sitemap .response").remove();
+							if ( !$('#logshow').prop('checked') ) {
+								$(".zmi-sitemap .response").remove();
+							}
 							i++;
 							console.log(i);
 							set_progress( v=(i/n), func_name=func_ );
