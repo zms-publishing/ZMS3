@@ -1282,13 +1282,14 @@ class ZMSObject(ZMSItem.ZMSItem,
       if REQUEST.form.get('http_referer'):
         REQUEST.set('URL',REQUEST.form.get('http_referer'))
       obs = []
-      # Add child-nodes.
-      obs.extend( self.getChildNodes(REQUEST,meta_types))
-      # Add trashcan.
-      if ( self.meta_type == 'ZMS') and \
-         ( ( type( meta_types) is list and 'ZMSTrashcan' in meta_types) or \
-           ( type( meta_types) is string and 'ZMSTrashcan' == meta_types)):
-        obs.append( self.getTrashcan())
+      if not meta_types == 'ZMS':
+        # Add child-nodes.
+        obs.extend( self.getChildNodes(REQUEST,meta_types))
+        # Add trashcan.
+        if ( self.meta_type == 'ZMS') and \
+           ( ( type( meta_types) is list and 'ZMSTrashcan' in meta_types) or \
+             ( type( meta_types) is string and 'ZMSTrashcan' == meta_types)):
+          obs.append( self.getTrashcan())
       if self.meta_type == 'ZMS':
         obs.extend( self.getPortalClients())
       

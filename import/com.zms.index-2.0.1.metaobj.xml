@@ -41,7 +41,6 @@ function openWindow(url) {
 			</a>
 			<button name="btn" class="btn btn-warning" style="margin-right:1em"
 				title="REINDEX: Rebuilding the ZCatalog index of all selected (multisite) hierarchy objects."
-				tal:attributes="disabled python:active==False and 'disabled' or None"
 				onclick="return zmiFuncIndex('reindex');">Reindex
 			</button>
 			<button name="btn" class="btn btn-danger" style="margin-right:1em"
@@ -59,11 +58,6 @@ function openWindow(url) {
 					<input id="logshow" name="logshow" type="checkbox" />
 				</div>
 			</div>
-			<button tal:condition="not: active"
-				title="ACTIVATE: Activate ZCatalog index for links."
-				class="btn btn-success" name="btn" style="margin-left:1em"
-				onclick="return openWindow('zmsindex/ZMSIndexZCatalog_func_?ZMSIndexZCatalog_func_=activate'+'&loglevel='+$('#loglevel').val());">Activate
-			</button>
 		</div>
 	</div><!-- .form-group -->
 
@@ -510,25 +504,6 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
         if base is not None:
           count = visit(base)
           writeInfo(self,'[ZMSIndexZCatalog_func_] reindex for %s done: %i in %.2fsecs.'%(url,len(count),time.time()-t0))
-
-    ##############################################################################
-    # Activate
-    ##############################################################################
-    elif func_ == 'activate':
-      rootelmnt = self.getRootElement()
-      home = rootelmnt.getHome()
-      # Visit tree
-      def visit(node):
-        l = []
-        l.append(1)
-        writeInfo(self,'[ZMSIndexZCatalog_func_] activate_object %s'%node.getPath())
-        node.setConfProperty('ExtensionPoint.ZMSObject.get_uid','%s.get_uid'%self.meta_id)
-        node.setConfProperty('ExtensionPoint.ZReferableItem.getRefObjPath','%s.getRefObjPath'%self.meta_id)
-        node.setConfProperty('ExtensionPoint.ZReferableItem.getLinkObj','%s.getLinkObj'%self.meta_id)
-        return l
-      t0 = time.time()
-      index = visit(self.getDocumentElement())
-      writeInfo(self,'[ZMSIndexZCatalog_func_] activate done: %i in %.2fsecs.'%(len(index),time.time()-t0))
 
     ##############################################################################
     # Resync
