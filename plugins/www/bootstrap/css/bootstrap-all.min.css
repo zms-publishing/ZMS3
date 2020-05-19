@@ -1441,7 +1441,10 @@ tr.row_insert td.meta-sort{
  color:white !important;
  width:2.6em;
  overflow:hidden;}}
-
+.zmi.metas_acquire .checkbox i{
+ margin:0 .5em;}
+.zmi.metas_acquire .checkbox{
+ margin:0 0 0 2em;}
 div.zmi-nodes span{
  cursor:pointer;}
 input.btn.btn-file{
