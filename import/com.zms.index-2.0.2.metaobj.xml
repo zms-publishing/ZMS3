@@ -475,8 +475,9 @@ def ZMSIndexZCatalog_func_( self, *args, **kwargs):
         writeInfo(self,'[ZMSIndexZCatalog_func_] ### recreate catalog')
         rootelmnt = self.getRootElement()
         home = rootelmnt.getHome()
-        # Create catalog.)
-        if id not in home.objectIds(['ZCatalog']):
+        # Create catalog.
+        catalog = getattr(home,id,None)
+        if catalog is None:
           catalog = ZCatalog.ZCatalog(id=id, title=self.meta_id, container=home)
           home._setObject(catalog.id, catalog)
           catalog = getattr(home,id,None)
