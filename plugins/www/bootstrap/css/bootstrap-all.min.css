@@ -1397,7 +1397,8 @@ th.rolename > div > span{
  position:absolute;
  top:8px;
  left:6px;
- color:#999;}
+ color:#999;
+ z-index:3;}
 .zmi.metas .meta-default .input-group .form-control{
  border-top-left-radius:3px;
  border-bottom-left-radius:3px;}

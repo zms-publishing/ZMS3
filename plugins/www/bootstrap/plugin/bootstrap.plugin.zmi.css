@@ -1238,6 +1238,7 @@ th.rolename > div > span {
 	top: 8px;
 	left: 6px;
 	color: #999;
+	z-index:3;
 }
 .zmi.metas .meta-default .input-group .form-control {
 	border-top-left-radius: 3px;

@@ -1353,7 +1353,7 @@ class ObjAttrsManager:
           dct['key'] = attr['id']
           dct['xml'] = attr['id'] not in ['created_uid','created_dt','change_uid','change_dt','work_uid','work_dt','internal_dict','change_history','master_version','major_version','minor_version']
           dct['datatype'] = attr['type']
-          if attr['type'] in ['autocomplete','password','select']:
+          if attr['type'] in ['autocomplete','password','select','color']:
             dct['type'] = attr['type']
             dct['datatype'] = 'string'
           elif attr['type'] in ['richtext']:
