@@ -1,9 +1,9 @@
 <tal:block tal:replace="nothing">
 #####  Object State  ###########################################################
-</tal:block
-><span class="version_object_state" tal:content="structure python:here.zmi_version_object_state(here,request)">zmi_version_object_state</span
-
-><tal:block tal:define="standard modules/Products.zms/standard;
+</tal:block>
+<span class="object_has_titleimage" title="Title Image Preview" tal:condition="python:here.attr('titleimage')"><i class="icon-picture text-primary titleimage-preview" tal:attributes="style python:'--titleimage_url:url(%s)'%(here.attr('titleimage').getHref(request))"></i></span>
+<span class="version_object_state" tal:content="structure python:here.zmi_version_object_state(here,request)">zmi_version_object_state</span>
+<tal:block tal:define="standard modules/Products.zms/standard;
 		change_uid python:here.attr('change_uid');
 		change_dt  python:here.attr('change_dt');
 		constraints python:here.attr('check_constraints');">
