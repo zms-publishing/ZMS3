@@ -169,7 +169,7 @@ class ObjInputs:
   def getSelect(self, fmName, elName, value, inputtype, lang_str, required=False, optpl=[], enabled=True, REQUEST=None, css='form-control', maxlen=30):
     if inputtype in ['select','multiline']:
       return self.zmi_input_select(self,name=elName,value=value,lang_str=lang_str,mandatory=required,options=optpl,enabled=enabled)
-    if inputtype in ['color']:
+    elif inputtype in ['color']:
       return self.zmi_input_color(self,name=elName,value=value,lang_str=lang_str,mandatory=required,options=optpl,enabled=enabled)
     elif inputtype in ['multiselect']:
       return self.zmi_input_multiselect(self,name=elName,value=value,lang_str=lang_str,mandatory=required,options=optpl,enabled=enabled)
