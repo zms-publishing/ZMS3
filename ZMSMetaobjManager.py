@@ -754,7 +754,7 @@ class ZMSMetaobjManager:
         newCustom = ''
       if newType in ['resource'] and (type(newCustom) is str or type(newCustom) is int):
         newCustom = None
-      if newType not in ['*','autocomplete','multiautocomplete','multiselect','recordset','select']:
+      if newType not in ['*','autocomplete','color','multiautocomplete','multiselect','recordset','select']:
         newKeys = []
       if newType in self.getMetadictAttrs():
         newId = newType

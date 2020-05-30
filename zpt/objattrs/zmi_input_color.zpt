@@ -9,7 +9,7 @@
 <input type="color" class="form-control" list="colorpalette_"
 	tal:attributes="name name;id name;value value;list python:'colorpalette_%s'%(name)" />
 <datalist id="colorpalette_" tal:attributes="id python:'colorpalette_%s'%(name)">
-	<option tal:repeat="opt python:[o[0] for o in opts]" tal:content="opt"></option>
+	<tal:block tal:repeat="opt python:[o[0] for o in opts]"><option tal:content="opt"></option></tal:block>
 </datalist>
 </tal:block>
 
