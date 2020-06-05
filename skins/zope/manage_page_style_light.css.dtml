@@ -1,4 +1,4 @@
-/* ZMS CUSTOM STYLES: LIGHT  */
+/* ZMS CUSTOM STYLES: LIGHT 2020-06-01 */
 /* <dtml-call "RESPONSE.setHeader('Content-Type','text/css')"> */
 /* <dtml-call "RESPONSE.setHeader('Cache-Control','public,max-age=3600')"> */
 
@@ -286,10 +286,12 @@ select {
 	padding: 15px;
 	border-radius: 4px;
 }
-textarea {
+textarea,
+textarea.form-control,
+main  select.form-control {
 	overflow: auto;
 	color:#000;
-	font-family: courier !important;
+	font-family: courier, monospace !important;
 	padding: 1em;
 	border-radius: 6px;
 	padding: .3em;
@@ -328,8 +330,7 @@ input[name='encoding'] {
 	border: 1px solid silver;
 	padding: 6px 12px;
 	border-radius: 6px;
-	font-family: courier;
-
+	font-family: courier, monospace;
 }
 input[type="file"] {
 	color:silver;
