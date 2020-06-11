@@ -79,7 +79,7 @@ class ZMSLinkElement(ZMSCustom):
         'manage_userForm','manage_user',
         )
     __viewPermissions__ = (
-        'manage_ajaxGetChildNodes',
+        'manage_ajaxGetChildNodes','manage_get_node_json',
         )
     __ac_permissions__=(
         ('ZMS Author', __authorPermissions__),

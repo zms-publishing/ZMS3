@@ -1121,6 +1121,30 @@ class ZMSObject(ZMSItem.ZMSItem,
 
 
     # --------------------------------------------------------------------------
+    #  ZMSObject.manage_get_node_json:
+    # --------------------------------------------------------------------------
+    def manage_get_node_json(self):
+      """ ZMSObject.manage_get_node_json """
+      content_type = 'text/json; charset=utf-8'
+      filename = '%s.json'%self.id
+      request = self.REQUEST
+      RESPONSE = request.RESPONSE
+      RESPONSE.setHeader('Content-Type',content_type)
+      RESPONSE.setHeader('Content-Disposition','inline;filename="%s"'%filename)
+      RESPONSE.setHeader('Cache-Control', 'no-cache')
+      RESPONSE.setHeader('Pragma', 'no-cache')
+      self.f_standard_html_request( self, request)
+      d = {}
+      d['id'] = self.id
+      d['uid'] = self.get_uid()
+      d['physical_path'] = '/'.join(self.getPhysicalPath())
+      obj_attrs = self.getObjAttrs()
+      for key in obj_attrs:
+        d[key] = self.attr(key)
+      return standard.str_json(d)
+
+
+    # --------------------------------------------------------------------------
     #  ZMSObject.ajaxGetNode:
     # --------------------------------------------------------------------------
     security.declareProtected('View', 'ajaxGetNode')

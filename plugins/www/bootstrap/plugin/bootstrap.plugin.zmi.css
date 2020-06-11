@@ -346,8 +346,16 @@ ul.portalClients .zmi-item .center small {
 	font-size:smaller;
 }
 .form-disabled {
-  color:#666!important;
-  background-color:#EEE!important;
+	color:#666!important;
+	background-color:#EEE!important;
+}
+.form-modified {
+	color:#333321!important;
+	background-color:#FFFFE1!important;
+}
+.form-conflicted {
+	color:#332121!important;
+	background-color:#FFE1E1!important;
 }
 .nav-tabs {
 	margin-bottom:0;

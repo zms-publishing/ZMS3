@@ -727,6 +727,44 @@ ZMI.prototype.initInputFields = function(container) {
 					$controlGroup.addClass("has-error");
 					b = false;
 				}
+				// Check for intermediate modification by other user
+				if (b && $('input#last_change_dt:hidden',this).length) {
+					var result = $.ajax({
+						url: 'manage_get_node_json',
+						data:{lang:getZMILang()},
+						datatype:'text',
+						async: false
+						});
+					var node = eval("("+result.responseText+")");
+					var change_dt = node["change_dt"];
+					var change_uid = node["change_uid"];
+					var last_change_dt = $('input#last_change_dt:hidden',this).val();
+					var last_change_uid = $('input#last_change_uid:hidden',this).val();
+					// Intermediate modification?
+					if (change_dt != last_change_dt) {
+						for (var key in node) {
+							var $input = $("[name='"+key+"'],[name='"+key+"_"+getZMILang()+"']",this).filter("[data-initial-value]");
+							if ($input.length > 0) {
+								var remote_val = node[key];
+								var current_val = $input.val();
+								var initial_val = $input.attr("data-initial-value");
+								if (current_val != initial_val) {
+									$input.addClass("form-modified");
+									if (initial_val != remote_val) {
+										$input.removeClass("form-modified").addClass("form-conflicted");
+									}
+								}
+							}
+						}
+						var conflicts = $(".form-conflicted",this).length;
+						if (conflicts > 0) {
+							b = confirm(getZMILangStr('ATTR_LAST_MODIFIED')
+								+' '+change_dt+' '+getZMILangStr('BY')+' '+change_uid
+								+' '+getZMILangStr('MSG_CONFIRM_DISCARD_CHANGES')
+								+' ['+conflicts+' conflicts]');
+						}
+					}
+				}
 				// Lock
 				if (b && $('input[name="form_unlock"]',this).length==0) {
 					var result = $.ajax({
@@ -890,7 +928,20 @@ ZMI.prototype.initInputFields = function(container) {
 						$label.prepend($ZMI.icon("icon-exclamation"));
 					});
 			}
-				// Icon-Class
+			// Check for intermediate modification by other user
+			$("input,select,textarea",this).each(function() {
+					var $this = $(this);
+					$this.attr("data-initial-value",$this.val());
+					$this.change(function() {
+							if ($this.val()==$this.attr("data-initial-value")) {
+								$this.removeClass("form-modified");
+							}
+							else {
+								$this.addClass("form-modified");
+							}
+						});
+				});
+			// Icon-Class
 			$('input.zmi-input-icon-clazz',this).each(function() {
 				$(this).parents("div:first").append('<div class="pull-right">'+$ZMI.icon('')+'</div>');
 				$(this).wrap('<div class="pull-left"></div>');
