@@ -818,15 +818,14 @@ ZMI.prototype.initInputFields = function(container) {
 				// Lock
 				if (b && $('input[name="form_unlock"]',this).length==0) {
 					var result = $.ajax({
-						url: 'ajaxGetNode',
+						url: 'manage_get_node_json',
 						data:{lang:getZMILang()},
 						datatype:'text',
 						async: false
-						}).responseText;
-					var xmlDoc = $.parseXML(result);
-					var $xml = $(xmlDoc);
-					var change_dt = $('change_dt',$xml).text();
-					var change_uid = $('change_uid',$xml).text();
+						});
+					var node = eval("("+result.responseText+")");
+					var change_dt = node["change_dt"];
+					var change_uid = node["change_uid"];
 					var form_id = $('input[name=form_id]').val();
 					var form_dt = new Date(parseFloat(form_id)*1000);
 					var checkLock = new Date(change_dt).getTime() > form_dt.getTime();
