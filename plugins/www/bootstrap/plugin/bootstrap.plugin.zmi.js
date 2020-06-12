@@ -741,27 +741,77 @@ ZMI.prototype.initInputFields = function(container) {
 					var last_change_dt = $('input#last_change_dt:hidden',this).val();
 					var last_change_uid = $('input#last_change_uid:hidden',this).val();
 					// Intermediate modification?
-					if (change_dt != last_change_dt) {
+ 					if (change_dt != last_change_dt) {
 						for (var key in node) {
 							var $input = $("[name='"+key+"'],[name='"+key+"_"+getZMILang()+"']",this).filter("[data-initial-value]");
 							if ($input.length > 0) {
-								var remote_val = node[key];
-								var current_val = $input.val();
-								var initial_val = $input.attr("data-initial-value");
+								var remote_val = (""+node[key]).replace(/\r\n/gi,"\n").trim();
+								var current_val = (""+$input.val()).replace(/\r\n/gi,"\n").trim();
+								var initial_val = (""+$input.attr("data-initial-value")).replace(/\r\n/gi,"\n").trim();
 								if (current_val != initial_val) {
 									$input.addClass("form-modified");
-									if (initial_val != remote_val) {
-										$input.removeClass("form-modified").addClass("form-conflicted");
-									}
+								}
+								if (current_val != remote_val) {
+									$input.removeClass("form-modified").addClass("form-conflicted").attr("data-remote-value",remote_val);
 								}
 							}
 						}
 						var conflicts = $(".form-conflicted",this).length;
 						if (conflicts > 0) {
+							// show diffs
+							$.plugin('diff',{
+									files: [
+										'/++resource++zms_/jquery/diff/diff_match_patch.js',
+										'/++resource++zms_/jquery/diff/jquery.pretty-text-diff.min.js'
+								]});
+							$.plugin('diff').set({context:this});
+							$.plugin('diff').get(".form-conflicted",function() {
+									$(".form-conflicted",context).each(function(){
+											var id = $(this).attr("name")+"_diff";
+											$("#"+id).remove();
+											$(this).after('<div id="'+id+'" class="diff"></div>');
+											var $diffContainer = $("#"+id);
+											$(this).prettyTextDiff({
+													cleanup:true,
+													originalContent:$(this).attr("data-initial-value"),
+													changedContent:$(this).val(),
+													diffContainer:$diffContainer
+												});
+											var lines = $diffContainer.html().replace(/<span>/gi,'').replace(/<\/span>/gi,'').split("<br>");
+											var show = [];
+											var changed = false;
+											for (var i = 0; i < lines.length; i++) {
+												var line = lines[i];
+												changed |= line.indexOf("<"+"del>")>=0 || line.indexOf("<ins>")>=0;
+												if (changed) {
+													show.push(i);
+												}
+												changed &= !(line.indexOf("<"+"/del>")>=0 || line.indexOf("</ins>")>=0);
+											}
+											var html = [];
+											changed = false;
+											for (var i = 0; i < lines.length; i++) {
+												var line = lines[i];
+												changed |= line.indexOf("<"+"del>")>=0 || line.indexOf("<"+"ins>")>=0;
+												line = '<'+'span class="line-number'+(changed?' line-changed':'')+'">'+(i+1)+'</span> '+lines[i];
+												if (!(show.contains(i-1) || show.contains(i) || show.contains(i+1))) {
+													line = '<'+'span class="diff-unchanged hidden">'+line+'<'+'/span>';
+												}
+												else {
+													line = line+'<'+'br/>';
+												}
+												html.push(line);
+												changed &= !(line.indexOf("<"+"/del>")>=0 || line.indexOf("<"+"/ins>")>=0);
+											}
+											$diffContainer.html(html.join(""));
+										});
+								});
+							// confirm
 							b = confirm(getZMILangStr('ATTR_LAST_MODIFIED')
 								+' '+change_dt+' '+getZMILangStr('BY')+' '+change_uid
-								+' '+getZMILangStr('MSG_CONFIRM_DISCARD_CHANGES')
-								+' ['+conflicts+' conflicts]');
+								+' ['+conflicts+' conflicts]'
+								+'\n'+getZMILangStr('MSG_CHANGE_ANYWAY')
+								);
 						}
 					}
 				}
