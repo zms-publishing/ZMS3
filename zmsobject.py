@@ -1140,7 +1140,10 @@ class ZMSObject(ZMSItem.ZMSItem,
       d['physical_path'] = '/'.join(self.getPhysicalPath())
       obj_attrs = self.getObjAttrs()
       for key in obj_attrs:
-        d[key] = self.attr(key)
+        v = self.attr(key)
+        if type(v) is str:
+          v = v.replace('\t','    ')
+        d[key] = v
       return standard.str_json(d)
 
 
