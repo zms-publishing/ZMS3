@@ -1141,8 +1141,6 @@ class ZMSObject(ZMSItem.ZMSItem,
       obj_attrs = self.getObjAttrs()
       for key in obj_attrs:
         v = self.attr(key)
-        if type(v) is str:
-          v = v.replace('\t','    ')
         d[key] = v
       return standard.str_json(d)
 
