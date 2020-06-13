@@ -346,16 +346,21 @@ ul.portalClients .zmi-item .center small {
 	font-size:smaller;
 }
 .form-disabled {
-	color:#666!important;
-	background-color:#EEE!important;
+	color:#666 !important;
+	background-color:#EEEEEE !important;
 }
 .form-modified {
-	color:#333321!important;
-	background-color:#FFFFE1!important;
+	color:#212C33 !important;
+	background-color:#eff7fd !important;
 }
 .form-conflicted {
-	color:#332121!important;
-	background-color:#FFE1E1!important;
+	color:#332121 !important;
+	background-color:#FFE1E1 !important;
+}
+.form-conflicted:focus,
+.form-modified:focus {
+	color:#000 !important;
+	background-color:#FFF !important;
 }
 .nav-tabs {
 	margin-bottom:0;

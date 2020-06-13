@@ -707,8 +707,18 @@ ul.portalClients .zmi-item .center small{
 .form-small{
  font-size:smaller;}
 .form-disabled{
- color:#666!important;
- background-color:#EEE!important;}
+ color:#666 !important;
+ background-color:#EEEEEE !important;}
+.form-modified{
+ color:#212C33 !important;
+ background-color:#E3EFFF !important;}
+.form-conflicted{
+ color:#332121 !important;
+ background-color:#FFE1E1 !important;}
+.form-conflicted:focus,
+.form-modified:focus{
+ color:#000 !important;
+ background-color:#FFF !important;}
 .nav-tabs{
  margin-bottom:0;
  margin-top:1em;}
@@ -2308,3 +2318,39 @@ body.zmi.properties .alert.alert-success.zmi-dragged-info span.message{
  background:#e5e5e5 !important;
  color:#aaa;
  text-transform:lowercase;}
+
+.zmi .diff .line-number{
+ width:4em;
+ background:#FEFEFE;
+ color:#101010;
+ border:1px solid #CCC;
+ display:inline-block;
+ text-align:right;
+ padding:0 4px 0 4px;}
+.zmi .diff .line-number.line-changed{
+ background:#101010;
+ color:#FEFEFE;}
+.zmi .diff{
+ display:block;
+ padding:9.5px;
+ margin:0 0 10px;
+ font-size:13px;
+ line-height:1.42857143;
+ color:#333;
+ word-break:break-all;
+ word-wrap:break-word;
+ background-color:#f5f5f5;
+ border:1px solid #ccc;
+ border-radius:4px;}
+.zmi .focus .diff{
+ border-color:#80bdff;
+ outline:0;
+ box-shadow:0 0 0 0.2rem rgba(0,123,255,.25);}
+.zmi .diff del{
+ color:#777!important;
+ background-color:#f8d7da!important;
+ text-decoration:line-through;}
+.zmi .diff ins{
+ color:#3C763D!important;
+ background-color:#d4edda!important;
+ text-decoration:none;}
