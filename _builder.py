@@ -230,9 +230,8 @@ class Builder:
             ##### Object State ####
             newNode.setObjStateNew(req)
             ##### Init Properties ####
-            if 'active' in obj_attrs.keys():
+            if 'active' in obj_attrs:
               newNode.setObjProperty('active',1,lang)
-            if len( langs) == 1:
               dt = time.time()
               uid = self.REQUEST['AUTHENTICATED_USER'].getId()
               newNode.setObjProperty('created_uid',uid,lang)
