@@ -728,7 +728,7 @@ ZMI.prototype.initInputFields = function(container) {
 					b = false;
 				}
 				// Check for intermediate modification by other user
-				if (b && $('input#last_change_dt:hidden',this).length) {
+				if (b && $('input#last_change_dt:hidden',this).length && $('input[name="form_unlock"]',this).length==0) {
 					var result = $.ajax({
 						url: 'manage_get_node_json',
 						data:{lang:getZMILang()},
@@ -742,9 +742,15 @@ ZMI.prototype.initInputFields = function(container) {
 					var last_change_uid = $('input#last_change_uid:hidden',this).val();
 					// Intermediate modification?
  					if (change_dt != last_change_dt) {
+						var body = '<div class="alert alert-error">'
+									+ '<h4>'+$ZMI.icon("icon-warning-sign")+' '+getZMILangStr('ATTR_LAST_MODIFIED')+'</h4>'
+									+ '<div>'+change_dt+' '+getZMILangStr('BY')+' '+change_uid+'</div>'
+								+ '</div>';
 						for (var key in node) {
 							var $input = $("[name='"+key+"'],[name='"+key+"_"+getZMILang()+"']",this).filter("[data-initial-value]");
 							if ($input.length > 0) {
+								var $controlGroup = $input.parents(".form-group");
+								var $label = $("label.control-label",$controlGroup);
 								var remote_val = (""+node[key]).replace(/\r\n/gi,"\n").trim();
 								var current_val = (""+$input.val()).replace(/\r\n/gi,"\n").trim();
 								var initial_val = (""+$input.attr("data-initial-value")).replace(/\r\n/gi,"\n").trim();
@@ -753,11 +759,26 @@ ZMI.prototype.initInputFields = function(container) {
 								}
 								if (current_val != remote_val) {
 									$input.removeClass("form-modified").addClass("form-conflicted").attr("data-remote-value",remote_val);
+									body += '<div class="form-group">'
+											+ '<label class="control-label">' + $label.text() + '</label>'
+											+ '<div class="diff" id="'+$input.attr("name")+'_diff"></div>'
+										+ '</div>';
 								}
 							}
 						}
 						var conflicts = $(".form-conflicted",this).length;
 						if (conflicts > 0) {
+							b = false;
+							// confirm
+							var form_id = $('input[name=form_id]').val();
+							body += '<div class="form-group">'
+									+ '<button class="btn btn-primary" value="'+getZMILangStr('BTN_OVERWRITE')+'" onclick="zmiUnlockForm(\''+form_id+'\')">'+getZMILangStr('BTN_OVERWRITE')+'</button> '
+									+ '<button class="btn btn-default" value="'+getZMILangStr('BTN_DISPLAY')+'" onclick="window.open(self.location.href);">'+getZMILangStr('BTN_DISPLAY')+'</button> '
+								+ '</div>';
+							zmiModal(null,{
+									body:body,
+									title: getZMILangStr('CAPTION_WARNING')
+								});
 							// show diffs
 							$.plugin('diff',{
 									files: [
@@ -768,8 +789,6 @@ ZMI.prototype.initInputFields = function(container) {
 							$.plugin('diff').get(".form-conflicted",function() {
 									$(".form-conflicted",context).each(function(){
 											var id = $(this).attr("name")+"_diff";
-											$("#"+id).remove();
-											$(this).after('<div id="'+id+'" class="diff"></div>');
 											var $diffContainer = $("#"+id);
 											$(this).prettyTextDiff({
 													cleanup:true,
@@ -792,10 +811,10 @@ ZMI.prototype.initInputFields = function(container) {
 											changed = false;
 											for (var i = 0; i < lines.length; i++) {
 												var line = lines[i];
-												changed |= line.indexOf("<"+"del>")>=0 || line.indexOf("<"+"ins>")>=0;
-												line = '<'+'span class="line-number'+(changed?' line-changed':'')+'">'+(i+1)+'</span> '+lines[i];
+												changed |= line.indexOf("<del>")>=0 || line.indexOf("<ins>")>=0;
+												line = '<span class="line-number'+(changed?' line-changed':'')+'">'+(i+1)+'</span> '+lines[i];
 												if (!(show.contains(i-1) || show.contains(i) || show.contains(i+1))) {
-													line = '<'+'span class="diff-unchanged hidden">'+line+'<'+'/span>';
+													line = '<span class="diff-unchanged hidden">'+line+'</span>';
 												}
 												else {
 													line = line+'<'+'br/>';
@@ -806,42 +825,7 @@ ZMI.prototype.initInputFields = function(container) {
 											$diffContainer.html(html.join(""));
 										});
 								});
-							// confirm
-							b = confirm(getZMILangStr('ATTR_LAST_MODIFIED')
-								+' '+change_dt+' '+getZMILangStr('BY')+' '+change_uid
-								+' ['+conflicts+' conflicts]'
-								+'\n'+getZMILangStr('MSG_CHANGE_ANYWAY')
-								);
 						}
-					}
-				}
-				// Lock
-				if (b && $('input[name="form_unlock"]',this).length==0) {
-					var result = $.ajax({
-						url: 'manage_get_node_json',
-						data:{lang:getZMILang()},
-						datatype:'text',
-						async: false
-						});
-					var node = eval("("+result.responseText+")");
-					var change_dt = node["change_dt"];
-					var change_uid = node["change_uid"];
-					var form_id = $('input[name=form_id]').val();
-					var form_dt = new Date(parseFloat(form_id)*1000);
-					var checkLock = new Date(change_dt).getTime() > form_dt.getTime();
-					if (checkLock) {
-						zmiModal(null,{
-								body:''
-									+ '<div class="alert alert-error">'
-										+ '<h4>'+$ZMI.icon("icon-warning-sign")+' '+getZMILangStr('ACTION_MANAGE_CHANGEPROPERTIES')+'</h4>'
-										+ '<div>'+change_dt+' '+getZMILangStr('BY')+' '+change_uid+'</div>'
-									+ '</div>'
-									+ '<div class="form-group">'
-										+ '<button class="btn btn-primary" value="'+getZMILangStr('BTN_OVERWRITE')+'" onclick="zmiUnlockForm(\''+form_id+'\')">'+getZMILangStr('BTN_OVERWRITE')+'</button> '
-										+ '<button class="btn btn-default" value="'+getZMILangStr('BTN_DISPLAY')+'" onclick="window.open(self.location.href);">'+getZMILangStr('BTN_DISPLAY')+'</button> '
-									+ '</div>',
-								title: getZMILangStr('CAPTION_WARNING')
-							});
 					}
 				}
 				return b;
