@@ -172,6 +172,7 @@ class Builder:
     def OnStartElement(self, name, attrs):
         """ Builder.OnStartElement """
         standard.writeBlock( self, "[Builder.OnStartElement(" + str(name) + ")]")
+        request = self.REQUEST
         name = standard.unencode( name)
         attrs = standard.unencode( attrs)
         skip = self.oCurrNode is not None and len(filter(lambda x:x.get('skip'),self.oCurrNode.dTagStack.get_all())) > 0
@@ -224,20 +225,18 @@ class Builder:
           ##### Object State ####
           newNode.initializeWorkVersion()
           obj_attrs = newNode.getObjAttrs()
-          langs = self.getLangIds()
-          for lang in langs:
-            req = {'lang':lang,'preview':'preview'}
-            ##### Object State ####
-            newNode.setObjStateNew(req)
-            ##### Init Properties ####
-            if 'active' in obj_attrs:
-              newNode.setObjProperty('active',1,lang)
-              dt = time.time()
-              uid = self.REQUEST['AUTHENTICATED_USER'].getId()
-              newNode.setObjProperty('created_uid',uid,lang)
-              newNode.setObjProperty('created_dt',dt,lang)
-              newNode.setObjProperty('change_uid',uid,lang)
-              newNode.setObjProperty('change_dt',dt,lang)
+          ##### Object State ####
+          newNode.setObjStateNew(request)
+          ##### Init Properties ####
+          lang = request.get('lang',self.getPrimaryLanguage())
+          if 'active' in obj_attrs:
+            newNode.setObjProperty('active',1,lang)
+          dt = time.time()
+          uid = request['AUTHENTICATED_USER'].getId()
+          newNode.setObjProperty('created_uid',uid,lang)
+          newNode.setObjProperty('created_dt',dt,lang)
+          newNode.setObjProperty('change_uid',uid,lang)
+          newNode.setObjProperty('change_dt',dt,lang)
           
           if self.oRoot is None: # root object set?
             self.oRoot = newNode # -> set root node
