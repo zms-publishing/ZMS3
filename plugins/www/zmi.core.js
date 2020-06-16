@@ -1,3 +1,13 @@
+Date.prototype.toLocaleFormat = function(formatStr) {
+	var str = formatStr;
+	str = str.replace("%d",(this.getDate()<10?"0":"")+this.getDate());
+	str = str.replace("%m",((this.getMonth()+1)<10?"0":"")+(this.getMonth()+1));
+	str = str.replace("%Y",this.getFullYear());
+	str = str.replace("%H",(this.getHours()<10?"0":"")+this.getHours());
+	str = str.replace("%M",(this.getMinutes()<10?"0":"")+this.getMinutes());
+	str = str.replace("%S",(this.getSeconds()<10?"0":"")+this.getSeconds());
+	return str;
+}
 String.prototype.removeWhiteSpaces = function() {return(this.replace(/\s+/g,""));};
 String.prototype.leftTrim = function() {return(this.replace(/^\s+/,""));};
 String.prototype.rightTrim = function() {return(this.replace(/\s+$/,""));};

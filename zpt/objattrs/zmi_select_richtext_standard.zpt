@@ -57,7 +57,7 @@ function zmiRicheditInsertTab( fmName, elName) {
 		<tal:block tal:replace="nothing">
 		### Label
 		</tal:block>
-		<div class="col-sm-12" tal:condition="python:here.meta_id!='ZMSTextarea'">
+		<div class="col-sm-12">
 			<label class="control-label" tal:attributes="for options/elName"><span tal:content="options/lang_str">the label</span></label>
 		</div>
 

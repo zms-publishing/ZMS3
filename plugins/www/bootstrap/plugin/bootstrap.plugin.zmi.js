@@ -82,15 +82,16 @@ $(function(){
   if ($change_dt.length > 0) {
     var fn = function() {
         $ZMI.writeDebug("change_dt");
+        var $change_dt = $(".zmi-change-dt,.zmi-created-dt");
         $change_dt.each(function() {
           var $el = $(this);
           var mydate = $el.attr("title");
-          if (typeof mydate=="undefined") {
+          if (typeof mydate == "undefined") {
             mydate = $el.text();
           }
           var myformat = getZMILangStr('DATETIME_FMT');
-          var dtsplit=mydate.split(/[\/ .:]/);
-          var dfsplit=myformat.split(/[\/ .:]/);
+          var dtsplit = mydate.split(/[\/ .:]/);
+          var dfsplit = myformat.split(/[\/ .:]/);
           // creates assoc array for date
           df = new Array();
           for(dc=0;dc<dtsplit.length;dc++) {
@@ -745,7 +746,16 @@ ZMI.prototype.initInputFields = function(container) {
 						var body = '<div class="alert alert-error">'
 									+ '<h4>'+$ZMI.icon("icon-warning-sign")+' '+getZMILangStr('ATTR_LAST_MODIFIED')+'</h4>'
 									+ '<div>'+change_dt+' '+getZMILangStr('BY')+' '+change_uid+'</div>'
-								+ '</div>';
+								+ '</div>'
+								+ '<table class="table table-bordered table-striped">'
+								+ '<thead>'
+								+ '<tr class="form-group">'
+									+ '<th><label class="control-label">' + '</label></th>'
+									+ '<th></div></th>'
+									+ '<th>'+$(".authenticated_user").text()+' <span class="zmi-change-dt">'+(new Date()).toLocaleFormat(getZMILangStr('DATETIME_FMT'))+'</span></th>'
+									+ '<th>'+change_uid+' <span class="zmi-change-dt">'+(new Date(change_dt)).toLocaleFormat(getZMILangStr('DATETIME_FMT'))+'</span></th>'
+								+ '</thead>'
+								+ '</tr>';
 						for (var key in node) {
 							var $input = $("[name='"+key+"'],[name='"+key+"_"+getZMILang()+"']",this).filter("[data-initial-value]");
 							if ($input.length > 0) {
@@ -759,10 +769,12 @@ ZMI.prototype.initInputFields = function(container) {
 								}
 								if (current_val != remote_val) {
 									$input.removeClass("form-modified").addClass("form-conflicted").attr("data-remote-value",remote_val);
-									body += '<div class="form-group">'
-											+ '<label class="control-label">' + $label.text() + '</label>'
-											+ '<div class="diff" id="'+$input.attr("name")+'_diff"></div>'
-										+ '</div>';
+									body += '<tr class="form-group">'
+											+ '<td><label class="control-label"><span>' + $label.text() + '</span></label></td>'
+											+ '<td><div style="overflow-y:scroll;max-height:20em" class="diff" id="'+$input.attr("name")+'_diff"></div></td>'
+											+ '<td><div style="overflow-y:scroll;max-height:20em" class="mine" id="'+$input.attr("name")+'_mine">'+current_val+'</div></td>'
+											+ '<td><div style="overflow-y:scroll;max-height:20em" class="theirs" id="'+$input.attr("name")+'_theirs">'+remote_val+'</div></td>'
+										+ '</tr>';
 								}
 							}
 						}
@@ -771,7 +783,8 @@ ZMI.prototype.initInputFields = function(container) {
 							b = false;
 							// confirm
 							var form_id = $('input[name=form_id]').val();
-							body += '<div class="form-group">'
+							body += '</table>'
+								+ '<div class="form-group">'
 									+ '<button class="btn btn-primary" value="'+getZMILangStr('BTN_OVERWRITE')+'" onclick="zmiUnlockForm(\''+form_id+'\')">'+getZMILangStr('BTN_OVERWRITE')+'</button> '
 									+ '<button class="btn btn-default" value="'+getZMILangStr('BTN_DISPLAY')+'" onclick="window.open(self.location.href);">'+getZMILangStr('BTN_DISPLAY')+'</button> '
 								+ '</div>';
@@ -792,8 +805,8 @@ ZMI.prototype.initInputFields = function(container) {
 											var $diffContainer = $("#"+id);
 											$(this).prettyTextDiff({
 													cleanup:true,
-													originalContent:$(this).attr("data-initial-value"),
-													changedContent:$(this).val(),
+													originalContent:$(this).attr("data-initial-value").replace(/</gi,'&lt;'),
+													changedContent:$(this).val().replace(/</gi,'&lt;'),
 													diffContainer:$diffContainer
 												});
 											var lines = $diffContainer.html().replace(/<span>/gi,'').replace(/<\/span>/gi,'').split("<br>");
@@ -801,11 +814,11 @@ ZMI.prototype.initInputFields = function(container) {
 											var changed = false;
 											for (var i = 0; i < lines.length; i++) {
 												var line = lines[i];
-												changed |= line.indexOf("<"+"del>")>=0 || line.indexOf("<ins>")>=0;
+												changed |= line.indexOf("<del>")>=0 || line.indexOf("<ins>")>=0;
 												if (changed) {
 													show.push(i);
 												}
-												changed &= !(line.indexOf("<"+"/del>")>=0 || line.indexOf("</ins>")>=0);
+												changed &= !(line.indexOf("</del>")>=0 || line.indexOf("</ins>")>=0);
 											}
 											var html = [];
 											changed = false;
@@ -820,7 +833,7 @@ ZMI.prototype.initInputFields = function(container) {
 													line = line+'<'+'br/>';
 												}
 												html.push(line);
-												changed &= !(line.indexOf("<"+"/del>")>=0 || line.indexOf("<"+"/ins>")>=0);
+												changed &= !(line.indexOf("</del>")>=0 || line.indexOf("</ins>")>=0);
 											}
 											$diffContainer.html(html.join(""));
 										});
