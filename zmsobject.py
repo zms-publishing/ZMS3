@@ -1141,6 +1141,8 @@ class ZMSObject(ZMSItem.ZMSItem,
       obj_attrs = self.getObjAttrs()
       for key in obj_attrs:
         v = self.attr(key)
+        if isinstance( v, _blobfields.MyBlob):
+            v = v.getHref(request)
         d[key] = v
       return standard.str_json(d)
 
