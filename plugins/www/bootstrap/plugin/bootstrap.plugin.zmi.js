@@ -742,7 +742,7 @@ ZMI.prototype.initInputFields = function(container) {
 					var last_change_dt = $('input#last_change_dt:hidden',this).val();
 					var last_change_uid = $('input#last_change_uid:hidden',this).val();
 					// Intermediate modification?
- 					if (true || change_dt != last_change_dt) {
+ 					if (change_dt != last_change_dt) {
 						var body = '<div class="alert alert-error">'
 									+ '<h4>'+$ZMI.icon("icon-warning-sign")+' '+getZMILangStr('ATTR_LAST_MODIFIED')+'</h4>'
 									+ '<div>'+change_dt+' '+getZMILangStr('BY')+' '+change_uid+'</div>'
