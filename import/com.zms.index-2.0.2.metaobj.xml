@@ -1033,12 +1033,12 @@ zmscontext.ZMSIndexZCatalog_func_(zmscontext,'activate')
 ##
 # --// onImportObjEvt //--
 
-request = context.REQUEST
-base = list(context.getRootElement().getPhysicalPath())[:-1]
-url = list(context.getDocumentElement().getPhysicalPath())[len(base):-1]
-request.set('url','{$'+['','/'.join(url)+'@'][len(url)>0]+'}')
-zmscontext.ZMSIndexZCatalog_func_(zmscontext,'reindex')
-zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
+if zmscontext.getConfProperty('ZMSIndexZCatalog.onImportObjEvt',True) == True:
+  request = context.REQUEST
+  base = list(context.getRootElement().getPhysicalPath())[:-1]
+  url = list(context.getDocumentElement().getPhysicalPath())[len(base):-1]
+  request.set('url','{$'+['','/'.join(url)+'@'][len(url)>0]+'}')
+  zmscontext.ZMSIndexZCatalog_func_(zmscontext,'resync')
 
 # --// /onImportObjEvt //--
 ]]>
@@ -1279,7 +1279,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">ZMSIndexZCatalog</item>
           <item key="name">ZMSIndexZCatalog</item>
           <item key="package">com.zms.index</item>
-          <item key="revision">2.0.2</item>
+          <item key="revision">2.0.3</item>
           <item key="type">ZMSResource</item>
         </dictionary>
       </item>
@@ -1298,7 +1298,7 @@ return standard.FileFromData(zmscontext,"'%s' not found!"%path_)
           <item key="id">com.zms.index</item>
           <item key="name">com.zms.index</item>
           <item key="package"></item>
-          <item key="revision">2.0.2</item>
+          <item key="revision">2.0.3</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
