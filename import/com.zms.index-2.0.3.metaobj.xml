@@ -12,6 +12,7 @@
                 <dictionary>
                   <item key="custom"><![CDATA[<tal:block tal:define="
 		zmscontext options/zmscontext;
+		oid python:zmscontext.get_oid();
 		active python:zmscontext.getConfProperty('ExtensionPoint.ZMSObject.get_uid','')=='%s.get_uid'%zmscontext.meta_id;
 		initialized python:'zcatalog_index' in zmscontext.getRootElement().getHome().objectIds();
 		uid python:request.form.get('uid','');
@@ -26,7 +27,7 @@ function openWindow(url) {
 	<div class="form-group zms4-row">
 		<label class="col-sm-2 control-label">All Clients</label>
 		<div class="col-sm-10 form-inline">
-			<div class="btn btn-default" style="margin-right:1em">
+			<div class="btn btn-default btn-secondary" style="margin-right:1em">
 				<input id="zmi-sitemap-select" type="checkbox" checked="checked"
 					onclick="if( this.checked ){ $('.zmi-sitemap ul input').prop('checked', true) } else { $('.zmi-sitemap ul input').prop('checked', false) }" />
 			</div>
@@ -53,7 +54,7 @@ function openWindow(url) {
 					title="Select the Debug-Level for Logging Messages while Indexing">
 					<option tal:repeat="loglevel loglevels" tal:attributes="selected python:['','selected'][int(loglevel=='INFO')]" tal:content="loglevel">the loglevel</option>
 				</select>
-				<div class="btn btn-default input-group-addon" style="margin-left:1em;"
+				<div class="btn btn-default btn-secondary input-group-addon"
 					title="Show all Logging Info Directly ">
 					<input id="logshow" name="logshow" type="checkbox" />
 				</div>
@@ -63,7 +64,7 @@ function openWindow(url) {
 
 	<div class="form-group zms4-row">
 		<label class="col-sm-2 control-label">&nbsp;</label>
-		<div class="col-sm-10 zms4-row">
+		<div class="col-sm-10">
 			<div class="zmi-sitemap-expand" onclick="$('#zmsindex .zmi-sitemap-container').toggleClass('full');$('#zmsindex .zmi-sitemap-expand i').toggleClass('icon-resize-small')">
 				<i class="icon icon-resize-full fas fa-expand-arrows-alt" title="Seitenanfang"></i>
 			</div>
@@ -92,7 +93,9 @@ function openWindow(url) {
 					tal:attributes="value python:zmscontext.operator_getattr(zmscontext,'index_names','')"/>
 				<div class="input-group-append input-group-btn">
 					<button class="btn btn-primary" name="btn" value="save"
-						onclick="$(this).parents('form').attr({action:self.location.href})" tal:content="structure python:zmscontext.zmi_icon(name='icon-save')">save</button>
+						onclick="$(this).parents('form').attr({action:self.location.href})">
+						<i class="icon-save fas fa-save"></i>  
+					</button>
 				</div>
 			</div><!-- .input-group -->
 		</div><!-- .col-sm-5-->
@@ -138,7 +141,7 @@ function zmiFuncIndex(func_) {
 			if (i < n ) {
 				var $input = $($inputs[i]);
 				var uid = $input.val();
-				var data = {ZMSIndexZCatalog_func_:func_,url:uid,loglevel:$('#loglevel').val(),i:i};
+				var data = {ZMSIndexZCatalog_func_:func_,oid_:$('#oid_').val(),url:uid,loglevel:$('#loglevel').val(),i:i};
 				var $a = $input.next("a");
 				var viewport_pos = $(window).scrollTop();
 				var btn_close = '<' + 'a class="close" data-dismiss="alert" href="#"' + '>' + '×' + '<' + '/a' + '>';
@@ -229,11 +232,15 @@ $(function() {
 		margin-left: -15px;
 	}
 */
+
+	#zmsindex select.form-control:not([size]):not([multiple]) {
+		height: inherit;
+	}
 	#zmsindex .zmi-sitemap-container {
 		width:100%;
 		max-height: 30rem;
 		height: fit-content;
-		min-height: 4rem;
+		min-height: 6rem;
 		overflow-y: scroll;
 		overflow-x: hidden;
 		background: #e8f3fb;
@@ -263,8 +270,9 @@ $(function() {
 	}
 	#zmsindex .zmi-sitemap-container .progress {
 		padding-left:0;
-		margin-right: 2em;
+		margin-right: 30px;
 		background: #ddd;
+		height:1.25rem;
 	}
 	#zmsindex .zmi-sitemap-container .progress .progress-bar {
 		width:0%;
@@ -295,6 +303,7 @@ $(function() {
 	}
 	#zmsindex .zmi-sitemap-expand {
 		display: block;
+		top:0;
 		position: absolute;
 		color: #333;
 		right: 16px;
