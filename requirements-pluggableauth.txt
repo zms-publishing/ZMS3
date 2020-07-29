@@ -1,3 +1,4 @@
-Products.PluggableAuthService==1.11.0
 # newer versions will pull in zope4
+# Also it needs to be listed first so pip doesn't get confused and pulls in a newer version of PluginRegistry regardless
 Products.PluginRegistry==1.4
+Products.PluggableAuthService==1.11.0
