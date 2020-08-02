@@ -155,6 +155,11 @@ class ZMSItem(
         request.set('manage_lang',self.get_manage_lang())
       if not request.get('manage_tabs_message'):
         request.set( 'manage_tabs_message',self.getConfProperty('ZMS.manage_tabs_message',''))
+      # manage must not be accessible for Anonymous
+      if request['URL0'].find('/manage') >= 0:
+        if request['AUTHENTICATED_USER'].has_role('Anonymous'):
+          import zExceptions
+          raise zExceptions.Unauthorized
       # manage_system
       if request.form.has_key('zmi-manage-system'):
         request.SESSION.set('zmi-manage-system',int(request.get('zmi-manage-system')))
