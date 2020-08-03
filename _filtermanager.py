@@ -31,9 +31,9 @@ import time
 import urllib
 import zExceptions
 # Product Imports.
-import standard
 import _blobfields
 import _fileutil
+import standard
 
 
 ################################################################################

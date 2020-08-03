@@ -32,11 +32,11 @@ import urllib
 import warnings
 import zExceptions 
 # Product Imports.
-import standard
-import pilutil
-import zopeutil
 import _fileutil
 import _globals
+import pilutil
+import standard
+import zopeutil
 
 __all__= ['MyBlob','MyImage','MyFile']
 

@@ -41,7 +41,6 @@ import zmscustom
 import zmssqldb
 import zmslinkcontainer
 import zmslinkelement
-# import zmsteaserelement
 import _confmanager
 import _mediadb
 import _sequence
@@ -49,8 +48,8 @@ import _zmsattributecontainer
 import ZMSZCatalogAdapter
 import ZMSFormatProvider, ZMSFormatProviderAcquired
 import ZMSMetacmdProvider, ZMSMetacmdProviderAcquired
-import ZMSWorkflowProvider, ZMSWorkflowProviderAcquired
 import ZMSRepositoryManager
+import ZMSWorkflowProvider, ZMSWorkflowProviderAcquired
 
 try:
   from Products.CMFCore.DirectoryView import registerFileExtension

@@ -23,9 +23,9 @@
 import tempfile
 from App.Common import package_home
 # Product Imports.
-import standard
 import _fileutil
 import _xmllib
+import standard
 
 def warn(self,old,new=None):
   import warnings

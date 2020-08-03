@@ -28,10 +28,10 @@ import time
 import urllib
 import zExceptions
 # Product Imports.
-import standard
 import _confmanager
 import _globals
 import _xmllib
+import standard
 
 
 # ------------------------------------------------------------------------------

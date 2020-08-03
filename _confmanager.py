@@ -39,17 +39,16 @@ import xml.dom
 import zExceptions
 from zope.interface import implementer, providedBy
 # Product imports.
-from IZMSConfigurationProvider import IZMSConfigurationProvider
-import IZMSMetamodelProvider, IZMSFormatProvider, IZMSCatalogAdapter, ZMSZCatalogAdapter, IZMSRepositoryManager
-import standard
 import _exportable
 import _fileutil
 import _filtermanager
 import _mediadb
 import _multilangmanager
 import _sequence
-import zopeutil
+import IZMSConfigurationProvider, IZMSMetamodelProvider, IZMSFormatProvider, IZMSCatalogAdapter, ZMSZCatalogAdapter, IZMSRepositoryManager
+import standard
 import zmslog
+import zopeutil
 
 UNINHERITED_PROPERTIES = ['ASP','Portal']
 
@@ -429,7 +428,7 @@ class ConfManager(
       l.append({'label':'TAB_SYSTEM','action':'manage_customize'})
       l.append({'label':'TAB_LANGUAGES','action':'manage_customizeLanguagesForm'})
       for ob in self.objectValues():
-        if IZMSConfigurationProvider in list(providedBy(ob)):
+        if IZMSConfigurationProvider.IZMSConfigurationProvider in list(providedBy(ob)):
           for d in ob.manage_sub_options():
             l.append(self.operator_setitem(d.copy(),'action',ob.id+'/'+d['action']))
       l.append({'label':'TAB_FILTER','action':'manage_customizeFilterForm'})

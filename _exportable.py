@@ -30,12 +30,12 @@ import os
 import re
 import sys
 # Product Imports.
-import standard
 import _blobfields
 import _fileutil
 import _filtermanager
 import _globals
 import _xmllib
+import standard
 
 
 def writeFile(self, filename, data, mode='w', encoding='utf-8'):
