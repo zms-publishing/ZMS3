@@ -25,6 +25,7 @@ import OFS.SimpleItem, OFS.ObjectManager
 from zope.interface import implementer, providedBy
 # Product Imports.
 import IZMSDaemon
+import standard
 
 
 ################################################################################
