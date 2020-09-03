@@ -157,7 +157,9 @@ class ZMSItem(
         request.set( 'manage_tabs_message',self.getConfProperty('ZMS.manage_tabs_message',''))
       # manage must not be accessible for Anonymous
       if request['URL0'].find('/manage') >= 0:
-        if request['AUTHENTICATED_USER'].has_role('Anonymous'):
+        lower = self.getUserAttr(request['AUTHENTICATED_USER'],'attrActiveStart',None)
+        upper = self.getUserAttr(request['AUTHENTICATED_USER'],'attrActiveEnd',None)
+        if not standard.todayInRange(lower, upper) or request['AUTHENTICATED_USER'].has_role('Anonymous'):
           import zExceptions
           raise zExceptions.Unauthorized
       # manage_system
