@@ -241,7 +241,13 @@
         $(this).remove();
       }
     });
-  });
+    $('.data.data-objectset a').each(function() {
+      var lnk = $(this).attr('href');
+      $(this).closest('tr').on('dblclick', function(){
+        window.location.href = lnk;
+      })
+    })
+});
 </script>
 
 <!-- /ZMSRecordSet/main_grid -->
