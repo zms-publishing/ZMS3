@@ -207,7 +207,11 @@ class ZMSObject(ZMSItem.ZMSItem,
         forced = args[1]['forced']
         root_id = self.getRootElement().getHome().id
         physical_path = self.getPhysicalPath()
-        home_path = physical_path[physical_path.index(root_id):physical_path.index('content')]
+        try:
+          home_path = physical_path[physical_path.index(root_id):physical_path.index('content')]
+        except:
+          # breaks on discontinued master-client hierarchies
+          home_path = self.getHome().id
         object_path = physical_path[physical_path.index('content')+1:]
         return '%s@%s'%('/'.join(home_path),'/'.join(object_path))
       can_ep = True
