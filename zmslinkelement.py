@@ -146,8 +146,12 @@ class ZMSLinkElement(ZMSCustom):
     ############################################################################
     def manage_changeProperties(self, lang, REQUEST, RESPONSE): 
       """ ZMSLinkElement.manage_changeProperties """
-      
-      target = REQUEST.get( 'manage_target', '%s/manage_main'%self.getParentNode().absolute_url())
+
+      target_ob = self.getParentNode()
+      if REQUEST.get('menulock',0) == 1:
+        # Remain in Current Menu
+        target_ob = self
+      target = REQUEST.get( 'manage_target', '%s/manage_main'%target_ob.absolute_url())
       message = ''
       if REQUEST.get('btn','') not in  [ self.getZMILangStr('BTN_CANCEL'), self.getZMILangStr('BTN_BACK')]:
         try:
