@@ -1000,22 +1000,19 @@ ul.zmi-container .zmi-item.page .center .contentEditable{
  margin-left:.15em;
  margin-bottom:-1px;}
 .zmi-browse-iframe-preview{
- z-index:99999;
- padding:1em;
  position:absolute;
- 
- background:white;
- 
- background:rgba(255,255,255,0.6);
- 
- filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#99FFFFFF,endColorstr=#99FFFFFF);
- 
- ms-filter:"progid:DXImageTransform.Microsoft.gradient(startColorstr=#99FFFFFF,endColorstr=#99FFFFFF)";
  max-width:40em;
- border:1px dotted black;}
+ background-color:#FFFFFF;
+ box-shadow:0 0 2em #00000033;
+ margin:1.5em 0.2em;
+ padding:0;
+ border:none;
+ z-index:99999;}
 .zmi-browse-iframe-preview .contentEditable{
  zoom:0.6;
  -moz-transform:scale(0.6);}
+.zmi-browse-iframe-preview .ZMSGraphic .graphic{
+ margin:0;}
 .zmi-sitemap > div,
 .zmi-sitemap ul,
 .zmi-sitemap ol{
