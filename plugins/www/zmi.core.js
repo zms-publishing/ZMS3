@@ -280,8 +280,8 @@ ZMI.prototype.getLangStr = function(key, lang) {
  * Cache Ajax requests.
  */
 var zmiCache = {};
-ZMI.prototype.getCachedValue = function(k) {return zmiCache[k];}
-ZMI.prototype.setCachedValue = function(k,v) {zmiCache[k]=v;return v;}
+ZMI.prototype.getCachedValue = function(k) {var v = localStorage["zmiCache["+k+"]"]; return typeof v=='undefined'?v:JSON.parse(v);}
+ZMI.prototype.setCachedValue = function(k,v) {localStorage.setItem("zmiCache["+k+"]",JSON.stringify(v));return v;}
 
 /**
  * Returns request-property.
@@ -337,7 +337,7 @@ ZMI.prototype.getConfProperty = function(key, defaultValue) {
 			url: url+'/getConfProperty',
 			data: data,
 			datatype: 'text',
-			headers: {'Cache-Control': 'max-age=1800','X-Accel-Expires':1800},
+			headers: {'Cache-Control': 'max-age=1800'},
 			async: false
 			}).responseText;
 		this.writeDebug(url+'/getConfProperty('+key+','+defaultValue+'): '+r);
