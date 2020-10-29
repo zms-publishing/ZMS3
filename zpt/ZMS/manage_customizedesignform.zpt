@@ -150,7 +150,8 @@
 						</span>
 						<a tal:condition="css" target="_blank" class="pull-right"
 							title="Link to Zope Object Editor"
-							tal:attributes="href python:'%s/manage'%href"
+							tal:define="zmsid python:zmscontext.getHome().id; edit_url python:'%s/%s/%s'%( request.get('URL').split('/'+zmsid)[0], zmsid, href.split(zmsid+'/')[1] )"
+							tal:attributes="href python:'%s/manage'%(edit_url);title edit_url"
 							><i class="icon-external-link fas fa-external-link-alt"></i>
 						</a>
 						<pre class="alert alert-info preview" style="display:none;"></pre>
@@ -244,7 +245,8 @@
 						</span>
 						<a tal:condition="js" target="_blank" class="pull-right"
 							title="Link to Zope Object Editor"
-							tal:attributes="href python:'%s/manage'%href"
+							tal:define="zmsid python:zmscontext.getHome().id; edit_url python:'%s/%s/%s'%( request.get('URL').split('/'+zmsid)[0], zmsid, href.split(zmsid+'/')[1] )"
+							tal:attributes="href python:'%s/manage'%(edit_url);title edit_url"
 							><i class="icon-external-link fas fa-external-link-alt"></i>
 						</a>
 						<pre class="alert alert-info preview" style="display:none;"></pre>
