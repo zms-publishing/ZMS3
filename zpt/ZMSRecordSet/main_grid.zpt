@@ -14,17 +14,17 @@
     filtered_records python:options.get('filtered_records',records);
     size python:options.get('size',len(filtered_records));
     total python:options.get('total',len(records));
-    pageSize python:request.get('qsize',20);
+    pageSize python:int(request.get('qsize',20));
     pageIndex python:request.get('pageIndex',0);
     pageStart python:pageIndex*pageSize;
     pageEnd python:min(pageStart+pageSize,size);
     offset python:options.get('offset',pageStart);">
 
-<div class="pagination-pre">
+<div class="pagination-pre clearfix">
 	<div class="pull-left" tal:content="structure python:here.zmi_pagination(size=size,pageSize=pageSize,pageIndex=pageIndex)">zmi_pagination</div>
 	<form method="get" class="pull-right">
-		<label class="control-label" for="qsize" tal:content="python:here.getZMILangStr('ATTR_ROWS')" tal:define="global dummy0 python:request.set('qsize',request.get('qsize',10))">Rows</label>
-		<input class="form-control input-sm" size="6" id="qsize" type="number" name="qsize:int" tal:attributes="value request/qsize" onchange="this.form.submit()"/>
+		<label class="control-label" for="qsize" tal:content="python:here.getZMILangStr('ATTR_ROWS')" >Rows</label>
+		<input class="form-control input-sm" size="6" id="qsize" type="number" name="qsize" tal:attributes="value pageSize" onchange="this.form.submit()"/>
 	</form>
 </div>
 <form method="get" tal:attributes="action form_action">
@@ -37,16 +37,15 @@
 <tal:block tal:repeat="name python:url_params.keys()">
 <input type="hidden" tal:attributes="name name; value python:url_params[name]"/>
 </tal:block>
+<div class="table-responsive">
 <table class="table table-striped table-bordered table-hover zmi-sortable zmi-selectable">
 <colgroup>
-  <col />
-  <tal:block tal:repeat="metaObjAttr metaObjAttrs">
-    <tal:block tal:define="global 
-        elType python:metaObjAttr.get('type','string')">
-      <col tal:condition="python:elType in ['int']" width="3em"/>
-      <col tal:condition="python:elType not in ['int']"/>
-    </tal:block>
-  </tal:block>
+	<col />
+	<tal:block tal:repeat="metaObjAttr metaObjAttrs"
+		><tal:block tal:define="elType python:metaObjAttr.get('type','string')"
+			><col tal:condition="python:elType in ['int']" width="3em" /><col tal:condition="python:elType not in ['int']" />
+		</tal:block>
+	</tal:block>
 </colgroup>
 <thead>
 <tr>
@@ -223,8 +222,9 @@
 </tal:block>
 </tbody>
 </table>
+</div>
 </form>
-<div class="pagination-post">
+<div class="pagination-post clearfix">
 	<div class="pull-left" tal:content="structure python:here.zmi_pagination(size=size,pageSize=pageSize,pageIndex=pageIndex)">zmi_pagination</div>
 </div>
 

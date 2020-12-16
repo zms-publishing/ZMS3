@@ -37,7 +37,7 @@
 	></tal:block>
 
 	<legend tal:content="python:here.display_type(request,meta_id)">the display-type</legend>
-	<table class="table">
+	<table class="table" tal:condition="python:len(attrIds+subObjectIds)>0">
 	<thead>
 	<tr>
 		<th></th>
@@ -80,6 +80,11 @@
 	</tr>
 	</tbody>
 	</table>
+	<ol tal:condition="python:len(attrIds+subObjectIds)==0">
+		<li tal:repeat="ob res">
+			<a target="_blank" tal:attributes="href python:'%s/manage'%(ob.absolute_url())" tal:content="python:ob.absolute_url()"></a>
+		</li>
+	</ol>
 </form>
 
 <tal:block tal:content="structure python:here.zmi_html_foot(here,request)">zmi_html_foot</tal:block>
