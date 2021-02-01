@@ -91,7 +91,7 @@ $(function(){
 				})
 			.click( function(evt) {
 				evt.stopPropagation();
-				if (evt.target != "undefined" && $.inArray(evt.target.nodeName.toLowerCase(),['a','button','input','select','textarea']) > -1) {
+				if (evt.target != "undefined" && $.inArray(evt.target.nodeName.toLowerCase(),['a','button','input','select','textarea','img']) > -1) {
 					return;
 				}
 				var href = $(this).attr("data-absolute-url");
