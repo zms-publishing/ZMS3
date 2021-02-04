@@ -3716,7 +3716,7 @@ $(function() {
 	var e = $(".controls.save:gt(0)").detach();
 	e.insertAfter(".form-group.coverage");
 
-	$(".ZMSRecordSet form.form-horizontal").each(function() {
+	$(".ZMSRecordSet form.form-horizontal, .ZMSRecordSet.main_grid > form").each(function() {
 			var prefix = $("meta[name=physical_path]").attr("content").split("/");
 			prefix = prefix[prefix.length-1]+".ZMSRecordSet.";
 			console.log(prefix);
@@ -3758,6 +3758,8 @@ $(function() {
 					params[i.substr(prefix.length)] = localStorage[i];
 				}
 			}
+			// Force to ZMI language
+			params['lang'] = zmiParams['lang'];
 
 			$.get("publicRecordSetGrid",params,function(data) {
 					var $grid = $("#metaobj_recordset_main_grid");
@@ -4342,7 +4344,7 @@ return None
           <item key="id">ZMSObjectSet</item>
           <item key="name">ZMSObjectSet</item>
           <item key="package">com.zms.foundation</item>
-          <item key="revision">3.4.3</item>
+          <item key="revision">3.4.4</item>
           <item key="type">ZMSObject</item>
         </dictionary>
       </item>
@@ -7011,7 +7013,7 @@ return constraints
           <item key="id">com.zms.foundation</item>
           <item key="name">com.zms.foundation</item>
           <item key="package"></item>
-          <item key="revision">3.4.3</item>
+          <item key="revision">3.4.4</item>
           <item key="type">ZMSPackage</item>
         </dictionary>
       </item>
