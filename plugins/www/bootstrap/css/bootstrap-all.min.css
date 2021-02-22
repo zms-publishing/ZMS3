@@ -1022,6 +1022,10 @@ ul.zmi-container .zmi-item.page .center .contentEditable{
  list-style:outside none none;}
 .zmi-sitemap li.active > a{
  font-weight:bold;}
+
+.zmi-sitemap .ZMSLinkElement li:hover span i:not(.icon-link):before{
+ color:#ffc107;
+ content:"\f0c1";}
 .zmi.manage-menu .navbar-brand{
  font-size:100%!important;}
 body.browse_iframe .toggle{
