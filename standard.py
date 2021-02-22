@@ -1527,10 +1527,7 @@ def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, l
         + (['','\n'][formatted]+(['','\t'][formatted]*level)+',').join(map(lambda x: '"%s":%s'%(x,str_json(i[x],encoding,errors,formatted,level+1,allow_booleans,sort_keys)),k)) \
         + '}'
   elif type(i) is time.struct_time:
-    try:
-      return '"%s"'%format_datetime_iso(i)
-    except:
-      pass
+    return '"%s"'%format_datetime_iso(i)
   elif type(i) is int or type(i) is float:
     i = str(i)
     return i
@@ -1556,20 +1553,17 @@ def str_json(i, encoding='ascii', errors='xmlcharrefreplace', formatted=False, l
 
 
 security.declarePublic('str_item')
-def str_item(i):
+def str_item(i, f=False):
   """
   Returns a string representation of the item.
   @rtype: C{str}
   """
-  if type(i) is list or type(i) is tuple:
+  if type(i) is time.struct_time:
+    return format_datetime_iso(i)
+  elif type(i) is list or type(i) is tuple:
     return '\n'.join(map(lambda x: str_item(x),i))
   elif type(i) is dict:
-    return '\n'.join(map(lambda x: str_item(i[x]),i.keys()))
-  elif type(i) is time.struct_time:
-    try:
-      return format_datetime_iso(i)
-    except:
-      pass
+    return '\n'.join([str_item(i[x],f) for x in i if not f or not x.startswith('_')])
   if i is not None:
     return str(i)
   return ''

@@ -97,7 +97,7 @@ return [{<br/>
 
 <tal:block tal:define="global
 		metaObjIds python:here.getMetaobjIds();
-		metaObjs python:filter(lambda x:x['id'] not in ['ZMS'] and x['type'] in ['ZMSPackage','ZMSDocument','ZMSObject'],map(lambda x: here.getMetaobj(x), metaObjIds));
+		metaObjs python:[x for x in [here.getMetaobj(y) for y in metaObjIds] if x['id'] not in ['ZMS'] and x['type'] in ['ZMSPackage','ZMSDocument','ZMSObject','ZMSRecordSet']];
 		metaObjPackages python:here.sort_list(['']+map(lambda x: x['id'],filter(lambda x: x['type']=='ZMSPackage', metaObjs)));
 		metaObjPackages2 python:filter(lambda x: x not in metaObjPackages, map(lambda x: x.get('package'), metaObjs))">
 

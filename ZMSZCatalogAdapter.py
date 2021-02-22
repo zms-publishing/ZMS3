@@ -323,7 +323,9 @@ class ZMSZCatalogAdapter(
               result.append(msg)
           if attr_type in ['date','datetime']:
             value = self.getLangFmtDate(value,'eng','ISO8601')
-          if type(value) in [str,unicode]:
+          if type(value) in (dict, list):
+            value = standard.str_item(value,f=True)
+          if type(value) in (str, unicode):
             value = unistr(value)
           d[attr_id] = remove_tags(self,value)
         cb(node,d)
