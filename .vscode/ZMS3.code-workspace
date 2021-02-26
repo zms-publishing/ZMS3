@@ -15,10 +15,6 @@
 		"editor.renderWhitespace": "all",
 		"editor.renderControlCharacters": false,
 		"team.showWelcomeMessage": false,
-		"svn.enabled":true,
-		"svn.default.encoding":"utf-8",
-		"svn.enableProposedApi": "product",
-		"svn.defaultCheckoutDirectory": "https://zmslabs.org/svn/zmslabs/ZMS/trunk/",
 		"workbench.iconTheme": "vs-minimal",
 		"files.associations": {
 			"*.zpt": "html",

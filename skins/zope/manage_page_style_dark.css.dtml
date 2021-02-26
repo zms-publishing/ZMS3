@@ -1,4 +1,4 @@
-/* ZMS CUSTOM STYLES: DARK 2020-06-01 */
+/* ZMS CUSTOM STYLES: DARK 2021-02-26 */
 /* <dtml-call "RESPONSE.setHeader('Content-Type','text/css')"> */
 /* <dtml-call "RESPONSE.setHeader('Cache-Control','public,max-age=3600')"> */
 
@@ -501,3 +501,42 @@ body[class="Folder (Ordered)"] > form.form_main > .form-element > * {
 	zoom:0.8;
 	margin:0 8px 0 0
 }
+
+/* Memcache Data Grid */
+#nodeid_memcache_session_data dl {
+	margin:0;
+	display:flex;
+	flex-direction: row;
+}
+#nodeid_memcache_session_data dl:first-child {
+	margin-top:4em
+}
+#nodeid_memcache_session_data dl:first-child dt:before {
+	content:'Key';
+	diplay:block;
+	margin:-2.25em 0 0 0;
+	position:absolute;
+	font-style:italic;
+}
+#nodeid_memcache_session_data dl:first-child dd:before {
+	content:'Value';
+	diplay:block;
+	margin:-2.25em 0 0 0;
+	position:absolute;
+	font-style:italic;
+}
+#nodeid_memcache_session_data dl:nth-child(even) {
+	background:#666
+}
+#nodeid_memcache_session_data dl dt,
+#nodeid_memcache_session_data dl dd {
+	border:1px silver solid;
+	padding:.5em;
+	width: 25%;
+	font-weight:normal
+}
+#nodeid_memcache_session_data dl dd {
+	width: 75%;
+}
+
+
