@@ -3673,29 +3673,53 @@ $(function() {
 	return false;
 }
 
-function delZMSCustom(sender) {
+function _zmiObjectSetExec(sender, target) {
 	var $btnGroup = $(sender).parents(".btn-group");
 	$("input[name='qindices:list']",$btnGroup).prop("checked","checked");
 	var i = $("input[name='qindices:list']:checkbox:checked").length;
-	var msg = getZMILangStr('MSG_CONFIRM_TRASHOBJS');
-	msg = msg.replace("%i",""+i);
-	msg += $ZMI.getDescendantLanguages();
-	b = i > 0 && confirm(msg);
-	if (b) {
+    var b = true;
+	if (target.indexOf("manage_cutObjects") >= 0) {
+		var msg = getZMILangStr('MSG_CONFIRM_CUTOBJS') + $ZMI.getDescendantLanguages();
+		msg = msg.replace("%i",""+i);
+		b = i > 0 && confirm(msg);
+	}
+	else if (target.indexOf("manage_deleteObjs") >= 0) {
+		var msg = getZMILangStr('MSG_CONFIRM_TRASHOBJS');
+		msg = msg.replace("%i",""+i);
+		msg += $ZMI.getDescendantLanguages();
+		b = i > 0 && confirm(msg);
+	}
+    if (b) {
 		var html = '';
-		html += '<form class="ui-helper-hidden" id="delZMSCustomForm" method="post" action="manage_deleteObjs">';
+		html += '<form class="ui-helper-hidden d-none" id="zmiObjectSetExecForm" method="post" action="'+target+'">';
 		html += '<input type="hidden" name="lang" value="'+getZMILang()+'"/>';
 		$("input[name='qindices:list']:checkbox:checked").each(function() {
 				html += '<input type="hidden" name="ids:list" value="'+$(this).val()+'"/>';
 			});
 		html += '</form>';
 		$("body").append(html);
-		$("#delZMSCustomForm").submit();
+		$("#zmiObjectSetExecForm").submit();
 	}
 	else {
 		$("input[name='qindices:list']",$btnGroup).prop("checked","");
 	}
 	return false;
+}
+
+function zmiObjectSetDelete(sender) {
+	return _zmiObjectSetExec(sender,'manage_deleteObjs');
+}
+
+function zmiObjectSetCut(sender) {
+	return _zmiObjectSetExec(sender,'manage_cutObjects');
+}
+
+function zmiObjectSetCopy(sender) {
+	return _zmiObjectSetExec(sender,'manage_copyObjects');
+}
+
+function zmiObjectSetPaste(sender) {
+	return _zmiObjectSetExec(sender,'manage_pasteObjs');
 }
 
 $(function() {
@@ -4034,10 +4058,13 @@ return zmscontext.metaobj_recordset_main_grid( \
 		record_handler=zmscontext.attr('record_handler'), \
 		records=request['res'], \
 		filtered_records=request['res'], \
-		actions=['insert','update','delete'], \
+		actions=['insert','update','delete','cut','copy','paste'], \
 		insert='[[INSERT]]', \
 		update='[[UPDATE]]', \
-		delete='delZMSCustom(this)', \
+		delete='zmiObjectSetDelete(this)', \
+		cut='zmiObjectSetCut(this)', \
+		copy='zmiObjectSetCopy(this)', \
+		paste='zmiObjectSetPaste(this)', \
 		)
 
 # --// /publicRecordSetGrid //--
