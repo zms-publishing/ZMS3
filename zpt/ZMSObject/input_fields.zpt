@@ -191,7 +191,7 @@
 						<div class="checkbox" style="display:inline-block;padding: 0 1em;" 
 							title="Menu Lock: Stay in the menu after clicking the save button.">
 							<label>
-								<input type="checkbox" name="menulock:int" value="1" /><i class="icon-lock text-default"></i>
+								<input type="checkbox" id="menulock" name="menulock:int" onclick="$ZMILocalStorageAPI.set('ZMS.menulock',this.checked)" value="1" /><i class="icon-lock text-default"></i>
 							</label>
 						</div>
 						<button type="submit" name="btn" class="btn btn-primary" tal:attributes="value python:here.getZMILangStr('BTN_%s'%action.upper())" tal:content="python:here.getZMILangStr('BTN_%s'%action.upper())">Action</button>
