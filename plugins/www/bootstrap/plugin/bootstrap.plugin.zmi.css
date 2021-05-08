@@ -1612,6 +1612,9 @@ td .btn-group .checkbox.split-left.btn input {
 .ZMSRecordSet.main_grid table {
 	cursor:pointer;
 }
+#metaobj_recordset_main_grid .ZMSRecordSet.main_grid div.table-responsive {
+	min-height: 24em;
+}
 .ZMSRecordSet.main_grid form > table thead th div.btn-group span.split-left {
 	max-width:48px;
 	overflow:hidden;
