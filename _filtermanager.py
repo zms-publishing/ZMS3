@@ -694,10 +694,13 @@ class FilterManager:
     def getFilterIds(self, sort=1):
       obs = getRawFilters(self)
       ids = obs.keys()
-      if sort:
-        mapping = map(lambda x: (self.getFilter(x)['name'],x),ids)
-        mapping.sort()
-        ids = map(lambda x: x[1],mapping)
+      try:
+        if sort:
+          mapping = map(lambda x: (self.getFilter(x)['name'],x),ids)
+          mapping.sort()
+          ids = map(lambda x: x[1],mapping)
+      except:
+        pass
       return ids
 
 

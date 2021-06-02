@@ -189,7 +189,7 @@ $ZMI.registerReady(function(){
 				</div><!-- .form-group -->
 				<div class="form-group inpName">
 					<label for="inpName" class="col-sm-3 control-label mandatory"><span tal:content="python:here.getZMILangStr('ATTR_DISPLAY')">Display</span></label>
-					<div class="col-sm-9"><input class="form-control" type="text" id="inpName" name="inpName" tal:attributes="value filter/name"/></div>
+					<div class="col-sm-9"><input tal:on-error="default" class="form-control" type="text" id="inpName" name="inpName" tal:attributes="value filter/name"/></div>
 				</div><!-- .form-group -->
 				<div class="form-group">
 					<div class="controls save">
@@ -439,16 +439,16 @@ $ZMI.registerReady(function(){
 				<td>
 					<h3 class="filterName"><a tal:attributes="href python:'?lang=%s&id=%s'%(request['lang'],filterId); title python:here.getZMILangStr('BTN_EDIT')+'...'">
 						<tal:block tal:content="structure python:here.zmi_icon(name='icon-filter')"></tal:block>
-						<tal:block tal:content="filter/name">the filter-name</tal:block>
+						<tal:block tal:on-error="string:Filter Name N/A" tal:content="filter/name">the filter-name</tal:block>
 					</a></h3>
 					<div class="filterProcesses">
 						<table class="layoutTable">
 						<tr><td><div class="filterDelimiter">
-							<tal:block tal:condition="python:filter['format']=='import'">
+							<tal:block tal:condition="python:filter.get('format','')=='import'">
 								<img tal:attributes="src python:here.getMimeTypeIconSrc(filter['content_type']); title filter/content_type"/> 
 								<tal:block tal:content="structure python:here.zmi_icon(name='icon-arrow-up',extra='title=\042Import\042')"></tal:block>
 							</tal:block>
-							<tal:block tal:condition="python:filter['format']!='import'">
+							<tal:block tal:condition="python:filter.get('format','')!='import'" tal:on-error="string:Filter Format N/A">
 								<tal:block tal:content="filter/format">the format</tal:block>
 							</tal:block>
 						</div><i class="icon-long-arrow-down center"></i></td></tr>
@@ -467,10 +467,10 @@ $ZMI.registerReady(function(){
 							</tal:block>
 						</tr>
 						<tr><td><div class="filterDelimiter">
-							<tal:block tal:condition="python:filter['format']=='import'">
+							<tal:block tal:condition="python:filter.get('format','')=='import'">
 								<img tal:attributes="src python:here.getMimeTypeIconSrc('text/xml')"/>
 							</tal:block>
-							<tal:block tal:condition="python:filter['format']!='import'">
+							<tal:block tal:condition="python:filter.get('format','')!='import'" tal:on-error="string:Filter Format N/A">
 								<img tal:attributes="src python:here.getMimeTypeIconSrc(filter['content_type']); title filter/content_type"/> 
 								<tal:block tal:content="structure python:here.zmi_icon(name='icon-arrow-down',extra='title=\042Export\042')"></tal:block>
 							</tal:block>
