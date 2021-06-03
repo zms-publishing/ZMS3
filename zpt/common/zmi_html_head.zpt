@@ -2,6 +2,7 @@
 
 <head tal:define="
 		ZMS_HOME python:here.getHome().absolute_url()+'/';
+		ZMS_ROOT python:here.getDocumentElement().absolute_url()+'/';
 		ZMS_THEME python:[here.getConfProperty('ZMS.theme','')+'/',''][len(here.getConfProperty('ZMS.theme',''))==0];
 		dummy python:here.zmi_page_request(here,request)">
 	<title tal:content="python:'ZMS | %s | %s'%(here.display_type(),request['lang'])">the title</title>
@@ -13,7 +14,7 @@
 	<link type="text/css" rel="stylesheet" tal:attributes="href python:'%s/zmi_manage_css'%here.getDocumentElement().absolute_url()" />
 	<tal:block tal:repeat="href python:[here.getConfProperty(x) for x in here.getConfProperty('zmi.css').split(',')]"
 		><link tal:condition="href" type="text/css" rel="stylesheet" tal:attributes="
-			href python:href.replace('$ZMS_HOME/',ZMS_HOME).replace('$ZMS_THEME/',ZMS_THEME)" />
+			href python:href.replace('$ZMS_HOME/',ZMS_HOME).replace('$ZMS_THEME/',ZMS_THEME).replace('$ZMS_ROOT/',ZMS_ROOT)" />
 	</tal:block>
 	<link type="text/css" rel="stylesheet" 
 		tal:define="
