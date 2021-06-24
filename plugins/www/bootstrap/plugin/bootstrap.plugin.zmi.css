@@ -1633,6 +1633,32 @@ td .btn-group .checkbox.split-left.btn input {
 .zmi.importexport.ZMSSqlDb form.form-horizontal select {
 	height:12em
 }
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive {
+	min-height:18rem;
+	background:#dce3f04a;
+	margin-bottom: 0;
+}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-last-child(1) td .dropdown-menu {
+	top: -9rem;
+}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-last-child(2) td .dropdown-menu {
+	top: -6rem;
+}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-child(1) td .dropdown-menu  {
+	top: 2.75rem;
+}
+.zmi.properties.ZMSSqlDb #zmi-tab .accordion-group:not(.perc100) {
+	margin-bottom:2rem;
+	padding-bottom:3rem !important;
+}
+.zmi.properties.ZMSSqlDb .controls.save {
+	margin-right:2rem
+}
+.zmi.properties..ZMSSqlDb div.modal .controls.save {
+	margin:0rem
+}
+
+
 /* +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * +- [ZMI] Image
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
