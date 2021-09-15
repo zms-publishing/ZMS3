@@ -1679,6 +1679,8 @@ td .btn-group .checkbox.split-left.btn input{
  margin-left:1em;}
 .ZMSRecordSet.main_grid table{
  cursor:pointer;}
+#metaobj_recordset_main_grid .ZMSRecordSet.main_grid div.table-responsive{
+ min-height:24em;}
 .ZMSRecordSet.main_grid form > table thead th div.btn-group span.split-left{
  max-width:48px;
  overflow:hidden;}
@@ -1692,6 +1694,25 @@ td .btn-group .checkbox.split-left.btn input{
  margin-top:1em}
 .zmi.importexport.ZMSSqlDb form.form-horizontal select{
  height:12em}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive{
+ min-height:18rem;
+ background:#dce3f04a;
+ margin-bottom:0;}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-last-child(1) td .dropdown-menu{
+ top:-9rem;}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-last-child(2) td .dropdown-menu{
+ top:-6rem;}
+.zmi.properties.ZMSSqlDb .ZMSRecordSet.main_grid .table-responsive tr:nth-child(1) td .dropdown-menu{
+ top:2.75rem;}
+.zmi.properties.ZMSSqlDb #zmi-tab .accordion-group:not(.perc100){
+ margin-bottom:2rem;
+ padding-bottom:3rem !important;}
+.zmi.properties.ZMSSqlDb .controls.save{
+ margin-right:2rem}
+.zmi.properties..ZMSSqlDb div.modal .controls.save{
+ margin:0rem}
+
+
 
 
 .zmiDivOpaque{
