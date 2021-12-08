@@ -6,11 +6,11 @@ of depending packages (see INSTALL_REQUIRES_CONCRETE below or requirements.txt).
   to install the environment fetching packages from PyPI at https://pypi.python.org/pypi/
   (official releases)
 
-  Use '$ pip install https://zmslabs.org/download/ZMS3-latest.tar.gz'
-  to install the environment fetching the latest nightly build from ZMSLabs
+  Use '$ pip install https://github.com/zms-publishing/ZMS3/archive/refs/heads/master.zip'
+  to install the environment fetching the latest build from github
   (maybe unstable)
 
-  Use '$ pip install -r https://zmslabs.org/svn/zmslabs/ZMS/trunk/requirements.txt'
+  Use '$ pip install -r https://raw.githubusercontent.com/zms-publishing/ZMS3/master/requirements.txt'
   to install the environment fetching the latest development snapshots from SVN/GIT-Repositories
   (maybe unstable)
 
@@ -203,7 +203,7 @@ setup(
   author                = 'HOFFMANN+LIEBENBERG in association with SNTL Publishing, Berlin',
   author_email          = 'zms@sntl-publishing.com',
   url                   = 'http://www.zms-publishing.com',
-  download_url          = 'https://zmslabs.org',
+  download_url          = 'https://github.com/zms-publishing/ZMS3',
   install_requires      = INSTALL_REQUIRES_ABSTRACT + INSTALL_REQUIRES_CONCRETE,
   namespace_packages    = ['Products'],
   packages              = ['Products.zms'],
