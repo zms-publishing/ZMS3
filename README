@@ -10,9 +10,9 @@ http://www.zms-publishing.com
 Changelog
 ---------
 
-    * Changes: https://zmslabs.org/trac/wiki/CHANGES
-    * Revisions: https://zmslabs.org/trac/log/ZMS/trunk
-    * Source: https://zmslabs.org/trac/browser/ZMS/trunk
+    * Changes / Releases: https://github.com/zms-publishing/ZMS3/releases
+    * Revisions: https://github.com/zms-publishing/ZMS3/commits/master
+    * Source: https://github.com/zms-publishing/ZMS3
 
 Installation (GNU/Linux, OSX/Darwin and Windows/WSL)
 ----------------------------------------------------
