@@ -196,7 +196,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-  name                  = 'ZMS3',
+  name                  = 'ZMS',
   description           = 'ZMS: Simplified Content Modelling',
   long_description      = README,
   version               = VERSION,
