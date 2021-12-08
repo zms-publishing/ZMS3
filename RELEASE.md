@@ -1,4 +1,4 @@
-# Release checklist
+# How to make a new ZMS release (PyPI and GitHub)
 
 * update version.txt to the desired version. Remember that only the three first elements of the version are used.
 * create a release build with `python setup.py sdist`
