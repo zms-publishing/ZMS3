@@ -36,6 +36,10 @@ $ ./ZMS3/bin/pip install --requirements https://raw.githubusercontent.com/zms-pu
 
 ::     
 
+$ ./ZMS3/bin/pip install https://github.com/zms-publishing/ZMS3/archive/master.zip [--upgrade]
+
+or from pypi
+
 $ ./ZMS3/bin/pip install 'ZMS<=4'    [--upgrade]
 
 **(4) Create an Instance [or restart on Upgrade]**
