@@ -128,7 +128,7 @@ INSTALL_REQUIRES_CONCRETE = [
   'ZopeUndo==2.12.0', # due to ZopeUndo==4.0 causes ZEO DisconnectedError on manageUndo
 ]
 
-README = open(os.path.join(setup_path, 'README')).read()
+README = open(os.path.join(setup_path, 'README.rst')).read()
 
 # Remove text from version for PyPI
 VERSION = open(os.path.join(setup_path, 'version.txt')).read().replace('ZMS3-', '').replace('.REV', '')
