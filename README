@@ -42,7 +42,7 @@ or from pypi
 
 ::     
 
-$ ./ZMS3/bin/pip install 'ZMS<=4'    [--upgrade]
+$ ./ZMS3/bin/pip install 'ZMS<4'    [--upgrade]
 
 **(4) Create an Instance [or restart on Upgrade]**
 
