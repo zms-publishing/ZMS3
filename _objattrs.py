@@ -760,12 +760,13 @@ class ObjAttrs:
         b = b and v
       obj_vers = self.getObjVersion(REQUEST)
       obj_attrs = self.getObjAttrs()
-      for key in ['active','attr_active_start','attr_active_end']:
+      now = datetime.datetime.now()
+      for key in ['active', 'attr_active_start', 'attr_active_end']:
         if obj_attrs.has_key(key):
           obj_attr = obj_attrs[key]
-          lang = self.get_request_context(REQUEST,'lang',self.getPrimaryLanguage())
+          lang = self.get_request_context(REQUEST, 'lang', self.getPrimaryLanguage())
           while True:
-            value = self._getObjAttrValue(obj_attr,obj_vers,lang)
+            value = self._getObjAttrValue(obj_attr, obj_vers, lang)
             empty = False
             lang = self.getParentLanguage(lang)
             if lang is not None:
@@ -778,23 +779,17 @@ class ObjAttrs:
           # Start time.
           elif key == 'attr_active_start':
             if value is not None:
-              try:
-                dt = DateTime(time.mktime(value))
-                b = b and dt.isPast()
-              except:
-                # todo: consistent replacement of time by datetime
-                dtValue = datetime.datetime(value[0],value[1],value[2],value[3],value[4],value[5],value[6])
-                b = b and datetime.datetime.now() > dtValue
+              dt = datetime.datetime.fromtimestamp(time.mktime(value))
+              b = b and now > dt
+              if dt > now and self.REQUEST.get('ZMS_CACHE_EXPIRE_DATETIME', dt) >= dt:
+                self.REQUEST.set('ZMS_CACHE_EXPIRE_DATETIME',dt)
           # End time.
           elif key == 'attr_active_end':
             if value is not None:
-              try:
-                dt = DateTime(time.mktime(value))
-                b = b and (dt.isFuture() or (dt.equalTo(dt.earliestTime()) and dt.latestTime().isFuture()))
-              except:
-                # todo: consistent replacement of time by datetime
-                dtValue = datetime.datetime(value[0],value[1],value[2],value[3],value[4],value[5],value[6])
-                b = b and dtValue < datetime.datetime.now()
+              dt = datetime.datetime.fromtimestamp(time.mktime(value))
+              b = b and dt > now
+              if dt > now and self.REQUEST.get('ZMS_CACHE_EXPIRE_DATETIME', dt) >= dt:
+                self.REQUEST.set('ZMS_CACHE_EXPIRE_DATETIME',dt)
           if not b: break
       return b
 
