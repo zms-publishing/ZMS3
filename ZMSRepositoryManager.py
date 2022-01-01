@@ -228,12 +228,15 @@ class ZMSRepositoryManager(
           # ignore orphaned files in filesystem
           # if there are no references in model
           continue
-        l = local.get(filename,{})
-        r = remote.get(filename,{})
-        if l.get('data','') != r.get('data',''):
-          data = l.get('data',r.get('data',''))
-          mt, enc = standard.guess_content_type(filename,data)
-          diff.append((filename,mt,l.get('id',r.get('id','?')),l,r))
+        l = local.get(filename, {})
+        r = remote.get(filename, {})
+        if isinstance(l['data'],(str,unicode)):
+          l['data'] = l['data'].replace('\r','')
+          r['data'] = r['data'].replace('\r','')
+        if l.get('data', '') != r.get('data', ''):
+          data = l.get('data', r.get('data',''))
+          mt, enc = standard.guess_content_type(filename, data)
+          diff.append((filename, mt, l.get('id', r.get('id', '?')), l, r))
       return diff
 
 
@@ -261,7 +264,7 @@ class ZMSRepositoryManager(
         for k in keys:
           v = o.get(k)
           py.append('\t# %s'%k.capitalize())
-          py.append('\t%s = %s'%(standard.id_quote(k),standard.str_json(v,encoding="utf-8",formatted=True,level=2,allow_booleans=False)))
+          py.append('\t%s = %s'%(standard.id_quote(k), standard.str_json(v, encoding="utf-8", formatted=True, level=2, allow_booleans=False)))
           py.append('')
         for k in e:
           v = o.get(k)
@@ -279,14 +282,14 @@ class ZMSRepositoryManager(
                     data = data.encode('utf-8')
                   d = {}
                   d['id'] = id
-                  d['filename'] = os.path.sep.join(filename[:-1]+['%s%s'%(fileprefix,fileexts.get(ob.meta_type,''))])
+                  d['filename'] = os.path.sep.join(filename[:-1]+['%s%s'%(fileprefix, fileexts.get(ob.meta_type, ''))])
                   d['data'] = data
-                  d['version'] = self.getLangFmtDate(ob.bobobase_modification_time().timeTime(),'eng')
+                  d['version'] = self.getLangFmtDate(ob.bobobase_modification_time().timeTime(), 'eng')
                   d['meta_type'] = ob.meta_type
                   l[d['filename']] = d
                 if i.has_key('ob'):
                   del i['ob']
-                py.append('\t\t%s = %s'%(self.id_quote(i['id']),standard.str_json(i,encoding="utf-8",formatted=True,level=3,allow_booleans=False)))
+                py.append('\t\t%s = %s'%(self.id_quote(i['id']), standard.str_json(i, encoding="utf-8", formatted=True, level=3, allow_booleans=False)))
                 py.append('')
         d = {}
         d['id'] = id
