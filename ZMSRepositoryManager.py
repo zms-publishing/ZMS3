@@ -231,8 +231,8 @@ class ZMSRepositoryManager(
         l = local.get(filename, {})
         r = remote.get(filename, {})
         if isinstance(l['data'],(str,unicode)):
-          l['data'] = l['data'].replace('\r','')
-          r['data'] = r['data'].replace('\r','')
+          l['data'] = l.get('data','').replace('\r','')
+          r['data'] = r.get('data','').replace('\r','')
         if l.get('data', '') != r.get('data', ''):
           data = l.get('data', r.get('data',''))
           mt, enc = standard.guess_content_type(filename, data)
