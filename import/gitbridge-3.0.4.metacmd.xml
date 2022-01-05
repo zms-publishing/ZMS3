@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<list>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import os
+
+def manage_repository_gitpull(self, request=None):
+	html = []
+	request = self.REQUEST
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+	base_path = self.getConfProperty('ZMS.conf.path', self.get_conf_basepath(id=''))
+	branch = self.getConfProperty('ZMSRepository.git.server.branch','main').replace('"','').replace(';','')
+	hardreset_cmd = 'git reset --hard origin/%s'%(branch)
+
+	html.append('<!DOCTYPE html>')
+	html.append('<html lang="en">')
+	html.append(self.zmi_html_head(self,request).encode('utf-8'))
+	html.append('<body class="repository_manager_main %s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+	# html.append(self.zmi_body_header(self,request,options=[{'action':'#','label':'%s...'%self.getZMILangStr('BTN_GITPULL')}]))
+	html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()).encode('utf-8'))
+	html.append('<div id="zmi-tab">')
+	html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]).encode('utf-8'))
+	html.append('<div class="card">')
+	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+	html.append('<legend><p>%s, Current Branch %s</p></legend>'%(self.getZMILangStr('BTN_GITPULL'),branch))
+
+
+	# --- PULL. +++IMPORTANT+++: Use SSH/cert and git credential manager
+	# ---------------------------------
+	if btn=='BTN_GITPULL':
+		message = []
+		### update from repository
+		# userid = self.getConfProperty('ZMSRepository.git.server.userid')
+		# password = self.getConfProperty('ZMSRepository.git.server.password') # TODO: decrypt
+		# url = self.getConfProperty('ZMSRepository.git.server.url')
+		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
+			os.chdir(base_path)
+			if request.get('hardreset'):
+				result = os.system(hardreset_cmd)
+				message.append('<code class="d-block">%s [%s]</code>'%(hardreset_cmd, str(result)))
+			command = 'git checkout %s;git pull'%(branch)
+			if request.get('revision')!='HEAD' and request.get('revision') is not None:
+				command = 'git checkout %s'%(request.get('revision').replace('"','').replace(';',''))
+			result = os.system(command)
+			message.append('<code class="d-block mb-3">%s [%s]</code>'%(command, str(result)))
+			### import from working-copy
+			# success = self.updateChanges(REQUEST.get('ids',[]),btn=='override')
+			# message.append(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success)))
+		else:
+			message.append('Error: To execute this function a user role Manager or ZMSAdministrator is needed.')
+		### return with message
+		request.response.redirect(self.url_append_params('manage_main',{'lang':request['lang'],'manage_tabs_message':''.join(message)}))
+
+	# --- Cancel.
+	# ---------------------------------
+	elif btn=='BTN_CANCEL':
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	# --- Display initial form.
+	# -------------------------
+	else:
+		html.append('<div class="card-body">')
+		html.append('<div class="form-group row">')
+		html.append('<label for="revision" class="col-sm-2 control-label mandatory">Revision</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="revision" type="text" size="25" value="HEAD" title="Default value HEAD pulls the latest revision. Please, enter the hexadecimal ID for checking out a specific revision." placeholder="Enter HEAD or Revision-ID"></div>')
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<label for="hardreset" class="col-sm-2 control-label mandatory">Use Hard Reset</label>')
+		html.append('<div class="col-sm-10"><input type="checkbox" name="hardreset" value="hardreset" title="git reset --hard origin/%s" /></div>'%(branch))
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group">')
+		html.append('<div class="controls save">')
+		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_GITPULL">%s</button>'%(self.getZMILangStr('BTN_GITPULL')))
+		html.append('<button type="submit" name="btn" class="btn btn-secondary" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
+		html.append('</div>')
+		html.append('</div><!-- .form-group -->')
+		# html.append(self.manage_main_diff(self,request))
+		html.append('</div><!-- .card-body -->')
+	# ---------------------------------
+
+	html.append('</form><!-- .form-horizontal -->')
+	html.append('</div><!-- .card -->')
+	html.append('</div><!-- #zmi-tab -->')
+	html.append(self.zmi_body_footer(self,request).encode('utf-8'))
+	html.append('<script>$ZMI.registerReady(function(){ $(\'#tabs_items li a\').removeClass(\'active\');$(\'#tabs_items li[data-action*=\"repository_manager\"] a\').addClass(\'active\'); })</script>')
+	html.append('</body>')
+	html.append('</html>')
+
+	return '\n'.join(html)]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution" type="int">0</item>
+      <item key="icon_clazz"><![CDATA[fas fa-backward icon icon-backward]]></item>
+      <item key="id">manage_repository_gitpull</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name">BTN_GITPULL</item>
+      <item key="revision">3.0.4</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title"><![CDATA[Git Pull]]></item>
+    </dictionary>
+  </item>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import os
+
+def manage_repository_gitpush(self, request=None):
+	html = []
+	request = self.REQUEST
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+	base_path = self.getConfProperty('ZMS.conf.path', self.get_conf_basepath(id=''))
+
+	html.append('<!DOCTYPE html>')
+	html.append('<html lang="en">')
+	html.append(self.zmi_html_head(self,request).encode('utf-8'))
+	html.append('<body class="repository_manager_main %s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+	html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()).encode('utf-8'))
+	html.append('<div id="zmi-tab">')
+	html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]).encode('utf-8'))
+	html.append('<div class="card">')
+	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+	html.append('<legend><p>%s, Current Branch %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
+
+
+	# --- COMMIT/PUSH. +++IMPORTANT+++: Use SSH/cert and git credential manager
+	# ---------------------------------
+	if btn=='BTN_GITPUSH':
+		message = []
+		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
+			userid = str(request.get('AUTHENTICATED_USER'))[0:3]
+			os.chdir(base_path)
+			command1 = 'git add .'
+			command2 = 'git commit -a -m "%s (%s)"'%(request.get('message').replace('"','').replace(';',''), userid)
+			command3 = 'git push'
+			result1 = os.system(command1)
+			message.append('<code class="d-block" style="display:block;">%s [%s]</code>'%(command1, str(result1)))
+			result2 = os.system(command2)
+			message.append('<code class="d-block" style="display:block;">%s [%s]</code>'%(command2, str(result2)))
+			result3 = os.system(command3)
+			message.append('<code class="d-block mb-3" style="display:block;margin-bottom:2rem">%s [%s]</code>'%(command3, str(result3)))
+		else:
+			message.append('Error: To execute this function a user role Manager or ZMSAdministrator is needed.')
+		### return with message
+		request.response.redirect(self.url_append_params('manage_main',{'lang':request['lang'],'manage_tabs_message':''.join(message)}))
+
+	# --- Cancel.
+	# ---------------------------------
+	elif btn=='BTN_CANCEL':
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	# --- Display initial form.
+	# -------------------------
+	else:
+
+		html.append('<div class="card-body">')
+		html.append('<div class="form-group row">')
+		html.append('<label for="message" class="col-sm-2 control-label mandatory">Message</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="message" type="text" size="25" value="" title="Enter commit message..." placeholder="Enter commit message..." /></div>')
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group">')
+		html.append('<div class="controls save">')
+		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_GITPUSH">%s</button>'%(self.getZMILangStr('BTN_GITPUSH')))
+		html.append('<button type="submit" name="btn" class="btn btn-secondary" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
+		html.append('</div>')
+		html.append('</div><!-- .form-group -->')
+		# html.append(self.manage_main_diff(self,request))
+		html.append('</div>')
+	# ---------------------------------
+
+	html.append('</form><!-- .form-horizontal -->')
+	html.append('</div><!-- .card -->')
+	html.append('</div><!-- #zmi-tab -->')
+	html.append(self.zmi_body_footer(self,request).encode('utf-8'))
+	html.append('<script>$ZMI.registerReady(function(){ $(\'#tabs_items li a\').removeClass(\'active\');$(\'#tabs_items li[data-action*=\"repository_manager\"] a\').addClass(\'active\'); })</script>')
+	html.append('</body>')
+	html.append('</html>')
+
+	return '\n'.join(html)]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution" type="int">0</item>
+      <item key="icon_clazz"><![CDATA[fas fa-forward icon icon-forward]]></item>
+      <item key="id">manage_repository_gitpush</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name">BTN_GITPUSH</item>
+      <item key="revision">3.0.4</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title"><![CDATA[Git Push]]></item>
+    </dictionary>
+  </item>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import os
+
+def manage_repository_gitstatus( self ):
+
+	html = []
+	request = self.REQUEST
+	if request.get('lang',None) is None:
+		request['lang'] = 'ger'
+	if request.get('manage_lang',None) is None:
+		request['manage_lang'] = 'ger'
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+
+	if btn=='BTN_CANCEL':
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	else:
+		# --- Display form.
+		# -------------------------
+		base_path = self.getConfProperty('ZMS.conf.path', self.get_conf_basepath(id=''))
+		base_status = ''
+		try:
+			standard.localfs_readPath(base_path)
+		except:
+			base_status = standard.writeError(self,'can\'t read base_path') 
+
+		html.append('<!DOCTYPE html>')
+		html.append('<html lang="en">')
+
+		try:
+			html.append(self.zmi_html_head(self,request))
+		except:
+			html.append(self.zmi_html_head(self,request).encode('utf-8'))
+
+		html.append('<body class="%s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+
+		try:
+			html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()))
+		except:
+			html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()).encode('utf-8'))
+
+		html.append('<div id="zmi-tab">')
+
+		try:
+			html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]))
+		except:
+			html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]).encode('utf-8'))
+
+		html.append('<div class="card">')
+		html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+		html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+		html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+		html.append('<legend><p>GIT-Status, Current Branch %s</p></legend>'%(self.getConfProperty('ZMSRepository.git.server.branch','master')))
+
+		message = ''
+		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
+			os.chdir(base_path)
+			command = 'git status'
+			result = os.popen(command).read()
+			# result = os.system(command)
+			message = '<pre class="zmi-code d-block mb-3" style="margin: 1rem 2rem 2rem 1rem;"><b>%s</b><br/><br/>%s</pre>'%(command,str(result))
+		else:
+			message = 'Error: To execute this function a user role Manager or ZMSAdministrator is needed.'
+		html.append(message)
+		html.append('<div class="card-body">')
+		html.append('<div class="form-group row">')
+		html.append('<div class="controls save" style="padding-right:3rem">')
+		html.append('<button type="submit" name="btn" class="btn btn-default" value="BTN_CANCEL">Cancel</button>')
+		html.append('</div>')
+		html.append('</div><!-- .form-group -->')
+		html.append('</div><!-- .card-body -->')
+
+		# ---------------------------------
+
+		html.append('</form><!-- .form-horizontal -->')
+		html.append('</div><!-- .card -->')
+		html.append('</div><!-- #zmi-tab -->')
+
+		try:
+			html.append(self.zmi_body_footer(self,request))
+		except:
+			html.append(self.zmi_body_footer(self,request).encode('utf-8'))
+
+		html.append('<script>$ZMI.registerReady(function(){ $(\'#tabs_items li a\').removeClass(\'active\');$(\'#tabs_items li[data-action*=\"repository_manager\"] a\').addClass(\'active\'); })</script>')
+		html.append('</body>')
+		html.append('</html>')
+
+		return '\n'.join(list(html))]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution" type="int">1</item>
+      <item key="icon_clazz">icon-bullhorn</item>
+      <item key="id">manage_repository_gitstatus</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name"><![CDATA[Git Status]]></item>
+      <item key="revision">3.0.4</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title"><![CDATA[Show git Status]]></item>
+    </dictionary>
+  </item>
+  <item type="dictionary">
+    <dictionary>
+      <item key="data"><![CDATA[from Products.zms import standard
+import os
+
+def manage_repository_gitconfig(self, request=None):
+	html = []
+	request = self.REQUEST
+	if request.get('lang',None) is None:
+		request['lang'] = 'ger'
+	if request.get('manage_lang',None) is None:
+		request['manage_lang'] = 'ger'
+	RESPONSE =  request.RESPONSE
+	btn = request.form.get('btn')
+	came_from = request.get('came_from',request['HTTP_REFERER'])
+	if came_from.find('?') > 0:
+		came_from = came_from[:came_from.find('?')]
+	base_path = self.getConfProperty('ZMS.conf.path', self.get_conf_basepath(id=''))
+	base_status = ''
+	try:
+		standard.localfs_readPath(base_path)
+	except:
+		base_status = standard.writeError(self,'can\'t read base_path') 
+
+	html.append('<!DOCTYPE html>')
+	html.append('<html lang="en">')
+
+	try:
+		html.append(self.zmi_html_head(self,request))
+	except:
+		html.append(self.zmi_html_head(self,request).encode('utf-8'))
+
+	html.append('<body class="%s">'%(' '.join(['zmi',request['lang'],self.meta_id])))
+
+	try:
+		html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()))
+	except:
+		html.append(self.zmi_body_header(self,request,options=self.repository_manager.customize_manage_options()).encode('utf-8'))
+
+	html.append('<div id="zmi-tab">')
+
+	try:
+		html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]))
+	except:
+		html.append(self.zmi_breadcrumbs(self,request,extra=[self.manage_sub_options()[0]]).encode('utf-8'))
+
+	html.append('<div class="card">')
+	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
+	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
+	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
+	html.append('<legend><p>GIT-%s, Current Branch %s</p></legend>'%(self.getZMILangStr('TAB_CONFIGURATION'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
+
+	# --- Change.
+	# ---------------------------------
+	if btn=='BTN_CHANGE':
+		message = []
+		self.setConfProperty('ZMSRepository.git.server.url',request['url'])
+		self.setConfProperty('ZMSRepository.git.server.branch',request['branch'])
+		message.append(self.getZMILangStr('MSG_CHANGED'))
+		request.response.redirect(self.url_append_params('manage_main',{'lang':request['lang'],'manage_tabs_message':'<br/>'.join(message)}))
+
+	# --- Checkout.
+	# ---------------------------------
+	elif btn=='BTN_CLONE':
+		url = self.getConfProperty('ZMSRepository.git.server.url')
+		os.chdir(base_path)
+		command = "git clone %s ."%(url)
+		result = os.system(command)
+		html.append('<div class="alert alert-info my-3"><code class="d-block">%s [%s]</code></div>'%(command, str(result)))
+
+	# --- Cancel.
+	# ---------------------------------
+	elif btn=='BTN_CANCEL':
+		request.response.redirect(self.url_append_params(came_from,{'lang':request['lang']}))
+
+	# --- Display initial form.
+	# -------------------------
+	else:
+		html.append('<div class="card-body">')
+		html.append('<div class="alert alert-info m-0 mb-4">IMPORTANT NOTE: Please make sure that a certificate based communication with the GIT server is configured properly on the system</div>')
+		html.append('<div class="form-group row">')
+		html.append('<label for="url" class="col-sm-2 control-label mandatory">Working-copy</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="path" type="text" size="25" value="%s" readonly></div>'%base_path)
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<label for="url" class="col-sm-2 control-label mandatory">Server</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="url" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.url','git@github.com:myname/myproject.git'))
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<label for="branch" class="col-sm-2 control-label mandatory">Branch Name</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="branch" placeholder="master" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.branch','main'))
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<div class="controls save">')
+		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_CHANGE">Save</button>')
+		html.append('<button type="submit" name="btn" class="btn btn-warning" value="BTN_CLONE">Clone</button>')
+		html.append('<button type="submit" name="btn" class="btn btn-secondary" value="BTN_CANCEL">Cancel</button>')
+		html.append('</div>')
+		html.append('</div><!-- .form-group -->')
+		html.append('</div><!-- .card-body -->')
+
+	# ---------------------------------
+
+	html.append('</form><!-- .form-horizontal -->')
+	html.append('</div><!-- .card -->')
+	html.append('</div><!-- #zmi-tab -->')
+
+	try:
+		html.append(self.zmi_body_footer(self,request))
+	except:
+		html.append(self.zmi_body_footer(self,request).encode('utf-8'))
+
+	html.append('<script>$ZMI.registerReady(function(){ $(\'#tabs_items li a\').removeClass(\'active\');$(\'#tabs_items li[data-action*=\"repository_manager\"] a\').addClass(\'active\'); })</script>')
+	html.append('</body>')
+	html.append('</html>')
+
+	return '\n'.join(list(html))]]>
+      </item>
+      <item key="description"></item>
+      <item key="execution" type="int">0</item>
+      <item key="icon_clazz"><![CDATA[fas fa-cogs icon-cogs]]></item>
+      <item key="id">manage_repository_gitconfig</item>
+      <item key="meta_type"><![CDATA[External Method]]></item>
+      <item key="meta_types" type="list">
+        <list>
+          <item>ZMS</item>
+        </list>
+      </item>
+      <item key="name">TAB_CONFIGURATION</item>
+      <item key="revision">3.0.4</item>
+      <item key="roles" type="list">
+        <list>
+          <item>ZMSAdministrator</item>
+        </list>
+      </item>
+      <item key="title">Git-Configuration</item>
+    </dictionary>
+  </item>
+</list>
