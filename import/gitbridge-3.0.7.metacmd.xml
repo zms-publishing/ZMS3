@@ -45,12 +45,12 @@ def manage_repository_gitpull(self, request=None):
 			os.chdir(base_path)
 			if request.get('hardreset'):
 				result = os.system(hardreset_cmd)
-				message.append('<code class="d-block">%s [%s]</code>'%(hardreset_cmd, str(result)))
+				message.append('<code class="d-block alert-success">%s [%s]</code>'%(hardreset_cmd, str(result)))
 			command = 'git checkout %s;git pull'%(branch)
 			if request.get('revision')!='HEAD' and request.get('revision') is not None:
 				command = 'git checkout %s'%(request.get('revision').replace('"','').replace(';',''))
 			result = os.system(command)
-			message.append('<code class="d-block mb-3">%s [%s]</code>'%(command, str(result)))
+			message.append('<code class="d-block alert-success mb-3">%s [%s]</code>'%(command, str(result)))
 			### import from working-copy
 			# success = self.updateChanges(REQUEST.get('ids',[]),btn=='override')
 			# message.append(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success)))
@@ -158,13 +158,13 @@ def manage_repository_gitpush(self, request=None):
 			command2 = 'git commit -a -m "%s (%s)"'%(request.get('message').replace('"','').replace(';',''), userid)
 			command3 = 'git push'
 			result0 = os.system(command0)
-			message.append('<code class="d-block" style="display:block;">%s [%s]</code>'%(command0, str(result0)))			
+			message.append('<code class="d-block  alert-success" style="display:block;">%s [%s]</code>'%(command0, str(result0)))			
 			result1 = os.system(command1)
-			message.append('<code class="d-block" style="display:block;">%s [%s]</code>'%(command1, str(result1)))
+			message.append('<code class="d-block alert-success" style="display:block;">%s [%s]</code>'%(command1, str(result1)))
 			result2 = os.system(command2)
-			message.append('<code class="d-block" style="display:block;">%s [%s]</code>'%(command2, str(result2)))
+			message.append('<code class="d-block alert-success" style="display:block;">%s [%s]</code>'%(command2, str(result2)))
 			result3 = os.system(command3)
-			message.append('<code class="d-block mb-3" style="display:block;margin-bottom:2rem">%s [%s]</code>'%(command3, str(result3)))
+			message.append('<code class="d-block alert-success mb-3" style="display:block;margin-bottom:2rem">%s [%s]</code>'%(command3, str(result3)))
 		else:
 			message.append('Error: To execute this function a user role Manager or ZMSAdministrator is needed.')
 		### return with message
