@@ -143,7 +143,7 @@ def manage_repository_gitpush(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
+	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'), branch))
 
 
 	# --- COMMIT/PUSH. +++IMPORTANT+++: Use SSH/cert and git credential manager
@@ -151,7 +151,7 @@ def manage_repository_gitpush(self, request=None):
 	if btn=='BTN_GITPUSH':
 		message = []
 		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
-			userid = str(request.get('AUTHENTICATED_USER'))[0:3]
+			userid = 'zms_%s'%(str(request.get('AUTHENTICATED_USER'))[0:3])
 			os.chdir(base_path)
 			command0 = 'git checkout %s'%(branch)
 			command1 = 'git add .'
@@ -436,7 +436,7 @@ def manage_repository_gitconfig(self, request=None):
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
 		html.append('<label for="branch" class="col-sm-2 control-label mandatory">Branch Name</label>')
-		html.append('<div class="col-sm-10"><input class="form-control" name="branch" placeholder="master" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.branch','main'))
+		html.append('<div class="col-sm-10"><input class="form-control" name="branch" placeholder="main" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.branch','main'))
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
 		html.append('<div class="controls save">')
