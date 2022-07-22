@@ -30,7 +30,7 @@ def manage_repository_gitpull(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>%s, Current Branch %s</p></legend>'%(self.getZMILangStr('BTN_GITPULL'),branch))
+	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPULL'),branch))
 
 
 	# --- PULL. +++IMPORTANT+++: Use SSH/cert and git credential manager
@@ -107,7 +107,7 @@ def manage_repository_gitpull(self, request=None):
         </list>
       </item>
       <item key="name">BTN_GITPULL</item>
-      <item key="revision">3.0.5</item>
+      <item key="revision">3.0.7</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
@@ -143,7 +143,7 @@ def manage_repository_gitpush(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>%s, Current Branch %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
+	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
 
 
 	# --- COMMIT/PUSH. +++IMPORTANT+++: Use SSH/cert and git credential manager
@@ -215,7 +215,7 @@ def manage_repository_gitpush(self, request=None):
         </list>
       </item>
       <item key="name">BTN_GITPUSH</item>
-      <item key="revision">3.0.5</item>
+      <item key="revision">3.0.7</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
@@ -286,19 +286,15 @@ def manage_repository_gitstatus( self ):
 		html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 		html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 		html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-		html.append('<legend><p>GIT-Status, Current Branch %s</p></legend>'%(branch))
+		html.append('<legend><p>GIT-Status, Current Branch = %s</p></legend>'%(branch))
 
 		message = ''
 		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
 			os.chdir(base_path)
-			command0 = 'git checkout %s'%(branch)
-			result0 = os.popen(command0).read()
-			command1 = 'git branch -l  # HINT: Please ensure checkout-branch is %s'%(branch)
-			result1 = os.popen(command1).read()
-			command2 = 'git status'
-			result2 = os.popen(command2).read()
-			# result2 = os.system(command)
-			message = '<pre class="zmi-code d-block mb-3" style="margin: 1rem 2rem 2rem 1rem;color: #dee2e6;background-color: #354f67;"><b>%s</b><br/><br/>%s<br/><br/><b>%s</b><br/><br/>%s</pre>'%(command1,str(result1),command2,str(result2))
+			command = 'git checkout %s;'%(branch) + ' echo ""; echo "# BRANCHES:"; git branch -l; echo ""; git status; echo ""; echo "# HISTORY:"; git log -10 --pretty="format:%ad : #%h %s [%an]" --date=short'
+			result = os.popen(command).read()
+			# result = os.system(command)
+			message = '<pre class="zmi-code d-block mb-3" style="color: #dee2e6;background-color: #354f67;"><b style="color:#8d9eaf;">>> %s</b><br/><br/>%s</pre>'%(command,str(result))
 		else:
 			message = 'Error: To execute this function a user role Manager or ZMSAdministrator is needed.'
 		html.append(message)
@@ -340,7 +336,7 @@ def manage_repository_gitstatus( self ):
         </list>
       </item>
       <item key="name"><![CDATA[Git Status]]></item>
-      <item key="revision">3.0.6</item>
+      <item key="revision">3.0.7</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
@@ -357,6 +353,7 @@ import os
 def manage_repository_gitconfig(self, request=None):
 	html = []
 	request = self.REQUEST
+	branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
 	if request.get('lang',None) is None:
 		request['lang'] = 'ger'
 	if request.get('manage_lang',None) is None:
@@ -399,7 +396,7 @@ def manage_repository_gitconfig(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>GIT-%s, Current Branch %s</p></legend>'%(self.getZMILangStr('TAB_CONFIGURATION'),self.getConfProperty('ZMSRepository.git.server.branch','master')))
+	html.append('<legend><p>GIT-%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('TAB_CONFIGURATION'), branch))
 
 	# --- Change.
 	# ---------------------------------
@@ -478,7 +475,7 @@ def manage_repository_gitconfig(self, request=None):
         </list>
       </item>
       <item key="name">TAB_CONFIGURATION</item>
-      <item key="revision">3.0.5</item>
+      <item key="revision">3.0.7</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
