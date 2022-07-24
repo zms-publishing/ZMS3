@@ -15,8 +15,7 @@ def manage_repository_gitpull(self, request=None):
 	if came_from.find('?') > 0:
 		came_from = came_from[:came_from.find('?')]
 	base_path = self.getConfProperty('ZMS.conf.path', self.get_conf_basepath(id=''))
-	branch = self.getConfProperty('ZMSRepository.git.server.branch','main').replace('"','').replace(';','')
-	hardreset_cmd = 'git reset --hard origin/%s'%(branch)
+	git_branch = self.getConfProperty('ZMSRepository.git.server.branch','main').replace('"','').replace(';','')
 
 	html.append('<!DOCTYPE html>')
 	html.append('<html lang="en">')
@@ -30,30 +29,39 @@ def manage_repository_gitpull(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPULL'),branch))
+	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPULL'),git_branch))
 
 
 	# --- PULL. +++IMPORTANT+++: Use SSH/cert and git credential manager
 	# ---------------------------------
 	if btn=='BTN_GITPULL':
 		message = []
+		git_commands = []
 		### update from repository
-		# userid = self.getConfProperty('ZMSRepository.git.server.userid')
-		# password = self.getConfProperty('ZMSRepository.git.server.password') # TODO: decrypt
-		# url = self.getConfProperty('ZMSRepository.git.server.url')
 		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
 			os.chdir(base_path)
-			if request.get('hardreset'):
-				result = os.system(hardreset_cmd)
-				message.append('<code class="d-block" style="display:block;background:none;">%s [%s]</code>'%(hardreset_cmd, str(result)))
-			command = 'git checkout %s;git pull'%(branch)
-			if request.get('revision')!='HEAD' and request.get('revision') is not None:
-				command = 'git checkout %s'%(request.get('revision').replace('"','').replace(';',''))
-			result = os.system(command)
-			message.append('<code class="d-block mb-3" style="display:block;background:none;margin-bottom:2rem">%s [%s]</code>'%(command, str(result)))
-			### import from working-copy
-			# success = self.updateChanges(REQUEST.get('ids',[]),btn=='override')
-			# message.append(self.getZMILangStr('MSG_IMPORTED')%('<em>%s</em>'%' '.join(success)))
+
+			# GIT reset hard
+			if request.get('git_hardreset'):
+				git_commands.append( 'git reset --hard origin/%s'%(git_branch) )
+
+			# GIT checkout branch
+			if self.getConfProperty('ZMSRepository.git.server.branch.checkout', 0) == 1:
+				git_commands.append( 'git checkout %s'%(git_branch) )
+
+			# GIT pull
+				git_commands.append( 'git pull' )
+
+			# GIT checkout revision
+			if request.get('git_revision')!='HEAD' and request.get('git_revision') is not None:
+				git_commands.append( 'git checkout %s'%(request.get('git_revision').replace('"','').replace(';','')) )
+
+			# EXECUTE GIT COMMANDS
+			for gcmd in git_commands:
+				res = os.system(gcmd)
+				message.append('<code class="d-block" style="display:block;background:transparent">%s [%s]</code>'%(gcmd, str(res)))
+			message.append('<code class="d-block mb-3" style="display:block;background:transparent"># Done</code>')
+
 		else:
 			message.append('Error: To execute this function a user role Manager or ZMSAdministrator is needed.')
 		### return with message
@@ -69,17 +77,17 @@ def manage_repository_gitpull(self, request=None):
 	else:
 		html.append('<div class="card-body">')
 		html.append('<div class="form-group row">')
-		html.append('<label for="revision" class="col-sm-2 control-label mandatory">Revision</label>')
-		html.append('<div class="col-sm-10"><input class="form-control" name="revision" type="text" size="25" value="HEAD" title="Default value HEAD pulls the latest revision. Please, enter the hexadecimal ID for checking out a specific revision." placeholder="Enter HEAD or Revision-ID"></div>')
+		html.append('<label for="git_revision" class="col-sm-2 control-label mandatory">Revision</label>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="git_revision" type="text" size="25" value="HEAD" title="Default value HEAD pulls the latest revision. Please, enter the hexadecimal ID for checking out a specific revision." placeholder="Enter HEAD or Revision-ID"></div>')
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
-		html.append('<label for="hardreset" class="col-sm-2 control-label mandatory">Use Hard Reset</label>')
-		html.append('<div class="col-sm-10"><input type="checkbox" name="hardreset" value="hardreset" title="git reset --hard origin/%s" /></div>'%(branch))
+		html.append('<label for="git_hardreset" class="col-sm-2 control-label mandatory">Use Hard Reset</label>')
+		html.append('<div class="col-sm-10"><span class="btn btn-secondary btn-default"><input type="checkbox" name="git_hardreset" value="git_hardreset" title="git reset --hard origin/%s" /></span></div>'%(git_branch))
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group">')
 		html.append('<div class="controls save">')
 		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_GITPULL">%s</button>'%(self.getZMILangStr('BTN_GITPULL')))
-		html.append('<button type="submit" name="btn" class="btn btn-secondary" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
+		html.append('<button type="submit" name="btn" class="btn btn-secondary btn-default" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
 		html.append('</div>')
 		html.append('</div><!-- .form-group -->')
 		# html.append(self.manage_main_diff(self,request))
@@ -107,7 +115,7 @@ def manage_repository_gitpull(self, request=None):
         </list>
       </item>
       <item key="name">BTN_GITPULL</item>
-      <item key="revision">3.0.7</item>
+      <item key="revision">3.1.0</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
@@ -125,7 +133,7 @@ def manage_repository_gitpush(self, request=None):
 	html = []
 	request = self.REQUEST
 	RESPONSE =  request.RESPONSE
-	branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
+	git_branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
 	btn = request.form.get('btn')
 	came_from = request.get('came_from',request['HTTP_REFERER'])
 	if came_from.find('?') > 0:
@@ -143,30 +151,46 @@ def manage_repository_gitpush(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'), branch))
+	html.append('<legend><p>%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('BTN_GITPUSH'), git_branch))
 
 
 	# --- COMMIT/PUSH. +++IMPORTANT+++: Use SSH/cert and git credential manager
 	# ---------------------------------
 	if btn=='BTN_GITPUSH':
 		message = []
+		git_commands = []
+
 		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
 			userid = 'zms_%s'%(str(request.get('AUTHENTICATED_USER'))[0:3])
 			os.chdir(base_path)
-			command0 = 'git checkout %s'%(branch)
-			command1 = 'git add .'
-			command2 = 'git commit -a -m "%s (%s)"'%(request.get('message').replace('"','').replace(';',''), userid)
-			command3 = 'git push'
-			result0 = os.system(command0)
-			message.append('<code class="d-block" style="display:block;background:none;">%s [%s]</code>'%(command0, str(result0)))			
-			result1 = os.system(command1)
-			message.append('<code class="d-block" style="display:block;background:none;">%s [%s]</code>'%(command1, str(result1)))
-			result2 = os.system(command2)
-			message.append('<code class="d-block" style="display:block;background:none;">%s [%s]</code>'%(command2, str(result2)))
-			result3 = os.system(command3)
-			message.append('<code class="d-block mb-3" style="display:block;background:none;margin-bottom:2rem">%s [%s]</code>'%(command3, str(result3)))
+
+			# GIT checkout branch
+			if self.getConfProperty('ZMSRepository.git.server.branch.checkout', 0) == 1:
+				git_commands.append( 'git checkout %s'%(git_branch) )
+
+			# GIT add
+			git_commands.append( 'git add .' )
+
+			# GIT commit
+			git_commit = 'git commit -a -m'
+			if int(request.get('git_sign',0))==1:
+				git_commit = 'git commit -a -S -m'
+				self.setConfProperty('ZMSRepository.git.commit.sign', 1)
+			elif self.getConfProperty('ZMSRepository.git.commit.sign', 0) == 1:
+				self.setConfProperty('ZMSRepository.git.commit.sign', 0)
+			git_commands.append( '%s "%s" --author="%s <>"'%( git_commit, request.get('git_message').replace('"','').replace(';',''), userid ) )
+
+			# GIT push
+			git_commands.append( 'git push') 
+
+			# EXECUTE GIT COMMANDS
+			for gcmd in git_commands:
+				res = os.system(gcmd)
+				message.append('<code class="d-block" style="display:block;background:transparent">%s [%s]</code>'%(gcmd, str(res)))
+			message.append('<code class="d-block mb-3" style="display:block;background:transparent"># Done</code>')
 		else:
 			message.append('Error: To execute this function a user role Manager or ZMSAdministrator is needed.')
+
 		### return with message
 		request.response.redirect(self.url_append_params('manage_main',{'lang':request['lang'],'manage_tabs_message':''.join(message)}))
 
@@ -178,16 +202,22 @@ def manage_repository_gitpush(self, request=None):
 	# --- Display initial form.
 	# -------------------------
 	else:
-
 		html.append('<div class="card-body">')
 		html.append('<div class="form-group row">')
 		html.append('<label for="message" class="col-sm-2 control-label mandatory">Message</label>')
-		html.append('<div class="col-sm-10"><input class="form-control" name="message" type="text" size="25" value="" title="Enter commit message..." placeholder="Enter commit message..." /></div>')
+		html.append('<div class="col-sm-10"><input class="form-control" name="git_message" type="text" size="25" value="" placeholder="Enter commit message here"></div>')
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<label for="sign" class="col-sm-2 control-label mandatory">Sign</label>')
+		html.append('<div class="col-sm-10">')
+		html.append('<span class="btn btn-secondary btn-default"><input type="checkbox" name="git_sign" id="sign" value="1" %s title="Adds the -S param to the commit. Please make sure a certificate without passphrase is installed." /></span>'%(self.getConfProperty('ZMSRepository.git.commit.sign', 0)==1 and 'checked=\042checked\042' or ''))
+		html.append('<small class="px-2 pull-right float-right"><a class="text-info" target="_blank" href="https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work">More about Git signing...</a></small>')
+		html.append('</div>')
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group">')
 		html.append('<div class="controls save">')
 		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_GITPUSH">%s</button>'%(self.getZMILangStr('BTN_GITPUSH')))
-		html.append('<button type="submit" name="btn" class="btn btn-secondary" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
+		html.append('<button type="submit" name="btn" class="btn btn-secondary btn-default" value="BTN_CANCEL">%s</button>'%(self.getZMILangStr('BTN_CANCEL')))
 		html.append('</div>')
 		html.append('</div><!-- .form-group -->')
 		# html.append(self.manage_main_diff(self,request))
@@ -215,7 +245,7 @@ def manage_repository_gitpush(self, request=None):
         </list>
       </item>
       <item key="name">BTN_GITPUSH</item>
-      <item key="revision">3.0.7</item>
+      <item key="revision">3.1.0</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
@@ -233,7 +263,7 @@ def manage_repository_gitstatus( self ):
 
 	html = []
 	request = self.REQUEST
-	branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
+	git_branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
 	if request.get('lang',None) is None:
 		request['lang'] = 'ger'
 	if request.get('manage_lang',None) is None:
@@ -286,15 +316,35 @@ def manage_repository_gitstatus( self ):
 		html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 		html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 		html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-		html.append('<legend><p>GIT-Status, Current Branch = %s</p></legend>'%(branch))
+		html.append('<legend><p>GIT-Status, Current Branch = %s</p></legend>'%(git_branch))
 
 		message = ''
+		git_commands = []
 		if len([x for x in request['AUTHENTICATED_USER'].getRolesInContext(self) if x in ['Manager','ZMSAdminstrator']]) > 0:
 			os.chdir(base_path)
-			command = 'git checkout %s;'%(branch) + ' echo ""; echo "# BRANCHES:"; git branch -l; echo ""; git status; echo ""; echo "# HISTORY:"; git log -10 --pretty="format:%ad : #%h %s [%an]" --date=short'
-			result = os.popen(command).read()
+
+			# GIT checkout branch
+			if self.getConfProperty('ZMSRepository.git.server.branch.checkout', 0) == 1:
+				git_commands.append( 'git checkout %s'%(git_branch) )
+				git_commands.append( 'echo ""' )
+
+			# GIT list branches
+			git_commands.append( 'echo "# BRANCHES:"' )
+			git_commands.append( 'git branch -l' )
+			git_commands.append( 'echo ""' )
+
+			# GIT status
+			git_commands.append( 'git status' )
+			git_commands.append( 'echo ""' )
+
+			# GIT history
+			git_commands.append( 'echo "# HISTORY:"' )
+			git_commands.append( 'git log -10 --pretty="format:%ad : #%h %s [%an]" --date=short' )
+
+			gcmd = ';'.join(git_commands)
+			result = os.popen(gcmd).read()
 			# result = os.system(command)
-			message = '<pre class="zmi-code d-block mb-3" style="color: #dee2e6;background-color: #354f67;"><b style="color:#8d9eaf;">>> %s</b><br/><br/>%s</pre>'%(command,str(result))
+			message = '<pre class="zmi-code d-block m-0 p-4" style="margin:1rem 2rem 2rem 1rem;color:#dee2e6;background-color:#354f67;"><b style="color:#8d9eaf;">>> %s</b><br/><br/>%s</pre>'%(gcmd,str(result))
 		else:
 			message = 'Error: To execute this function a user role Manager or ZMSAdministrator is needed.'
 		html.append(message)
@@ -303,7 +353,7 @@ def manage_repository_gitstatus( self ):
 		html.append('<div class="controls save" style="padding-right:3rem">')
 		html.append('<button type="submit" name="btn" class="btn btn-danger" value="BTN_GITPULL"><i class="icon icon-backward fas fa-backward"></i>&nbsp;&nbsp;%s</button> '%(self.getZMILangStr('BTN_GITPULL')))
 		html.append('<button type="submit" name="btn" class="btn btn-success" value="BTN_GITPUSH"><i class="icon icon-forward fas fa-forward"></i>&nbsp;&nbsp;%s</button> '%(self.getZMILangStr('BTN_GITPUSH')))
-		html.append('<button type="submit" name="btn" class="btn btn-default" value="BTN_CANCEL">Cancel</button>')
+		html.append('<button type="submit" name="btn" class="btn btn-secondary btn-default" value="BTN_CANCEL">Cancel</button>')
 		html.append('</div>')
 		html.append('</div><!-- .form-group -->')
 		html.append('</div><!-- .card-body -->')
@@ -336,13 +386,13 @@ def manage_repository_gitstatus( self ):
         </list>
       </item>
       <item key="name"><![CDATA[Git Status]]></item>
-      <item key="revision">3.0.7</item>
+      <item key="revision">3.1.0</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
         </list>
       </item>
-      <item key="title"><![CDATA[Show git Status]]></item>
+      <item key="title"><![CDATA[Show Git Status]]></item>
     </dictionary>
   </item>
   <item type="dictionary">
@@ -353,7 +403,8 @@ import os
 def manage_repository_gitconfig(self, request=None):
 	html = []
 	request = self.REQUEST
-	branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
+	git_branch = self.getConfProperty('ZMSRepository.git.server.branch','main')
+	git_url = self.getConfProperty('ZMSRepository.git.server.url','git@github.com:myname/myproject.git')
 	if request.get('lang',None) is None:
 		request['lang'] = 'ger'
 	if request.get('manage_lang',None) is None:
@@ -396,25 +447,25 @@ def manage_repository_gitconfig(self, request=None):
 	html.append('<form class="form-horizontal" method="post" enctype="multipart/form-data">')
 	html.append('<input type="hidden" name="lang" value="%s"/>'%request['lang'])
 	html.append('<input type="hidden" name="came_from" value="%s"/>'%came_from)
-	html.append('<legend><p>GIT-%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('TAB_CONFIGURATION'), branch))
+	html.append('<legend><p>GIT-%s, Current Branch = %s</p></legend>'%(self.getZMILangStr('TAB_CONFIGURATION'), git_branch))
 
 	# --- Change.
 	# ---------------------------------
 	if btn=='BTN_CHANGE':
 		message = []
-		self.setConfProperty('ZMSRepository.git.server.url',request['url'])
-		self.setConfProperty('ZMSRepository.git.server.branch',request['branch'])
+		self.setConfProperty('ZMSRepository.git.server.url',request.get('git_url'))
+		self.setConfProperty('ZMSRepository.git.server.branch',request.get('git_branch'))
+		self.setConfProperty('ZMSRepository.git.server.branch.checkout', int(request.get('git_checkout',0)))
 		message.append(self.getZMILangStr('MSG_CHANGED'))
 		request.response.redirect(self.url_append_params('manage_main',{'lang':request['lang'],'manage_tabs_message':'<br/>'.join(message)}))
 
 	# --- Checkout.
 	# ---------------------------------
 	elif btn=='BTN_CLONE':
-		url = self.getConfProperty('ZMSRepository.git.server.url')
 		os.chdir(base_path)
-		command = "git clone %s ."%(url)
+		command = "git clone %s ."%(git_url)
 		result = os.system(command)
-		html.append('<div class="alert alert-info my-3"><code class="d-block" style="display:block;background:none">%s [%s]</code></div>'%(command, str(result)))
+		html.append('<div class="alert alert-info my-3"><code class="d-block" style="display:block;background:transparent">%s [%s]</code></div>'%(command, str(result)))
 
 	# --- Cancel.
 	# ---------------------------------
@@ -432,17 +483,21 @@ def manage_repository_gitconfig(self, request=None):
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
 		html.append('<label for="url" class="col-sm-2 control-label mandatory">Server</label>')
-		html.append('<div class="col-sm-10"><input class="form-control" name="url" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.url','git@github.com:myname/myproject.git'))
+		html.append('<div class="col-sm-10"><input class="form-control" name="git_url" type="text" size="25" value="%s"></div>'%(git_url))
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
 		html.append('<label for="branch" class="col-sm-2 control-label mandatory">Branch Name</label>')
-		html.append('<div class="col-sm-10"><input class="form-control" name="branch" placeholder="main" type="text" size="25" value="%s"></div>'%self.getConfProperty('ZMSRepository.git.server.branch','main'))
+		html.append('<div class="col-sm-10"><input class="form-control" name="git_branch" placeholder="main" type="text" size="25" value="%s"></div>'%(git_branch))
+		html.append('</div><!-- .form-group -->')
+		html.append('<div class="form-group row">')
+		html.append('<label for="branch" class="col-sm-2 control-label mandatory">Always checkout first</label>')
+		html.append('<div class="col-sm-10"><span class="btn btn-secondary btn-default"><input type="checkbox" name="git_checkout" id="git_checkout" value="1" %s title=" Any git command starts with: git checkout %s" /></span></div>'%(self.getConfProperty('ZMSRepository.git.server.branch.checkout', 0)==1 and 'checked=\042checked\042' or '', git_branch))
 		html.append('</div><!-- .form-group -->')
 		html.append('<div class="form-group row">')
 		html.append('<div class="controls save">')
 		html.append('<button type="submit" name="btn" class="btn btn-primary" value="BTN_CHANGE">Save</button>')
 		html.append('<button type="submit" name="btn" class="btn btn-warning" value="BTN_CLONE">Clone</button>')
-		html.append('<button type="submit" name="btn" class="btn btn-default" value="BTN_CANCEL">Cancel</button>')
+		html.append('<button type="submit" name="btn" class="btn btn-secondary btn-default" value="BTN_CANCEL">Cancel</button>')
 		html.append('</div>')
 		html.append('</div><!-- .form-group -->')
 		html.append('</div><!-- .card-body -->')
@@ -475,7 +530,7 @@ def manage_repository_gitconfig(self, request=None):
         </list>
       </item>
       <item key="name">TAB_CONFIGURATION</item>
-      <item key="revision">3.0.7</item>
+      <item key="revision">3.1.0</item>
       <item key="roles" type="list">
         <list>
           <item>ZMSAdministrator</item>
