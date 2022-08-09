@@ -8,6 +8,7 @@
 		}
 	],
 	"settings": {
+		"python.defaultInterpreterPath": "/home/zope/vpy27/bin/python",
 		"python.pythonPath": "/home/zope/vpy27/bin/",
 		"window.zoomLevel": 0,
 		"git.ignoreMissingGitWarning": true,
@@ -24,7 +25,8 @@
 		"scm.alwaysShowActions": true,
 		"svn.autorefresh": false,
 		"files.exclude": {
-			"*.pyc": true
+			"*.pyc": true,
+			"*-all.min.*":true
 		},
 		"python.workspaceSymbols.exclusionPatterns": [
 			"**/site-packages/**",
@@ -32,7 +34,7 @@
 		],
 		"files.eol": "\n",
 		"files.autoSave": "afterDelay",
-		"workbench.colorTheme": "Default Light+",
+		"workbench.colorTheme": "Visual Studio Light",
 		"python.linting.enabled": true
 	},
 	"remoteAuthority": "wsl+Ubuntu-20.04"
