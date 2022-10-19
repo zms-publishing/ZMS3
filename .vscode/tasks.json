@@ -1,18 +1,18 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-	  {
-		"label": "Load Py2", 
-		"type": "shell",
-		"command": "code --install-extension ms-python.python@2022.2.1924087327", 
-		"group": "none",
-		"presentation": {
-			"reveal": "always",
-			"panel": "new"
-		},
-		"runOptions": {
-			"runOn": "folderOpen"
+		{
+			"label": "Downgrade Py2-VScode-Extension", 
+			"type": "shell",
+			"command": "code --install-extension ms-python.python@2022.2.1924087327", 
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		}
-	  }
 	]
-  }
+}

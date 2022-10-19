@@ -5,6 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // #################################################
+            //"preLaunchTask": "Downgrade Py2-VScode-Extension",
+            // #################################################
+            // # IMPORTANT HINT: Make sure, that the Py2-compatible Py2-VScode-Extension is installed
+            // # and the automatic update VSCode extensions is deactivated. 
+            // # 1. For WSL set local Win setttings:
+            // # %AppData%\Code\User\settings.json
+            // #    {
+            // #        "extensions.autoCheckUpdates": false,
+            // #        "extensions.autoUpdate": false,
+            // #    }
+            // # In WSL declare the old extension as _not_ whereas the latest as obsolete:
+            // # ~/.vscode-server/extensions/.obsolete
+            // #    {
+            // #        "ms-python.python-2022.2.1924087327":false, 
+            // #        "ms-python.python-2022.16.1":true
+            // #    }
+
             "name": "Python: Zope-ZMS3",
             "type": "python",
             "request": "launch",
@@ -12,7 +30,7 @@
             // "module": "Zope2.Startup.run",
             "console": "integratedTerminal",
             "args": [
-                "-C ../../../instance/zms3_dev/etc/zope.conf",
+                "-C ../../../../../instance/zms3_dev/etc/zope.conf",
                 // "-X 'debug-mode=on'",
             ],
             "env": {
@@ -22,6 +40,11 @@
                 "SOFTWARE_HOME": "/home/zope/vpy27/bin/",
                 "ZDCTL": "/home/zope/vpy27/bin/zopectl",
                 "ZOPE_RUN": "/home/zope/vpy27/bin/runzope",
+            },
+            "serverReadyAction":{
+                "pattern":"/i18n/heb.js",
+                "uriFormat": "http://127.0.0.1:8080/manage_main",
+                "action": "openExternally",
             },
         }
     ]
