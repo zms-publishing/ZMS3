@@ -230,7 +230,7 @@ class ZMSRepositoryManager(
           continue
         l = local.get(filename, {})
         r = remote.get(filename, {})
-        if isinstance(l['data'],(str,unicode)):
+        if isinstance(l.get('data'),(str,unicode)):
           l['data'] = l.get('data','').replace('\r','')
           r['data'] = r.get('data','').replace('\r','')
         if l.get('data', '') != r.get('data', ''):
