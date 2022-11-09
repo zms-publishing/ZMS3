@@ -1,4 +1,4 @@
-/* ZMS CUSTOM STYLES: LIGHT 2021-02-26 */
+/* ZMS CUSTOM STYLES: LIGHT 2022-11-09 */
 /* <dtml-call "RESPONSE.setHeader('Content-Type','text/css')"> */
 /* <dtml-call "RESPONSE.setHeader('Cache-Control','public,max-age=3600')"> */
 
@@ -50,6 +50,9 @@ a:focus, a:hover {
 }
 .breadcrumb img {
 	visibility:hidden;
+	max-width: 16px;
+	max-height: 16px;
+
 }
 .breadcrumb a {
 	margin:0 .5em;
@@ -306,17 +309,22 @@ input[type="submit"] {
 	vertical-align: middle;
 	-webkit-appearance: button;
 	cursor: pointer;
-	background-color: transparent;
+	background-color: transparent !important;
+	color:black;
 	height: 34px;
 	padding: 6px 12px;
 	line-height: 1.42857143;
-	border: 1px solid silver;
+	border: 1px solid silver !important;
 	border-radius: 4px;
 	-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 	box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 	-webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
 	-o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 	transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+}
+input[type="reset"]:hover,
+input[type="submit"]:hover {
+	color:inherit;
 }
 .form-group.form-inline input,
 form[action='manage_edit'] input[type='submit'] {
