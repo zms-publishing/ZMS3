@@ -1391,9 +1391,10 @@ ZMIObjectTree.prototype.addPages = function(pages) {
 			}
 		}
 		if (page_meta_type=='ZMSGraphic') {
+			// debugger;
 			var $img = $("img",$page);
 			if ($img.length==1) {
-				link_url = '<img data-id=&quot;'+page_uid+'&quot; src=&quot;'+$("href",$img).text()+'&quot;>';
+				link_url = '<img data-id=&quot;'+page_uid+'&quot;'+' src=&quot;'+$("href",$img).text()+'&quot;>';
 				try { page_titlealt = filename; } catch(err) { };
 			}
 		}
@@ -1402,7 +1403,7 @@ ZMIObjectTree.prototype.addPages = function(pages) {
 			if ($file.length==1) {
 				var $fname = $("filename",$file).text();
 				var $ext = $fname.substring($fname.lastIndexOf('.')+1,$fname.length);
-				link_url = '<a data-id=&quot;'+page_uid+'&quot; href=&quot;'+$("href",$file).text()+'&quot; target=&quot;_blank&quot;>'+$page.attr("titlealt").replace(/"/g,'')+'&#32;('+$ext.toUpperCase()+',&#32;'+$("size",$file).text()+')</a>'; 
+				link_url = '<a data-id=&quot;'+page_uid+'&quot;'+' href=&quot;'+$("href",$file).text()+'&quot; target=&quot;_blank&quot;>'+$page.attr("titlealt").replace(/"/g,'')+'&#32;('+$ext.toUpperCase()+',&#32;'+$("size",$file).text()+')</a>'; 
 				try { page_titlealt = filename; } catch(err) { };
 			}
 		}
