@@ -2206,7 +2206,7 @@ $(function() {
 // ### BACK-TO-TOP-SCROLL BUTTON
 // ############################################################################
 $(function() {
-	var offset = 150;
+	var offset = 42;
 	var duration = 300;
 	$(window).scroll(function() {
 		if ($(this).scrollTop() > offset) {

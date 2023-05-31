@@ -200,15 +200,19 @@ nav .scroller-left {
 	color: inherit;
 }
 .zmi footer .back-to-top {
-	color:#08c;
+	color:white;
 	cursor:pointer;
 	text-align:center;
-	margin: 0;
+	margin: 1rem;
 	position: fixed;
-	bottom: .2em;
-	right: .4em;
-	padding:.2em .3em;
-	z-index: 100;
+	bottom: 0;
+	right: 0;
+	z-index:100;
+	display: block;
+	width: 32px;
+	height: 32px;
+	line-height: 32px;
+	background: #337ab77a;
 	border:none;
 	border-radius:4px;
 }
