@@ -233,7 +233,7 @@
 		}
 
 		function show_spinner(e) {
-			e.html('<i class="fas fa-spinner fa-spin" title="Loading"></i>');
+			e.html('<i class="icon-spinner icon-spin" title="Loading"></i>');
 			$('.alert').html('Content Tree Analyzing ... '); 
 			$('#ZMI_TIME').val(Date.now()/1000);
 		}
