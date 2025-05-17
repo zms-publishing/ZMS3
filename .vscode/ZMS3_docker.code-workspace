@@ -1,0 +1,81 @@
+// IMPORTANT NOTE: Host-Workspace for debugging Zope2-Python2
+// This workspace is for debugging Zope2-Python2 in a host system (not Docker). 
+// It needs VSCode 1.96.4 or earlier and the old debugpy extension.
+// The Python interpreter is located in the host filesystem /home/zope/vpy27/bin/python2
+// VSCode 1.99+ are not compatible anymore with the glibc-libraries of older Linux:
+// https://code.visualstudio.com/docs/remote/faq#_can-i-run-vs-code-server-on-older-linux-distributions
+{
+	"folders": [
+		{
+			"name": "DOCKER: ZMS3",
+			"path": "/home/zope/src/zms-publishing/ZMS3"
+		}
+	],
+	"settings": {
+		"python.pythonPath": "/home/zope/venv/bin/python2",
+		"python.defaultInterpreterPath": "/home/zope/venv/bin/python2",
+		"python-old.setInterpreter": "/home/zope/venv/bin/python2",
+		"window.zoomLevel": 0,
+		"editor.minimap.enabled": false,
+		"editor.renderWhitespace": "all",
+		"editor.insertSpaces": false,
+		"editor.renderControlCharacters": false,
+		"editor.tabSize": 4,
+		"workbench.iconTheme": "vs-minimal",
+		"files.associations": {
+			"*.zpt": "html",
+			"*.zcml": "xml",
+			"css_*": "css"
+		},
+		"files.exclude": {
+			"*.pyc": true,
+			"*-all.min.*":true
+		},
+		"python.workspaceSymbols.exclusionPatterns": [
+			"**/site-packages/**",
+			"*.pyc"
+		],
+		"files.eol": "\n",
+		"files.autoSave": "afterDelay",
+		"python.linting.pylintEnabled": true,
+		"python.linting.enabled": false,
+		"jupyter.jupyterServerType": "local",
+		"task.allowAutomaticTasks": "on",
+		"git.openRepositoryInParentFolders": "always",
+		"extensions.ignoreRecommendations": true,
+		"extensions.autoUpdate": false,
+		"extensions.autoCheckUpdates": false,
+		"update.mode": "none"
+	},
+
+	"launch": {
+		"configurations": [
+			{
+				"name": "Docker: DESY-ZMS3-Py2",
+				"type": "python",
+				"request": "launch",
+				"program": "/home/zope/venv/lib/python2.7/site-packages/Zope2/Startup/run.py",
+				// "module": "Zope2.Startup.run",
+				"justMyCode": false,
+				"console": "integratedTerminal",
+				"args": [
+					"-C/home/zope/instance/etc/zope_8080_debug.conf",
+					"-Xdebug-mode=on"
+				],
+				"env": {
+					"PYTHONUNBUFFERED":"1",
+					"CONFIG_FILE": "/home/zope/instance/etc/zope_8080_debug.conf",
+					"INSTANCE_HOME": "/home/zope/instance",
+					"CLIENT_HOME": "/home/zope/instance",
+					"PYTHON": "/home/zope/venv/bin/python",
+					"SOFTWARE_HOME": "/home/zope/venv/bin/"
+				},
+				"serverReadyAction":{
+					"pattern":"Zope Ready to handle requests",
+					"uriFormat": "http://127.0.0.1:8080/manage_main",
+					"action": "openExternally"
+				}
+			}
+		]
+	}
+}

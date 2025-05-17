@@ -1,0 +1,65 @@
+// IMPORTANT NOTE: Host-Workspace for debugging Zope2-Python2
+// This workspace is for debugging Zope2-Python2 in a host system (not Docker). 
+// It needs VSCode 1.96.4 or earlier and the old debugpy extension.
+// The Python interpreter is located in the host filesystem /home/zope/vpy27/bin/python2
+// VSCode 1.99+ are not compatible anymore with the glibc-libraries of older Linux:
+// https://code.visualstudio.com/docs/remote/faq#_can-i-run-vs-code-server-on-older-linux-distributions
+{
+	"folders": [
+		{
+			"name": "ZMS3_DEV-Instance",
+			"path": "../"
+		}
+	],
+	"settings": {
+		"python.pythonPath": "/home/zope/vpy27/bin/python2",
+		"python.defaultInterpreterPath": "/home/zope/vpy27/bin/python2",
+		"python-old.setInterpreter": "/home/zope/vpy27/bin/python2",
+		"window.zoomLevel": 0,
+		"editor.minimap.enabled": false,
+		"editor.renderWhitespace": "all",
+		"editor.insertSpaces": false,
+		"editor.renderControlCharacters": false,
+		"editor.tabSize": 4,
+		"workbench.iconTheme": "vs-minimal",
+		"files.associations": {
+			"*.zpt": "html",
+			"*.zcml": "xml",
+			"css_*": "css"
+		},
+		"files.exclude": {
+			"**/site-packages/**":true,
+			"*.pyc": true,
+			"*.egg*":true
+		},
+		"files.eol": "\n",
+		"files.autoSave": "afterDelay",
+		"python.linting.enabled": true
+	},
+	"launch": {
+		"configurations": [
+			{
+				"name": "ZMS3-Py2",
+				"type": "python",
+				"request": "launch",
+				"program": "/home/zope/vpy27/lib/python2.7/site-packages/Zope2/Startup/run.py",
+				// "module": "Zope2.Startup.run",
+				"justMyCode": false,
+				"console": "integratedTerminal",
+				"env": {
+					"PYTHONUNBUFFERED":"1",
+					"CONFIG_FILE": "/home/vpy27/instance/zms3_dev/etc/zope.conf",
+					"INSTANCE_HOME": "/home/vpy27/instance/zms3_dev",
+					"CLIENT_HOME": "/home/vpy27/instance/zms3_dev",
+					"PYTHON": "/home/vpy27/venv/bin/python",
+					"SOFTWARE_HOME": "/home/vpy27/venv/bin/"
+				},
+				"serverReadyAction":{
+					"pattern":"Zope Ready to handle requests",
+					"uriFormat": "http://127.0.0.1:8080/manage_main",
+					"action": "openExternally"
+				}
+			}
+		]
+	}
+}
