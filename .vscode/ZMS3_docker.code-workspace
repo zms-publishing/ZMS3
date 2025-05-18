@@ -51,7 +51,7 @@
 	"launch": {
 		"configurations": [
 			{
-				"name": "Docker: DESY-ZMS3-Py2",
+				"name": "Docker: ZMS3-Py2",
 				"type": "python",
 				"request": "launch",
 				"program": "/home/zope/venv/lib/python2.7/site-packages/Zope2/Startup/run.py",
