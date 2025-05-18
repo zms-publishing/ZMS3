@@ -78,11 +78,8 @@ RUN virtualenv --python=python2 $VIRTUAL_ENV
 WORKDIR $VIRTUAL_ENV/bin
 RUN bash -c "source activate"
 
-RUN mkdir -p ~/src/zms-publishing/ZMS3
-RUN git clone https://github.com/zms-publishing/ZMS3.git ~/src/zms-publishing/ZMS3
-
 RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
-RUN ./pip install -e ~/src/zms-publishing/ZMS3/.
+RUN ./pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
 RUN ./pip install Products.PluginRegistry==1.4
 RUN ./pip install Products.LDAPUserFolder==2.27
 RUN ./pip install Products.PluggableAuthService==1.11.0
@@ -98,12 +95,8 @@ RUN ./pip install Pillow
 RUN ./pip install feedparser
 RUN ./pip install python-memcached==1.59
 
-# Add symbolic link for zms to Products folder of the Zope instance
-# RUN ln -s $VIRTUAL_ENV/src/zms $INSTANCE_DIR/Products/zms
-
 # # Create Zope Instance
-# RUN mkzopeinstance -d $INSTANCE_HOME -u admin:admin
-# COPY ./var $INSTANCE_HOME/var
+RUN ./mkzopeinstance --dir /home/zope/instance --user admin:admin
 
 # EXPOSE 3306
 # EXPOSE 8080

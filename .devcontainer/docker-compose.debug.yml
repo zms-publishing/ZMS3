@@ -10,12 +10,8 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/bin/:${INSTANCE_DIR}/bin/:rw
-    - ./instance/etc/:${INSTANCE_DIR}/etc/:rw
-    - ${INSTANCE_MOUNT}/:${INSTANCE_DIR}/:rw
-    - ${CUSTOM_MOUNT}/:${CUSTOM_DIR}/:rw
+    - ./instance/:${INSTANCE_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
-    - ${HOME_DIR}/.vscode-server:${HOME_DIR}/.vscode-server:rw
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &

@@ -9,6 +9,10 @@
 		{
 			"name": "ZMS3-src",
 			"path": "../"
+		},
+		{
+			"name": "ZMS3-instance",
+			"path": "/home/zope/instance/zms3_dev"
 		}
 	],
 	"settings": {
