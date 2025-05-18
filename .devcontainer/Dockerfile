@@ -75,25 +75,31 @@ ENV INSTANCE_DIR=${INSTANCE_DIR}
 ENV VIRTUAL_ENV=${VENV_DIR}
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN virtualenv --python=python2 $VIRTUAL_ENV
-WORKDIR $VIRTUAL_ENV
+WORKDIR $VIRTUAL_ENV/bin
+RUN bash -c "source activate"
 
-RUN pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
-RUN pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
-RUN pip install Products.PluginRegistry==1.4
-RUN pip install Products.LDAPUserFolder==2.27
-RUN pip install Products.PluggableAuthService==1.11.0
-RUN pip install Products.LDAPMultiPlugins==1.14
-RUN pip install Products.ZSQLMethods==2.13.4
-RUN pip install MySQL-python==1.2.5
-RUN pip install Products.ZSQLiteDA==0.6.1
-RUN pip install Products.ZMySQLDA==3.1.1
-RUN pip install Products.SQLAlchemyDA
-RUN pip install --no-deps Products.mcdutils==2.0
-RUN pip install SQLAlchemy
-RUN pip install Pillow
-RUN pip install feedparser
-RUN pip install python-memcached==1.59
+RUN mkdir -p ~/src/zms-publishing/ZMS3
+RUN git clone https://github.com/zms-publishing/ZMS3.git ~/src/zms-publishing/ZMS3
 
+RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
+RUN ./pip install -e ~/src/zms-publishing/ZMS3/.
+RUN ./pip install Products.PluginRegistry==1.4
+RUN ./pip install Products.LDAPUserFolder==2.27
+RUN ./pip install Products.PluggableAuthService==1.11.0
+RUN ./pip install Products.LDAPMultiPlugins==1.14
+RUN ./pip install Products.ZSQLMethods==2.13.4
+RUN ./pip install MySQL-python==1.2.5
+RUN ./pip install Products.ZSQLiteDA==0.6.1
+RUN ./pip install Products.ZMySQLDA==3.1.1
+RUN ./pip install Products.SQLAlchemyDA
+RUN ./pip install --no-deps Products.mcdutils==2.0
+RUN ./pip install SQLAlchemy
+RUN ./pip install Pillow
+RUN ./pip install feedparser
+RUN ./pip install python-memcached==1.59
+
+# Add symbolic link for zms to Products folder of the Zope instance
+# RUN ln -s $VIRTUAL_ENV/src/zms $INSTANCE_DIR/Products/zms
 
 # # Create Zope Instance
 # RUN mkzopeinstance -d $INSTANCE_HOME -u admin:admin

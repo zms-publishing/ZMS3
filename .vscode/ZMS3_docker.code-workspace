@@ -8,7 +8,7 @@
 	"folders": [
 		{
 			"name": "DOCKER: ZMS3",
-			"path": "/home/zope/src/zms-publishing/ZMS3"
+			"path": "../"
 		}
 	],
 	"settings": {
