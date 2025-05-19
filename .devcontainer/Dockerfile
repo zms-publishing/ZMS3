@@ -94,6 +94,8 @@ RUN ./pip install SQLAlchemy
 RUN ./pip install Pillow
 RUN ./pip install feedparser
 RUN ./pip install python-memcached==1.59
+RUN ./pip install xhtml2pdf==0.2.4
+RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx*
 
 # # Create Zope Instance
 RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
