@@ -1,12 +1,12 @@
-# In-place dockerization: Running Py2-Zope/ZMS apps on a modern operating system
+# Running Py2-Zope/ZMS Apps on a Current Operating System
 
-> _The text describes the subsequent operation of a Python2-based ZMS environment from an old OS with a previous Python2 package installation in a modern OS, where Python2 is no longer available or cannot be made available by self-compilation: the Python2 code can no longer integrate the current OpenSSL 3+ lib, among other things, and breaks accordingly when trying to compile. In addition, the parallel operation of two (incompatible) Python generations is prone to errors. If a Python 3 migration is not practicable, it is possible to continue operation in a Docker container with the old operating system. \
-\
+> _The text describes the subsequent operation of a Python2-based ZMS environment from an old OS with a previous Python2 package installation in a modern OS, where Python2 is no longer available or cannot be made available by self-compilation: the Python2 code can no longer integrate the current OpenSSL 3+ lib, among other things, and breaks accordingly when trying to compile. In addition, the parallel operation of two (incompatible) Python generations is prone to errors. If a Python 3 migration is not practicable, it is possible to continue operation in a Docker container with the old operating system.
+
 Hint: It should be noted that the LTS support for Python2 expired in 2020 and its use should be limited to a protected intranet environment._
 
-## Home-Folder: ./venv und ./instance
+## Data Organization in Folders ./venv and ./instance
 
-The Zope/ZMS installation is usually carried out in a virtual Python environment (venv). The following data organization is suggested for container operation:
+The Zope/ZMS installation is usually carried out in a virtual Python environment (venv). The following data organization is suggested for container operation. The `venv` folders are those of the virtual Python environment, while the Zope instance is stored in the `instance` folder:
 
 ```txt
 /home/zope/venv
@@ -27,26 +27,25 @@ The Zope/ZMS installation is usually carried out in a virtual Python environment
   /var
 ```
 
-The `venv` folders are those of the virtual Python environment, while the Zope instance is stored in the `instance` folder.
-In the case shown, the Zope instance are therefore nested in the user folder; in reality, however, they can also be located elsewhere in the file tree. The paths that are relevant for starting a Zope instance are basically only two, namely:
+In practice, however, a real world system can be located elsewhere in the file tree. The relevant paths for starting a Zope instance are basically only two, namely:
 
-1. the path to the Python binary used (from the venv) and
+1. the path to the Python binary used (usually the virtual Python environment) and
 2. the path to the Zope instance with its productive data
 
 
 ## In-place dockerization
 
-The “in-place Dockerization” approach now consists of providing only the Python2 runtime environment via a Docker image and making the entire database (as it is, “in-place”) accessible to the running container as a mount-bind. This means that the Py2-Zope app server running in the container accesses the host file system _from the container_ or publishes “upstream” from the container to the web server (e.g. nginx) via the port defined in container-zope.conf. This in turn can run in its own container or on the host server.
+The “in-place dockerization” approach now consists of providing only the Python2 runtime environment via a Docker image and making the entire database (as it is, “in-place”) accessible to the running container as a mount-bind. This means that the Py2-Zope app server running in the container accesses the host file system _from the container_ or publishes “upstream” from the container to the web server (e.g. nginx) via the port defined in container-zope.conf. This in turn can run in its own container or on the host server.
 
-To create the two Docker constructs, the following configuration files are required; these are placed in the folder in which the Zope instances are located: 
+To create the Docker constructs, the following configuration files are required; these are placed in the folder in which the Zope instances are located: 
 
 1. **Image**, e.g.: `/home/zope/venv/instances/Dockerfile`
 2. **Container**, e.g: `/home/zope/venv/instances/docker-compose`
 
 
-## Docker-Image with Ubuntu 16.04
+## Docker-Image using Ubuntu 16.04
 
-The Docker image is based on Ubuntu 16.04 which still allows the package installation of Python2.Zope 2.13.29 and ZMS3 are installed via github, as well as any Python modules that may need to be extended for specific projects. For the sake of traceability, the virtual Python is located in the container in the path hierarchy *analogous* to the host server: `/home/zope/venv/`.
+The Docker image is based on Ubuntu 16.04 which still allows the standard package installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`:
 
 
 ```yml
@@ -154,9 +153,14 @@ RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
 
 This container image forms the basis for the containers that perform the mount-binding to the host file system and start the application.
 
-## Run Zope/ZMS in the Docker container
+## Run Zope/ZMS in the Docker Container
 
-Only one Zope instance now runs in a container - monotonously on port 8080. this always identical container-internal port is mapped/externalized to a unified port such as 8085, 8086, 8087 etc. with the help of an environment variable at Zope startup. Since zope.conf unfortunately cannot accept variables, the complete zope.conf file is now generated dynamically via shell script for the start of the Zope instance. This is based on the HTTP_PORT and READ_ONLY environment variables defined via the Docker Compose. The start of the Zope application happens with the shell-script `start_instance.sh` (.devcontainer/start_instance.sh)
+Only one Zope instance now runs in a container - monotonously on port 8080. The always identical container-internal port will be mapped/externalized to a unified port such as 8085, 8086, 8087 etc; this is accomplished by environment variables at Zope startup. Since zope.conf unfortunately cannot accept variables directly, the complete zope.conf file will be  generated dynamically by the shell script that starts the Zope instance. The crucial variables are:
+
+1. HTTP_PORT 
+2. READ_ONLY
+
+These environment variables are defined by the docker-compose file and processed by the shell-script that starts the Zope instance: `start_instance.sh` (.devcontainer/start_instance.sh)
 
 ```yml
 x-instance-common: &instance_common
@@ -225,7 +229,7 @@ services:
       sleep infinity
       "
 ```
-Instead of creating a separate docker-composefile for each Zope instance, the sequence with its specific variables is called for each container on the basis of a template “&instance_common” in order to create the respective container.
+Instead of creating a separate docker-composefile for each Zope instance, the sequence with its specific variables is called for each container on the basis of a template `&instance_common` in order to create the respective container.
 So, the number of Zope instances is set in the Docker Compose file by duplicating a minimalist description for the Zope instance (i.e. not via a port number iteration in the start script as before. The Zope start script now starts a single instance per container and, in addition to starting Zope, has the new task of automatically generating a suitable zope.conf beforehand so that it can then be called). 
 By copying and adapting the following block, you can create new Zope instances in the docker-compose file:
 
@@ -243,7 +247,7 @@ By copying and adapting the following block, you can create new Zope instances i
 ```
 
 
-## Container-consistent Zope configuration 
+## Container-Consistent Zope Configuration 
 
 As the conf files used by the container originate from the host FS, they must correspond to the path situation *within* the container. As only one single Zope instance runs in each container under the same path `/home/zope/instance` using the virtual Python from `/home/zope/venv`, the runzope file is always the same.
 These pathes are applied to the runzeo-script as well.
@@ -275,9 +279,10 @@ exec "$PYTHON" -m ZEO.runzeo -C "$CONFIG_FILE" ${1+"$@"}
 
 ```
 
-### Template based creation of $INSTANCE/etc/zope.conf
+### Template based Creation of $INSTANCE/etc/zope.conf
 
 To create an instance-specific zope.conf file, a text template is used, which is specified using the Linux command envsubst with the values of two variables:
+
 1. READ_ONLY: Set to true to start Zope in read-only mode.
 2. HTTP_PORT: The container port on which the Zope port is mapped to.
 
