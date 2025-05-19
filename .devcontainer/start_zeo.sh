@@ -13,15 +13,13 @@ export PATH="$VENV_DIR/bin:$PATH"
 # ---------------------------------
 # [A] Start ZEO server
 # ---------------------------------
-### Wait for the database file to become available
-# echo "Waiting for Data.fs at $INSTANCE_DIR/var/Data.fs..."
-# if ! [ -S "$INSTANCE_DIR/var/Data.fs" ]; then
-#   echo "ZEO server needs a Data.fs file to start."
-#   echo "Please create a Data.fs file in $INSTANCE_DIR/var/ and try again."
-#   exit 0
-# else
-#   echo "Data.fs file found at $INSTANCE_DIR/var/Data.fs"
-# fi
+
+### Create Data.fs if it does not exist
+if ! [ -S "$INSTANCE_DIR/var/Data.fs" ]; then
+  echo "New Data.fs is created that ZEO can connect to."
+  $VENV_DIR/bin/python2 $INSTANCE_DIR/bin/create_zodb.py
+  sleep 2
+fi
 
 nohup "$VENV_DIR/bin/runzeo" --configure "$INSTANCE_DIR/etc/zeo.conf" 1>/dev/null 2>/dev/null &
 # Check if ZEO server is running on socket: $INSTANCE_DIR/var/zeosocket
