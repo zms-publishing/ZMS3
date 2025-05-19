@@ -96,7 +96,7 @@ RUN ./pip install feedparser
 RUN ./pip install python-memcached==1.59
 
 # # Create Zope Instance
-RUN ./mkzopeinstance --dir /home/zope/instance --user admin:admin
+RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
 
 # EXPOSE 3306
 # EXPOSE 8080
