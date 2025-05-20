@@ -48,6 +48,7 @@ while ! nc -z localhost 8080; do
   echo "Waiting for Zope to start ..."
   sleep 1
 done
+sleep 2
 echo "Zope started on port 8080 and publishing on $HTTP_PORT"
 # ---------------------------------
 
