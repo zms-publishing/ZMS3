@@ -6,6 +6,8 @@ FROM ubuntu:16.04
 ARG INSTANCE_DIR
 ARG VENV_DIR
 ARG IS_DEBUG
+ARG UID
+ARG GID
 # ############################
 
 RUN apt-get update
@@ -19,8 +21,7 @@ RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
 RUN apt-get install -y --no-install-recommends gettext-base
-RUN apt-get install -y netcat
-RUN apt-get install -y inetutils-ping
+RUN apt-get install -y lsof netcat inetutils-ping nano
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
 RUN apt-get install -y python2.7
@@ -61,8 +62,6 @@ RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-se
 RUN python2 -m pip install pip==20.3
 
 # Set host's UID/GID to allow sharing of production files as bind mounts
-ENV UID=1000
-ENV GID=1000
 RUN groupadd --gid $GID zope
 RUN adduser --disabled-password --uid $UID --gid $GID zope
 

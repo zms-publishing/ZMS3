@@ -7,6 +7,8 @@ x-instance-common: &instance_common
       - INSTANCE_DIR=${INSTANCE_DIR}
       - VENV_DIR=${VENV_DIR}
       - IS_DEBUG=true
+      - UID=${UID}
+      - GID=${GID}
   depends_on:
     - zeo
   user: zope
