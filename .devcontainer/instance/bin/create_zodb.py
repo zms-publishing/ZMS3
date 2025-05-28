@@ -14,4 +14,4 @@ if not hasattr(root, 'app_root'):
 
 connection.close()
 db.close()
-print("Initial ZODB file created successfully!")
+print("New Data.fs-file created successfully!")

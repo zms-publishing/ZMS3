@@ -36,12 +36,30 @@ export CONF_TS=$(date +"%Y%m%d_%H%M%S")
 # ---------------------------------
 # Create zope.conf for given HTTP_PORT
 envsubst '$HTTP_PORT $READ_ONLY $CONF_TS' < "${INSTANCE_DIR}/etc/zope.conf.tmpl" > "${INSTANCE_DIR}/etc/zope_$HTTP_PORT.conf"
+
 # Wait until the conf file was created successfully
-sleep 1
 while [ ! -f "${INSTANCE_DIR}/etc/zope_$HTTP_PORT.conf" ]; do
   echo "Waiting for zope.conf to be created ..."
   sleep 1
 done
+
+# Wait for ZEO server to start by monitoring its log file
+echo "Waiting for ZEO server to start listening on socket..."
+max_wait=60  # Maximum seconds to wait
+elapsed=0
+while ! grep -q "listening on" "${INSTANCE_DIR}/log/zeo.log" 2>/dev/null; do
+  echo "Waiting for ZEO server to start... ($elapsed seconds)"
+  sleep 1
+  elapsed=$((elapsed+1))
+  # Check if we've exceeded the maximum wait time
+  if [ $elapsed -ge $max_wait ]; then
+    echo "ERROR: Timed out waiting for ZEO server to start (${max_wait}s)"
+    exit 1
+  fi
+done
+echo "ZEO server is now listening on socket"
+
+# Start Zope instance
 echo "Starting Zope instance ..."
 nohup $VENV_DIR/bin/runzope -C $INSTANCE_DIR/etc/zope_$HTTP_PORT.conf 1>/dev/null 2>/dev/null &
 while ! nc -z localhost 8080; do
