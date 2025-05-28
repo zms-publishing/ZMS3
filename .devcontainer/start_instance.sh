@@ -47,11 +47,11 @@ done
 echo "Waiting for ZEO server to start listening on socket..."
 max_wait=60  # Maximum seconds to wait
 elapsed=0
-while ! grep -q "listening on" "${INSTANCE_DIR}/log/zeo.log" 2>/dev/null; do
+while ! tail -n 20 "${INSTANCE_DIR}/log/zeo.log" 2>/dev/null | grep -q "listening on"; do
   echo "Waiting for ZEO server to start... ($elapsed seconds)"
   sleep 1
   elapsed=$((elapsed+1))
-  # Check if we've exceeded the maximum wait time
+  # Check if maximum waiting time is exceeded
   if [ $elapsed -ge $max_wait ]; then
     echo "ERROR: Timed out waiting for ZEO server to start (${max_wait}s)"
     exit 1
