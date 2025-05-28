@@ -5,6 +5,7 @@ FROM ubuntu:16.04
 # ############################
 ARG INSTANCE_DIR
 ARG VENV_DIR
+ARG IS_DEBUG
 # ############################
 
 RUN apt-get update
@@ -19,6 +20,7 @@ RUN apt-get install -y wget
 RUN apt-get install -y curl
 RUN apt-get install -y --no-install-recommends gettext-base
 RUN apt-get install -y netcat
+RUN apt-get install -y inetutils-ping
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
 RUN apt-get install -y python2.7
@@ -58,12 +60,22 @@ RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-se
 
 RUN python2 -m pip install pip==20.3
 
-# Grant zope passwordless sudo
-RUN apt-get update && \
-	apt-get install -y sudo && \
-	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Set host's UID/GID to allow sharing of production files as bind mounts
+ENV UID=1000
+ENV GID=1000
+RUN groupadd --gid $GID zope
+RUN adduser --disabled-password --uid $UID --gid $GID zope
 
-RUN adduser --disabled-password zope && usermod -aG sudo zope
+# Grant zope passwordless sudo for development purposes if IS_DEBUG is set to true
+RUN if [ "$IS_DEBUG" = "true" ]; then \
+	echo "Debug mode is ON. Granting zope passwordless sudo." && \
+	apt-get update && \
+	apt-get install -y sudo && \
+	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
+	adduser zope sudo; \
+else \
+	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
+fi
 
 # # Prepare MySQL runtime & data dirs and give them to zope
 # RUN mkdir -p /var/run/mysqld /var/lib/mysql \

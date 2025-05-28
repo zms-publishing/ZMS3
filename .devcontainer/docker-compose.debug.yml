@@ -1,11 +1,12 @@
 x-instance-common: &instance_common
-  image: zms3:latest
+  image: zms3:latest-debug
   build:
     context: .
     dockerfile: ./Dockerfile
     args:
       - INSTANCE_DIR=${INSTANCE_DIR}
       - VENV_DIR=${VENV_DIR}
+      - IS_DEBUG=true
   depends_on:
     - zeo
   user: zope
