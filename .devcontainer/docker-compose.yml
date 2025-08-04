@@ -18,6 +18,7 @@ x-instance-common: &instance_common
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
+      wait 2 &
       ${SRC_DIR}/.devcontainer/start_instance.sh &&
       sleep infinity
     "
