@@ -1,14 +1,16 @@
-// IMPORTANT NOTE: Host-Workspace for debugging Zope2-Python2
-// This workspace is for debugging Zope2-Python2 in a host system (not Docker). 
-// It needs VSCode 1.96.4 or earlier and the old debugpy extension.
-// The Python interpreter is located in the host filesystem /home/zope/vpy27/bin/python2
-// VSCode 1.99+ are not compatible anymore with the glibc-libraries of older Linux:
-// https://code.visualstudio.com/docs/remote/faq#_can-i-run-vs-code-server-on-older-linux-distributions
+// ########################################################################
+// IMPORTANT NOTE: Docker-Workspace for debugging Zope2-Python2
+// ########################################################################
+
+// 2019.10.44104 is the last version of the Python extension that supports Python 2 AND VSCode 1.60
+// https://github.com/microsoft/vscode-python/releases/tag/2019.10.44104
+// https://github.com/microsoft/vscode-python/releases/download/2019.10.44104/ms-python-release.vsix
+
 {
 	"folders": [
 		{
-			"name": "DOCKER: ZMS3",
-			"path": "../"
+			"name": "DOCKER: ZMS3-Instance",
+			"path": "/home/zope/instance/"
 		}
 	],
 	"settings": {
