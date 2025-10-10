@@ -2,7 +2,7 @@ x-instance-common: &instance_common
   image: zms3:latest-debug
   build:
     context: .
-    dockerfile: ./Dockerfile
+    dockerfile: ./Dockerfile.debug
     args:
       - INSTANCE_DIR=${INSTANCE_DIR}
       - VENV_DIR=${VENV_DIR}
@@ -15,10 +15,15 @@ x-instance-common: &instance_common
   volumes:
     - ./instance/:${INSTANCE_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
+
+  ### HINT: VScode-Server will be started in the container automatically
+  ### and can be accessed via the browser at http://localhost:8888
+  ### The VSCode-Server will be started with the workspace and
+  ### Zope Instance has be started manually with VSCode-Python Debugger
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      sleep infinity
+      code-server --bind-addr 0.0.0.0:8888 --disable-telemetry --disable-update-check --user-data-dir /home/zope/.local/share/code-server --auth none ${INSTANCE_DIR}/.vscode/Docker.code-workspace
     "
 
 services:
@@ -35,6 +40,7 @@ services:
       - DB_PORT="3306"
     ports:
       - "8080:8080"
+      - "8888:8888" # Code-server port
 
   ### ZEO: Zope Enterprise Objects
   zeo:

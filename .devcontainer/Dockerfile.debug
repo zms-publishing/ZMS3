@@ -1,8 +1,12 @@
 FROM ubuntu:16.04
 
-# Image name: zms3:latest
-LABEL org.opencontainers.image.title="zms3:latest"
+# Image name: zms3:latest-debug
+LABEL org.opencontainers.image.title="zms3:latest-debug"
 
+# Container-variant for local development
+# Based on Dockerfile plus VSCode-Server 3.12.0
+# creating VSCode 1.60.0 as a browser-based IDE
+# ############################
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
@@ -22,7 +26,7 @@ RUN apt-get -y upgrade
 RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base
+RUN apt-get install -y --no-install-recommends gettext-base 
 RUN apt-get install -y lsof netcat inetutils-ping nano
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
@@ -60,6 +64,22 @@ RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-se
 	rm -rf /var/lib/apt/lists/*
 
 RUN python2 -m pip install pip==20.3
+
+# Add Microsoft Package Servers for VSCode
+RUN wget https://launchpad.net/ubuntu/+archive/primary/+files/apt-transport-https_1.2.32_amd64.deb && \
+	dpkg -i apt-transport-https_1.2.32_amd64.deb && \
+	rm apt-transport-https_1.2.32_amd64.deb
+# RUN apt-get install -y curl apt-transport-https
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list
+RUN apt-get update
+# Install VSCode Server as User root
+# Copilot-Hints: 
+# 	https://copilot.microsoft.com/shares/zTrKFY3Jc7ucLYUs7bkge
+# 	https://copilot.microsoft.com/shares/cfz7tHiKiEKhhu1osK3NQ
+# 	https://copilot.microsoft.com/shares/JWQQogrAxdTgMdAcMQnno
+RUN curl -fsSL https://code-server.dev/install.sh | bash -s -- --version 3.12.0
+
 
 # Set host's UID/GID to allow sharing of production files as bind mounts
 ENV UID=1000
@@ -108,16 +128,24 @@ RUN ./pip install xhtml2pdf==0.2.4
 RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx
 
 # # Create Zope Instance
-RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
+# RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
+# COPY ./var ${INSTANCE_DIR}/var
 
-# EXPOSE 3306
-# EXPOSE 8080
-# EXPOSE 8085
-# EXPOSE 8086
-# EXPOSE 8087
 
-# Finally Start Zope by Script
-# ENTRYPOINT ["/bin/sh -c"]
-# ENTRYPOINT ["bash", "-c", "sleep infinity"]
-# CMD ["$INSTANCE_HOME/bin/zopectl","fg"]
-# CMD ["$INSTANCE_HOME/bin/runzope","-X","debug-mode=on"]cd
+# Download VSCode Python Extension vsix file and install from the file
+# /// IMPORTANT: 2021.9.1246542782 corresponds to VSCode 1.60.0 and code-server 3.12.0
+# /// see https://github.com/microsoft/vscode-python/releases/tag/2021.9.1246542782
+# /// The latest version of the Python extension is not be compatible with this older VSCode version!
+WORKDIR /home/zope
+RUN wget https://github.com/microsoft/vscode-python/releases/download/2021.9.1246542782/ms-python-release.vsix
+RUN code-server --install-extension ms-python-release.vsix  --user-data-dir /home/zope/.local/share/code-server
+
+
+# Start VScode-Server
+# CMD ["code-server", \
+#      "--bind-addr", "0.0.0.0:8888", \
+#      "--disable-telemetry", \
+#      "--disable-update-check", \
+#      "--user-data-dir", "/home/zope/.local/share/code-server", \
+#      "--auth", "none", \
+#      "/home/zope"]
