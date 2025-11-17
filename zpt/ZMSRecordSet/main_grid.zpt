@@ -24,7 +24,7 @@
 	<div class="pull-left" tal:content="structure python:here.zmi_pagination(size=size,pageSize=pageSize,pageIndex=pageIndex)">zmi_pagination</div>
 	<form method="get" class="pull-right">
 		<label class="control-label" for="qsize" tal:content="python:here.getZMILangStr('ATTR_ROWS')" >Rows</label>
-		<input class="form-control input-sm" size="6" id="qsize" type="number" name="qsize" tal:attributes="value pageSize" onchange="this.form.submit()"/>
+		<input class="form-control input-sm" size="6" id="qsize" type="number" name="qsize:int" tal:attributes="value pageSize" onchange="this.form.submit()"/>
 	</form>
 </div>
 <form method="get" tal:attributes="action form_action">
@@ -239,5 +239,6 @@
     })
 });
 </script>
+
 
 <!-- /ZMSRecordSet/main_grid -->
