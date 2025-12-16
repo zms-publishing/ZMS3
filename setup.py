@@ -165,7 +165,7 @@ if sys.platform[:3].lower() == "win":
   ]
 
 CLASSIFIERS = [
-  'Development Status :: 4 - Beta',
+  'Development Status :: 5 - Production/Stable',
   'Framework :: Zope2',
   'Programming Language :: Python :: 2.7',
   'Operating System :: OS Independent',
