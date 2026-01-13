@@ -37,7 +37,7 @@ RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
 RUN apt-get install -y --no-install-recommends gettext-base 
-RUN apt-get install -y lsof netcat inetutils-ping nano
+RUN apt-get install -y lsof netcat inetutils-ping nano iproute2
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
 RUN apt-get install -y python2 python2-dev

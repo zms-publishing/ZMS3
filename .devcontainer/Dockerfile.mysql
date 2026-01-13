@@ -1,0 +1,34 @@
+# File: .devcontainer/Dockerfile.mysql
+
+# 1. Use the official MariaDB image
+FROM mariadb:10.8.2
+
+# 2. Set up environment variables
+ENV MYSQL_ROOT_PASSWORD=root \
+	MYSQL_DATABASE=zms_news \
+	MYSQL_USER=zms \
+	MYSQL_PASSWORD=zms
+
+# 3. Expose the default MariaDB port
+EXPOSE 3306
+
+# 4. Healthcheck to ensure MariaDB is ready
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
+  CMD mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} || exit 1
+
+# 5. Default command
+CMD ["mysqld"]
+
+# --- Usage ---
+# 1. Create the Docker network (if not exists):
+#    docker network create zms_network
+#
+# 2. Build the image:
+#    docker build -t custom-mariadb -f .devcontainer/Dockerfile.mysql .
+#
+# 3. Run the container on the zms_network:
+#    docker run -d \
+#      --name mariadb \
+#      --network zms_network \
+#      -p 3306:3306 \
+#      custom-mariadb

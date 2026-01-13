@@ -13,17 +13,12 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/bin/:${INSTANCE_DIR}/bin/:rw
-    - ./instance/etc/:${INSTANCE_DIR}/etc/:rw
-    - ${INSTANCE_MOUNT}/:${INSTANCE_DIR}/:rw
-    - ${CUSTOM_MOUNT}/:${CUSTOM_DIR}/:rw
+    - ./instance/:${INSTANCE_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
-    - ${HOME_DIR}/.vscode-server-py2:${HOME_DIR}/.vscode-server:rw
-    - /afs:/afs
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${CUSTOM_DIR}/.devcontainer/start_instance.sh &&
+      ${SRC_DIR}/.devcontainer/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -74,7 +69,7 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${CUSTOM_DIR}/.devcontainer/start_zeo.sh &
+      ${SRC_DIR}/.devcontainer/start_zeo.sh &
       sleep infinity
       "
 

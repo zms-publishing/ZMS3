@@ -1,0 +1,21 @@
+services:
+  mariadb:
+    image: mariadb:10.8.2
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: zms_news
+      MYSQL_USER: zms
+      MYSQL_PASSWORD: zms
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - zms_network
+volumes:
+  mariadb_data:
+    driver: local
+networks:
+  zms_network:
+    driver: bridge

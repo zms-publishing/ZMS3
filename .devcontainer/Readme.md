@@ -45,7 +45,7 @@ To create the Docker constructs, the following configuration files are required;
 
 ## Docker-Image using Ubuntu 20.04
 
-The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`:
+The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation, in short: 
 
 
 ```yml
@@ -54,27 +54,12 @@ FROM ubuntu:20.04
 # Image name: zms3:base
 LABEL org.opencontainers.image.title="zms3:base"
 
-# Get environment variables from docker-compose.yml:
-# So, image file must be created with docker-compose build
 # ############################
 ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
 ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
 ARG IS_DEBUG=$(IS_DEBUG;default:false)
 ARG UID=$(UID;default:1000)
 ARG GID=$(GID;default:1000)
-# ############################
-
-# Non-interactive installs and default timezone to avoid interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Berlin
-
-# Preconfigure timezone non-interactively
-RUN apt-get update && \
-	echo "tzdata tzdata/Areas select Europe" | debconf-set-selections && \
-	echo "tzdata tzdata/Zones/Europe select Berlin" | debconf-set-selections && \
-	apt-get install -y --no-install-recommends tzdata && \
-	ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-	dpkg-reconfigure -f noninteractive tzdata && \
-	rm -rf /var/lib/apt/lists/*
 # ############################
 
 RUN apt-get update
@@ -103,61 +88,10 @@ RUN apt-get install -y libldap2-dev
 RUN apt-get install -y libssl-dev
 RUN apt-get install -y libsqlite3-dev
 
-# Install memcached
-RUN apt-get update && \
-	apt-get install -y memcached libmemcached-tools && \
-	rm -rf /var/lib/apt/lists/*
-
-# Install only MariaDB client libs
-RUN apt-get update && \
-	apt-get install -y mariadb-client default-libmysqlclient-dev && \
-	rm -rf /var/lib/apt/lists/*
-
-# Install slapd and ldap-utils without prompting for password
-RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/internal/adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/password2 password password" | debconf-set-selections && \
-	echo "slapd slapd/password1 password password" | debconf-set-selections && \
-	echo "slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION" | debconf-set-selections && \
-	echo "slapd slapd/domain string example.com" | debconf-set-selections && \
-	echo "slapd shared/organization string Example Inc." | debconf-set-selections && \
-	apt-get update && \
-	apt-get install -y slapd ldap-utils && \
-	rm -rf /var/lib/apt/lists/*
-
-# ------------------------------
-# Add Packages needed for VSCode
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl && \
-	curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
-	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list && \
-	rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && \
-	apt-get install -y libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1 libxcb1 && \
-	rm -rf /var/lib/apt/lists/*
-# ------------------------------
 
 # Set host's UID/GID to allow sharing of production files as bind mounts
 RUN groupadd --gid $GID zope
 RUN adduser --disabled-password --uid $UID --gid $GID zope
-
-# Grant zope passwordless sudo for development purposes if IS_DEBUG is set to true
-RUN if [ "$IS_DEBUG" = "true" ]; then \
-	echo "Debug mode is ON. Granting zope passwordless sudo." && \
-	apt-get update && \
-	apt-get install -y sudo && \
-	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-	adduser zope sudo; \
-else \
-	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
-fi
-
-# ----------------------------
-# MariaDB service is provided in dockerfile-compose.mysql.yml
-# ------------------------------
-# # Prepare MySQL runtime & data dirs and give them to zope
-# RUN mkdir -p /var/run/mysqld /var/lib/mysql \
-#	&& chown -R zope:zope /var/run/mysqld /var/lib/mysql
 
 USER zope
 # Create Zope Instance
@@ -176,27 +110,23 @@ RUN ./pip install Products.PluggableAuthService==1.11.0
 RUN ./pip install Products.LDAPMultiPlugins==1.14
 RUN ./pip install Products.ZSQLMethods==2.13.4
 RUN ./pip install Products.ZSQLiteDA==0.6.1
-# RUN ./pip install MySQL-python==1.2.5 # Not working with Python 2.7.18 on Ubuntu 20.04
 RUN ./pip install mysqlclient==1.4.6
 RUN ./pip install --no-deps Products.ZMySQLDA==4.11
 RUN ./pip install Products.SQLAlchemyDA
 RUN ./pip install --no-deps Products.mcdutils==2.0
 RUN ./pip install SQLAlchemy
 RUN ./pip install Pillow
-RUN ./pip install feedparser
-RUN ./pip install python-memcached==1.59
-RUN ./pip install xhtml2pdf==0.2.4
-RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx
 
 # Create Zope Instance
 RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
 ```
 
+This example code actually just shows the most important installation steps. Our [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/Dockerfile) will install some components (memcache, VSCode-Server, MariaDB etc.) 
 This container image forms the basis for the containers that perform the mount-binding to the host file system and start the application.
 
 ## Run Zope/ZMS in the Docker Container
 
-Only one Zope instance now runs in a container - monotonously on port 8080. The always identical container-internal port will be mapped/externalized to a unified port such as 8085, 8086, 8087 etc; this is accomplished by environment variables at Zope startup. Since zope.conf unfortunately cannot accept variables directly, the complete zope.conf file will be  generated dynamically by the shell script that starts the Zope instance. The crucial variables are:
+Only one Zope instance now runs in a container - monotonously on port 8080. The always identical container-internal port will be mapped/externalized to a unified port such as 8085, 8086, 8087 etc; this is accomplished by environment variables at Zope startup. Since `zope.conf` unfortunately cannot accept variables directly, the complete `zope.conf` file will be  generated dynamically by the shell script that starts the Zope instance. The crucial variables are:
 
 1. HTTP_PORT 
 2. READ_ONLY
@@ -219,17 +149,12 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/bin/:${INSTANCE_DIR}/bin/:rw
-    - ./instance/etc/:${INSTANCE_DIR}/etc/:rw
-    - ${INSTANCE_MOUNT}/:${INSTANCE_DIR}/:rw
-    - ${CUSTOM_MOUNT}/:${CUSTOM_DIR}/:rw
+    - ./instance/:${INSTANCE_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
-    - ${HOME_DIR}/.vscode-server-py2:${HOME_DIR}/.vscode-server:rw
-    - /afs:/afs
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${CUSTOM_DIR}/.devcontainer/start_instance.sh &&
+      ${SRC_DIR}/.devcontainer/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -280,19 +205,18 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${CUSTOM_DIR}/.devcontainer/start_zeo.sh &
+      ${SRC_DIR}/.devcontainer/start_zeo.sh &
       sleep infinity
       "
-
-### MariaDB service is provided in dockerfile-compose.mysql.yml
 ```
+
 Instead of creating a separate docker-composefile for each Zope instance, the sequence with its specific variables is called for each container on the basis of a template `&instance_common` in order to create the respective container.
-So, the number of Zope instances is set in the Docker Compose file by duplicating a minimalist description for the Zope instance (i.e. not via a port number iteration in the start script as before. The Zope start script now starts a single instance per container and, in addition to starting Zope, has the new task of automatically generating a suitable zope.conf beforehand so that it can then be called). 
+So, the number of Zope instances is set in the Docker Compose file by duplicating a minimalist description for the Zope instance (i.e. not via a port number iteration in the start script as before. The Zope start script now starts a single instance per container and, in addition to starting Zope, has the new task of automatically generating a suitable `zope.conf` beforehand so that it can then be called). 
 By copying and adapting the following block, you can create new Zope instances in the docker-compose file:
 
 ```yml
   zmsclient1:
-    <<: *zmsclient_common
+    <<: *instance_common
     environment:
       - PYTHONUNBUFFERED="1"
       - SOFTWARE_HOME="${VENV_DIR}/bin"
@@ -333,12 +257,11 @@ CONFIG_FILE="$INSTANCE_HOME/etc/zeo.conf"
 PYTHONPATH="$ZODB3_HOME"
 export PYTHONPATH INSTANCE_HOME
 exec "$PYTHON" -m ZEO.runzeo -C "$CONFIG_FILE" ${1+"$@"}
-
 ```
 
 ### Template based Creation of $INSTANCE/etc/zope.conf
 
-To create an instance-specific zope.conf file, a text template is used, which is specified using the Linux command envsubst with the values of two variables:
+To create an instance-specific `zope.conf` file, a text template is used, which is specified using the Linux command envsubst with the values of two variables:
 
 1. READ_ONLY: Set to true to start Zope in read-only mode.
 2. HTTP_PORT: The container port on which the Zope port is mapped to.
@@ -411,3 +334,68 @@ instancehome $INSTANCE_HOME
 	</logfile>
 </logger>
 ```
+
+## Coordinated start process
+
+In the _docker-compose_ file any service section (derived from the _instance_common_-template)  will call the [_start_instance_-script](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/start_instance.sh):
+
+```sh
+${SRC_DIR}/.devcontainer/start_instance.sh
+```
+
+The script contains some waiting-loops to make sure for any Zope-instance that ZEO has started and the ZODB-connection is available and a report about the starting process is sent to the console:
+
+```sh
+zope@dev: ~/src/ZMS3/.devcontainer$ docker compose -f docker-compose.yml up
+
+✔ Image zms3:base
+✔ Network devcontainer_zms_network
+✔ Container devcontainer-zeo-1
+✔ Container devcontainer-instance1-1 
+✔ Container devcontainer-instance2-1
+✔ Container devcontainer-instance3-1 
+Attaching to instance1-1, instance2-1, instance3-1, zeo-1
+zeo-1  | Starting ZEO server...
+zeo-1  | ZEO-starting script is waiting for ZEO server to start...
+instance2-1  | HTTP_PORT is set to 8086
+instance2-1  | READ_ONLY is set to false
+instance2-1  | Waiting for ZEO server to start listening on socket...
+instance2-1  | Waiting for ZEO server to start... (0 seconds)
+instance1-1  | HTTP_PORT is set to 8085
+instance1-1  | READ_ONLY is set to true
+instance1-1  | Waiting for ZEO server to start listening on socket...
+instance1-1  | Waiting for ZEO server to start... (0 seconds)
+instance3-1  | HTTP_PORT is set to 8087
+instance3-1  | READ_ONLY is set to false
+instance3-1  | Waiting for ZEO server to start listening on socket...
+instance3-1  | Waiting for ZEO server to start... (0 seconds)
+zeo-1        | ZEO server has started on /home/zope/instance/var/zeosocket
+instance2-1  | ZEO server is now listening on socket
+instance2-1  | Starting Zope instance ...
+instance2-1  | Waiting for Zope to start ...
+instance1-1  | ZEO server is now listening on socket
+instance1-1  | Starting Zope instance ...
+instance1-1  | Waiting for Zope to start ...
+instance3-1  | ZEO server is now listening on socket
+instance3-1  | Starting Zope instance ...
+instance3-1  | Waiting for Zope to start ...
+instance2-1  | Zope started on port 8080 and publishing on 8086
+instance1-1  | Zope started on port 8080 and publishing on 8085
+instance3-1  | Zope started on port 8080 and publishing on 8087
+```
+
+The debug-Container (having VSCode-Server) starts only ZEO and not Zope. This will be done manually with the VSCode-Python-Debugger:
+
+```sh
+zope@dev: ~/src/ZMS3/.devcontainer$ docker compose -f docker-compose.yml up
+```
+
+The VSCode-GUI will appear in the web-browser on port 8888 and the launch-name for debugging will be "Docker: ZMS3-Py2".After launching Zope will be published on port 8080.
+
+
+## Potential issues
+
+1. file permissions on the mounted folders do not match the container user
+2. the hostsystem-user (for creating the container) is not part of the docker group
+3. the hostsystem-user is defined by a remote system (e.g. afs) that does not allow writing the .docker-config-folder into the the user's home-folder 
+
