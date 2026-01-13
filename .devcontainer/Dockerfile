@@ -1,37 +1,52 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
-# Image name: zms3:latest
-LABEL org.opencontainers.image.title="zms3:latest"
+# Image name: zms3:base
+LABEL org.opencontainers.image.title="zms3:base"
 
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
-ARG INSTANCE_DIR
-ARG VENV_DIR
-ARG IS_DEBUG
-ARG UID
-ARG GID
+ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
+ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
+ARG IS_DEBUG=$(IS_DEBUG;default:false)
+ARG UID=$(UID;default:1000)
+ARG GID=$(GID;default:1000)
 # ############################
 
-RUN apt-get update && apt-get install -y ca-certificates
+# Non-interactive installs and default timezone to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Berlin
+
+# Preconfigure timezone non-interactively
+RUN apt-get update && \
+	echo "tzdata tzdata/Areas select Europe" | debconf-set-selections && \
+	echo "tzdata tzdata/Zones/Europe select Berlin" | debconf-set-selections && \
+	apt-get install -y --no-install-recommends tzdata && \
+	ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+	dpkg-reconfigure -f noninteractive tzdata && \
+	rm -rf /var/lib/apt/lists/*
+# ############################
+
+RUN apt-get update
+
+RUN apt-get install -y ca-certificates
 # COPY zerts-pem/* /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 RUN apt-get -y upgrade
 
-# Install Zope/ZEO Dependencies
 RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base
+RUN apt-get install -y --no-install-recommends gettext-base 
 RUN apt-get install -y lsof netcat inetutils-ping nano
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
-RUN apt-get install -y python2.7
-RUN apt-get install -y python-pip
-RUN apt-get install -y python-minimal
-RUN apt-get install -y python-dev
-RUN apt-get install -y python-setuptools
-RUN apt-get install -y python-virtualenv
+RUN apt-get install -y python2 python2-dev
+# Install pip for Python 2 (pip 20.3) since Ubuntu 20.04 does not ship python2-pip
+RUN curl -sS https://bootstrap.pypa.io/pip/2.7/get-pip.py -o /tmp/get-pip.py && \
+	python2 /tmp/get-pip.py pip==20.3 && \
+	rm /tmp/get-pip.py
+# Install virtualenv for creating Python2 virtual environments
+RUN python2 -m pip install virtualenv
 RUN apt-get install -y libsasl2-dev
 RUN apt-get install -y libldap2-dev
 RUN apt-get install -y libssl-dev
@@ -44,7 +59,7 @@ RUN apt-get update && \
 
 # Install only MariaDB client libs
 RUN apt-get update && \
-	apt-get install -y mariadb-client libmysqlclient-dev && \
+	apt-get install -y mariadb-client default-libmysqlclient-dev && \
 	rm -rf /var/lib/apt/lists/*
 
 # Install slapd and ldap-utils without prompting for password
@@ -59,11 +74,19 @@ RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-se
 	apt-get install -y slapd ldap-utils && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN python2 -m pip install pip==20.3
+# ------------------------------
+# Add Packages needed for VSCode
+RUN apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl && \
+	curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
+	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list && \
+	rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+	apt-get install -y libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1 libxcb1 && \
+	rm -rf /var/lib/apt/lists/*
+# ------------------------------
 
 # Set host's UID/GID to allow sharing of production files as bind mounts
-ENV UID=1000
-ENV GID=1000
 RUN groupadd --gid $GID zope
 RUN adduser --disabled-password --uid $UID --gid $GID zope
 
@@ -78,6 +101,12 @@ else \
 	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
 fi
 
+# ----------------------------
+# MariaDB service is provided in dockerfile-compose.mysql.yml
+# ------------------------------
+# # Prepare MySQL runtime & data dirs and give them to zope
+# RUN mkdir -p /var/run/mysqld /var/lib/mysql \
+#	&& chown -R zope:zope /var/run/mysqld /var/lib/mysql
 
 USER zope
 # Create Zope Instance
@@ -95,9 +124,10 @@ RUN ./pip install Products.LDAPUserFolder==2.27
 RUN ./pip install Products.PluggableAuthService==1.11.0
 RUN ./pip install Products.LDAPMultiPlugins==1.14
 RUN ./pip install Products.ZSQLMethods==2.13.4
-RUN ./pip install MySQL-python==1.2.5
 RUN ./pip install Products.ZSQLiteDA==0.6.1
-RUN ./pip install Products.ZMySQLDA==3.1.1
+# RUN ./pip install MySQL-python==1.2.5 # Not working with Python 2.7.18 on Ubuntu 20.04
+RUN ./pip install mysqlclient==1.4.6
+RUN ./pip install --no-deps Products.ZMySQLDA==4.11
 RUN ./pip install Products.SQLAlchemyDA
 RUN ./pip install --no-deps Products.mcdutils==2.0
 RUN ./pip install SQLAlchemy
@@ -108,7 +138,8 @@ RUN ./pip install xhtml2pdf==0.2.4
 RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx
 
 # # Create Zope Instance
-RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
+# RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
+# COPY ./var ${INSTANCE_DIR}/var
 
 # EXPOSE 3306
 # EXPOSE 8080

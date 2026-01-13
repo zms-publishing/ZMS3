@@ -1,5 +1,5 @@
 x-instance-common: &instance_common
-  image: zms3:latest
+  image: zms3:base
   build:
     context: .
     dockerfile: ./Dockerfile
@@ -13,15 +13,25 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/:${INSTANCE_DIR}/:rw
+    - ./instance/bin/:${INSTANCE_DIR}/bin/:rw
+    - ./instance/etc/:${INSTANCE_DIR}/etc/:rw
+    - ${INSTANCE_MOUNT}/:${INSTANCE_DIR}/:rw
+    - ${CUSTOM_MOUNT}/:${CUSTOM_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
+    - ${HOME_DIR}/.vscode-server-py2:${HOME_DIR}/.vscode-server:rw
+    - /afs:/afs
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      wait 2 &
-      ${SRC_DIR}/.devcontainer/start_instance.sh &&
+      ${CUSTOM_DIR}/.devcontainer/start_instance.sh &&
       sleep infinity
     "
+  networks:
+    - zms_network
+
+networks:
+  zms_network:
+    driver: bridge
 
 services:
   ### Zope: Zope Application Server
@@ -64,6 +74,8 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/.devcontainer/start_zeo.sh &
+      ${CUSTOM_DIR}/.devcontainer/start_zeo.sh &
       sleep infinity
       "
+
+### MariaDB service is provided in dockerfile-compose.mysql.yml

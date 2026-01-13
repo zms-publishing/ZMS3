@@ -1,141 +1,39 @@
-FROM ubuntu:16.04
+FROM zms3:base
 
-# Image name: zms3:latest-debug
-LABEL org.opencontainers.image.title="zms3:latest-debug"
+# Image name: zms3:debug
+LABEL org.opencontainers.image.title="zms3:debug"
 
-# Container-variant for local development
-# Based on Dockerfile plus VSCode-Server 3.12.0
-# creating VSCode 1.60.0 as a browser-based IDE
-# ############################
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
-ARG INSTANCE_DIR
-ARG VENV_DIR
-ARG IS_DEBUG
-ARG UID
-ARG GID
+ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
+ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
+ARG IS_DEBUG=true
+ARG UID=$(UID;default:1000)
+ARG GID=$(GID;default:1000)
+ARG CODE_SERVER_VERSION=4.20.1
 # ############################
 
-RUN apt-get update && apt-get install -y ca-certificates
-# COPY zerts-pem/* /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-RUN apt-get -y upgrade
-
-# Install Zope/ZEO Dependencies
-RUN apt-get install -y bash
-RUN apt-get install -y wget
-RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base 
-RUN apt-get install -y lsof netcat inetutils-ping nano
-RUN apt-get install -y build-essential
-RUN apt-get install -y git
-RUN apt-get install -y python2.7
-RUN apt-get install -y python-pip
-RUN apt-get install -y python-minimal
-RUN apt-get install -y python-dev
-RUN apt-get install -y python-setuptools
-RUN apt-get install -y python-virtualenv
-RUN apt-get install -y libsasl2-dev
-RUN apt-get install -y libldap2-dev
-RUN apt-get install -y libssl-dev
-RUN apt-get install -y libsqlite3-dev
-
-# Install memcached
-RUN apt-get update && \
-	apt-get install -y memcached libmemcached-tools && \
-	rm -rf /var/lib/apt/lists/*
-
-# Install only MariaDB client libs
-RUN apt-get update && \
-	apt-get install -y mariadb-client libmysqlclient-dev && \
-	rm -rf /var/lib/apt/lists/*
-
-# Install slapd and ldap-utils without prompting for password
-RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/internal/adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/password2 password password" | debconf-set-selections && \
-	echo "slapd slapd/password1 password password" | debconf-set-selections && \
-	echo "slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION" | debconf-set-selections && \
-	echo "slapd slapd/domain string example.com" | debconf-set-selections && \
-	echo "slapd shared/organization string Example Inc." | debconf-set-selections && \
-	apt-get update && \
-	apt-get install -y slapd ldap-utils && \
-	rm -rf /var/lib/apt/lists/*
-
-RUN python2 -m pip install pip==20.3
-
-# Add Microsoft Package Servers for VSCode
-RUN wget https://launchpad.net/ubuntu/+archive/primary/+files/apt-transport-https_1.2.32_amd64.deb && \
-	dpkg -i apt-transport-https_1.2.32_amd64.deb && \
-	rm apt-transport-https_1.2.32_amd64.deb
-# RUN apt-get install -y curl apt-transport-https
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list
-RUN apt-get update
+# ------------------------------
 # Install VSCode Server as User root
+# ------------------------------
+USER root
+
 # Copilot-Hints: 
-# 	https://copilot.microsoft.com/shares/zTrKFY3Jc7ucLYUs7bkge
-# 	https://copilot.microsoft.com/shares/cfz7tHiKiEKhhu1osK3NQ
-# 	https://copilot.microsoft.com/shares/JWQQogrAxdTgMdAcMQnno
-RUN curl -fsSL https://code-server.dev/install.sh | bash -s -- --version 3.12.0
+# https://copilot.microsoft.com/shares/zTrKFY3Jc7ucLYUs7bkge
+# https://copilot.microsoft.com/shares/cfz7tHiKiEKhhu1osK3NQ
+# https://copilot.microsoft.com/shares/JWQQogrAxdTgMdAcMQnno
+RUN curl -fsSL https://code-server.dev/install.sh | bash -s -- --version $CODE_SERVER_VERSION
 
 
-# Set host's UID/GID to allow sharing of production files as bind mounts
-ENV UID=1000
-ENV GID=1000
-RUN groupadd --gid $GID zope
-RUN adduser --disabled-password --uid $UID --gid $GID zope
-
-# Grant zope passwordless sudo for development purposes if IS_DEBUG is set to true
-RUN if [ "$IS_DEBUG" = "true" ]; then \
-	echo "Debug mode is ON. Granting zope passwordless sudo." && \
-	apt-get update && \
-	apt-get install -y sudo && \
-	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-	adduser zope sudo; \
-else \
-	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
-fi
-
-
+# ------------------------------
+# Install VSCode Extensions as user zope
+# ------------------------------
 USER zope
-# Create Zope Instance
-ENV INSTANCE_DIR=${INSTANCE_DIR}
-ENV VIRTUAL_ENV=${VENV_DIR}
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN virtualenv --python=python2 $VIRTUAL_ENV
-WORKDIR $VIRTUAL_ENV/bin
-RUN bash -c "source activate"
-
-RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
-RUN ./pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
-RUN ./pip install Products.PluginRegistry==1.4
-RUN ./pip install Products.LDAPUserFolder==2.27
-RUN ./pip install Products.PluggableAuthService==1.11.0
-RUN ./pip install Products.LDAPMultiPlugins==1.14
-RUN ./pip install Products.ZSQLMethods==2.13.4
-RUN ./pip install MySQL-python==1.2.5
-RUN ./pip install Products.ZSQLiteDA==0.6.1
-RUN ./pip install Products.ZMySQLDA==3.1.1
-RUN ./pip install Products.SQLAlchemyDA
-RUN ./pip install --no-deps Products.mcdutils==2.0
-RUN ./pip install SQLAlchemy
-RUN ./pip install Pillow
-RUN ./pip install feedparser
-RUN ./pip install python-memcached==1.59
-RUN ./pip install xhtml2pdf==0.2.4
-RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx
-
-# # Create Zope Instance
-# RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
-# COPY ./var ${INSTANCE_DIR}/var
-
-
 # Download VSCode Python Extension vsix file and install from the file
-# /// IMPORTANT: 2021.9.1246542782 corresponds to VSCode 1.60.0 and code-server 3.12.0
-# /// see https://github.com/microsoft/vscode-python/releases/tag/2021.9.1246542782
-# /// The latest version of the Python extension is not be compatible with this older VSCode version!
+# /// IMPORTANT: 2021.9.1246542782 corresponds to VSCode 1.60.0 and code-server 3.12.0.
+# /// We keep this VSIX pinned to preserve Python 2 support; if you upgrade `code-server`
+# /// to 4.x, you must test the VSIX — newer Python extension releases may have dropped Py2 support.
 WORKDIR /home/zope
 RUN wget https://github.com/microsoft/vscode-python/releases/download/2021.9.1246542782/ms-python-release.vsix
 RUN code-server --install-extension ms-python-release.vsix  --user-data-dir /home/zope/.local/share/code-server

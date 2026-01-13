@@ -1,5 +1,5 @@
 x-instance-common: &instance_common
-  image: zms3:latest-debug
+  image: zms3:debug
   build:
     context: .
     dockerfile: ./Dockerfile.debug
@@ -26,6 +26,13 @@ x-instance-common: &instance_common
       code-server --bind-addr 0.0.0.0:8888 --disable-telemetry --disable-update-check --user-data-dir /home/zope/.local/share/code-server --auth none ${INSTANCE_DIR}/.vscode/Docker.code-workspace
     "
 
+  networks:
+    - zms_network
+
+networks:
+  zms_network:
+    driver: bridge
+
 services:
   ### Zope Instance for Debugging
   instance_debug:
@@ -35,7 +42,7 @@ services:
       - SOFTWARE_HOME="${VENV_DIR}/bin"
       - PYTHON="${VENV_DIR}bin/python"
       - HTTP_PORT=8080
-      - READ_ONLY=true
+      - READ_ONLY=false
       - DB_HOST="host.docker.internal" # Use this to access the host's MariaDB server
       - DB_PORT="3306"
     ports:

@@ -43,18 +43,38 @@ To create the Docker constructs, the following configuration files are required;
 2. **Container**, e.g: `/home/zope/venv/instances/docker-compose`
 
 
-## Docker-Image using Ubuntu 16.04
+## Docker-Image using Ubuntu 20.04
 
-The Docker image is based on Ubuntu 16.04 which still allows the standard package installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`:
+The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`:
 
 
 ```yml
-FROM ubuntu:16.04
+FROM ubuntu:20.04
+
+# Image name: zms3:base
+LABEL org.opencontainers.image.title="zms3:base"
+
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
-ARG INSTANCE_DIR
-ARG VENV_DIR
+ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
+ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
+ARG IS_DEBUG=$(IS_DEBUG;default:false)
+ARG UID=$(UID;default:1000)
+ARG GID=$(GID;default:1000)
+# ############################
+
+# Non-interactive installs and default timezone to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Berlin
+
+# Preconfigure timezone non-interactively
+RUN apt-get update && \
+	echo "tzdata tzdata/Areas select Europe" | debconf-set-selections && \
+	echo "tzdata tzdata/Zones/Europe select Berlin" | debconf-set-selections && \
+	apt-get install -y --no-install-recommends tzdata && \
+	ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+	dpkg-reconfigure -f noninteractive tzdata && \
+	rm -rf /var/lib/apt/lists/*
 # ############################
 
 RUN apt-get update
@@ -67,16 +87,17 @@ RUN apt-get -y upgrade
 RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base
-RUN apt-get install -y netcat
+RUN apt-get install -y --no-install-recommends gettext-base 
+RUN apt-get install -y lsof netcat inetutils-ping nano
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
-RUN apt-get install -y python2.7
-RUN apt-get install -y python-pip
-RUN apt-get install -y python-minimal
-RUN apt-get install -y python-dev
-RUN apt-get install -y python-setuptools
-RUN apt-get install -y python-virtualenv
+RUN apt-get install -y python2 python2-dev
+# Install pip for Python 2 (pip 20.3) since Ubuntu 20.04 does not ship python2-pip
+RUN curl -sS https://bootstrap.pypa.io/pip/2.7/get-pip.py -o /tmp/get-pip.py && \
+	python2 /tmp/get-pip.py pip==20.3 && \
+	rm /tmp/get-pip.py
+# Install virtualenv for creating Python2 virtual environments
+RUN python2 -m pip install virtualenv
 RUN apt-get install -y libsasl2-dev
 RUN apt-get install -y libldap2-dev
 RUN apt-get install -y libssl-dev
@@ -87,12 +108,10 @@ RUN apt-get update && \
 	apt-get install -y memcached libmemcached-tools && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install MariaDB server and client
+# Install only MariaDB client libs
 RUN apt-get update && \
-	apt-get install -y mariadb-server mariadb-client libmysqlclient-dev && \
+	apt-get install -y mariadb-client default-libmysqlclient-dev && \
 	rm -rf /var/lib/apt/lists/*
-# Configure MySQL
-RUN wget https://raw.githubusercontent.com/paulfitz/mysql-connector-c/master/include/my_config.h -O /usr/include/mysql/my_config.h
 
 # Install slapd and ldap-utils without prompting for password
 RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-set-selections && \
@@ -106,15 +125,36 @@ RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-se
 	apt-get install -y slapd ldap-utils && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN python2 -m pip install pip==20.3
+# ------------------------------
+# Add Packages needed for VSCode
+RUN apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl && \
+	curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
+	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list && \
+	rm -rf /var/lib/apt/lists/*
 
-# Grant zope passwordless sudo
 RUN apt-get update && \
+	apt-get install -y libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1 libxcb1 && \
+	rm -rf /var/lib/apt/lists/*
+# ------------------------------
+
+# Set host's UID/GID to allow sharing of production files as bind mounts
+RUN groupadd --gid $GID zope
+RUN adduser --disabled-password --uid $UID --gid $GID zope
+
+# Grant zope passwordless sudo for development purposes if IS_DEBUG is set to true
+RUN if [ "$IS_DEBUG" = "true" ]; then \
+	echo "Debug mode is ON. Granting zope passwordless sudo." && \
+	apt-get update && \
 	apt-get install -y sudo && \
-	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
+	adduser zope sudo; \
+else \
+	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
+fi
 
-RUN adduser --disabled-password zope && usermod -aG sudo zope
-
+# ----------------------------
+# MariaDB service is provided in dockerfile-compose.mysql.yml
+# ------------------------------
 # # Prepare MySQL runtime & data dirs and give them to zope
 # RUN mkdir -p /var/run/mysqld /var/lib/mysql \
 #	&& chown -R zope:zope /var/run/mysqld /var/lib/mysql
@@ -135,9 +175,10 @@ RUN ./pip install Products.LDAPUserFolder==2.27
 RUN ./pip install Products.PluggableAuthService==1.11.0
 RUN ./pip install Products.LDAPMultiPlugins==1.14
 RUN ./pip install Products.ZSQLMethods==2.13.4
-RUN ./pip install MySQL-python==1.2.5
 RUN ./pip install Products.ZSQLiteDA==0.6.1
-RUN ./pip install Products.ZMySQLDA==3.1.1
+# RUN ./pip install MySQL-python==1.2.5 # Not working with Python 2.7.18 on Ubuntu 20.04
+RUN ./pip install mysqlclient==1.4.6
+RUN ./pip install --no-deps Products.ZMySQLDA==4.11
 RUN ./pip install Products.SQLAlchemyDA
 RUN ./pip install --no-deps Products.mcdutils==2.0
 RUN ./pip install SQLAlchemy
@@ -164,25 +205,39 @@ These environment variables are defined by the docker-compose file and processed
 
 ```yml
 x-instance-common: &instance_common
-  image: zms3:latest
+  image: zms3:base
   build:
     context: .
     dockerfile: ./Dockerfile
     args:
       - INSTANCE_DIR=${INSTANCE_DIR}
       - VENV_DIR=${VENV_DIR}
+      - IS_DEBUG=false
+      - UID=${UID}
+      - GID=${GID}
   depends_on:
     - zeo
   user: zope
   volumes:
-    - ./instance/:${INSTANCE_DIR}/:rw
+    - ./instance/bin/:${INSTANCE_DIR}/bin/:rw
+    - ./instance/etc/:${INSTANCE_DIR}/etc/:rw
+    - ${INSTANCE_MOUNT}/:${INSTANCE_DIR}/:rw
+    - ${CUSTOM_MOUNT}/:${CUSTOM_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
+    - ${HOME_DIR}/.vscode-server-py2:${HOME_DIR}/.vscode-server:rw
+    - /afs:/afs
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${SRC_DIR}/.devcontainer/start_instance.sh &&
+      ${CUSTOM_DIR}/.devcontainer/start_instance.sh &&
       sleep infinity
     "
+  networks:
+    - zms_network
+
+networks:
+  zms_network:
+    driver: bridge
 
 services:
   ### Zope: Zope Application Server
@@ -225,9 +280,11 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/.devcontainer/start_zeo.sh &
+      ${CUSTOM_DIR}/.devcontainer/start_zeo.sh &
       sleep infinity
       "
+
+### MariaDB service is provided in dockerfile-compose.mysql.yml
 ```
 Instead of creating a separate docker-composefile for each Zope instance, the sequence with its specific variables is called for each container on the basis of a template `&instance_common` in order to create the respective container.
 So, the number of Zope instances is set in the Docker Compose file by duplicating a minimalist description for the Zope instance (i.e. not via a port number iteration in the start script as before. The Zope start script now starts a single instance per container and, in addition to starting Zope, has the new task of automatically generating a suitable zope.conf beforehand so that it can then be called). 
