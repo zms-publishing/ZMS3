@@ -18,12 +18,12 @@ ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Berlin
 
 # Preconfigure timezone non-interactively
 RUN apt-get update && \
-	echo "tzdata tzdata/Areas select Europe" | debconf-set-selections && \
-	echo "tzdata tzdata/Zones/Europe select Berlin" | debconf-set-selections && \
-	apt-get install -y --no-install-recommends tzdata && \
-	ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-	dpkg-reconfigure -f noninteractive tzdata && \
-	rm -rf /var/lib/apt/lists/*
+    echo "tzdata tzdata/Areas select Europe" | debconf-set-selections && \
+    echo "tzdata tzdata/Zones/Europe select Berlin" | debconf-set-selections && \
+    apt-get install -y --no-install-recommends tzdata && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    rm -rf /var/lib/apt/lists/*
 # ############################
 
 RUN apt-get update
@@ -36,15 +36,15 @@ RUN apt-get -y upgrade
 RUN apt-get install -y bash
 RUN apt-get install -y wget
 RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base 
+RUN apt-get install -y --no-install-recommends gettext-base
 RUN apt-get install -y lsof netcat inetutils-ping nano iproute2
 RUN apt-get install -y build-essential
 RUN apt-get install -y git
 RUN apt-get install -y python2 python2-dev
 # Install pip for Python 2 (pip 20.3) since Ubuntu 20.04 does not ship python2-pip
 RUN curl -sS https://bootstrap.pypa.io/pip/2.7/get-pip.py -o /tmp/get-pip.py && \
-	python2 /tmp/get-pip.py pip==20.3 && \
-	rm /tmp/get-pip.py
+    python2 /tmp/get-pip.py pip==20.3 && \
+    rm /tmp/get-pip.py
 # Install virtualenv for creating Python2 virtual environments
 RUN python2 -m pip install virtualenv
 RUN apt-get install -y libsasl2-dev
@@ -54,36 +54,36 @@ RUN apt-get install -y libsqlite3-dev
 
 # Install memcached
 RUN apt-get update && \
-	apt-get install -y memcached libmemcached-tools && \
-	rm -rf /var/lib/apt/lists/*
+    apt-get install -y memcached libmemcached-tools && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install only MariaDB client libs
 RUN apt-get update && \
-	apt-get install -y mariadb-client default-libmysqlclient-dev && \
-	rm -rf /var/lib/apt/lists/*
+    apt-get install -y mariadb-client default-libmysqlclient-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install slapd and ldap-utils without prompting for password
 RUN echo "slapd slapd/internal/generated_adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/internal/adminpw password password" | debconf-set-selections && \
-	echo "slapd slapd/password2 password password" | debconf-set-selections && \
-	echo "slapd slapd/password1 password password" | debconf-set-selections && \
-	echo "slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION" | debconf-set-selections && \
-	echo "slapd slapd/domain string example.com" | debconf-set-selections && \
-	echo "slapd shared/organization string Example Inc." | debconf-set-selections && \
-	apt-get update && \
-	apt-get install -y slapd ldap-utils && \
-	rm -rf /var/lib/apt/lists/*
+    echo "slapd slapd/internal/adminpw password password" | debconf-set-selections && \
+    echo "slapd slapd/password2 password password" | debconf-set-selections && \
+    echo "slapd slapd/password1 password password" | debconf-set-selections && \
+    echo "slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION" | debconf-set-selections && \
+    echo "slapd slapd/domain string example.com" | debconf-set-selections && \
+    echo "slapd shared/organization string Example Inc." | debconf-set-selections && \
+    apt-get update && \
+    apt-get install -y slapd ldap-utils && \
+    rm -rf /var/lib/apt/lists/*
 
 # ------------------------------
 # Add Packages needed for VSCode
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl && \
-	curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
-	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list && \
-	rm -rf /var/lib/apt/lists/*
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
-	apt-get install -y libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1 libxcb1 && \
-	rm -rf /var/lib/apt/lists/*
+    apt-get install -y libnss3 libxss1 libasound2 libatk1.0-0 libgtk-3-0 libx11-xcb1 libxcb1 && \
+    rm -rf /var/lib/apt/lists/*
 # ------------------------------
 
 # Set host's UID/GID to allow sharing of production files as bind mounts
@@ -92,14 +92,14 @@ RUN adduser --disabled-password --uid $UID --gid $GID zope
 
 # Grant zope passwordless sudo for development purposes if IS_DEBUG is set to true
 RUN if [ "$IS_DEBUG" = "true" ]; then \
-	echo "Debug mode is ON. Granting zope passwordless sudo." && \
-	apt-get update && \
-	apt-get install -y sudo && \
-	echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-	adduser zope sudo; \
-else \
-	echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
-fi
+    echo "Debug mode is ON. Granting zope passwordless sudo." && \
+    apt-get update && \
+    apt-get install -y sudo && \
+    echo 'zope ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
+    adduser zope sudo; \
+    else \
+    echo "Debug mode is OFF. Not granting zope passwordless sudo."; \
+    fi
 
 # ----------------------------
 # MariaDB service is provided in dockerfile-compose.mysql.yml
@@ -119,23 +119,7 @@ RUN bash -c "source activate"
 
 RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
 RUN ./pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
-RUN ./pip install Products.PluginRegistry==1.4
-RUN ./pip install Products.LDAPUserFolder==2.27
-RUN ./pip install Products.PluggableAuthService==1.11.0
-RUN ./pip install Products.LDAPMultiPlugins==1.14
-RUN ./pip install Products.ZSQLMethods==2.13.4
-RUN ./pip install Products.ZSQLiteDA==0.6.1
-# RUN ./pip install MySQL-python==1.2.5 # Not working with Python 2.7.18 on Ubuntu 20.04
-RUN ./pip install mysqlclient==1.4.6
-RUN ./pip install --no-deps Products.ZMySQLDA==4.11
-RUN ./pip install Products.SQLAlchemyDA
-RUN ./pip install --no-deps Products.mcdutils==2.0
-RUN ./pip install SQLAlchemy
-RUN ./pip install Pillow
-RUN ./pip install feedparser
-RUN ./pip install python-memcached==1.59
-RUN ./pip install xhtml2pdf==0.2.4
-RUN ./pip install requests beautifulsoup4 lxml Markdown pyScss python-docx
+RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements-extra.txt
 
 # # Create Zope Instance
 # RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin

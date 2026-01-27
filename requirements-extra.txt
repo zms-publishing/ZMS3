@@ -1,0 +1,24 @@
+Products.PluginRegistry==1.4
+Products.LDAPUserFolder==2.27
+Products.PluggableAuthService==1.11.0
+Products.LDAPMultiPlugins==1.14
+Products.ZSQLMethods==2.13.4
+Products.ZSQLiteDA==0.6.1
+#  MySQL-python==1.2.5 # Not working with Python 2.7.18 on Ubuntu 20.04
+mysqlclient==1.4.6
+Products.ZMySQLDA==4.11 # --install-option="--no-deps"
+Products.SQLAlchemyDA
+Products.mcdutils==2.0 # --install-option="--no-deps"
+SQLAlchemy
+Pillow
+feedparser
+python-memcached==1.59
+xhtml2pdf==0.2.4
+requests
+beautifulsoup4
+lxml
+Markdown
+pyScss
+python-docx
+# last version with openssl 1.0.2k support
+cryptography==3.1.1
