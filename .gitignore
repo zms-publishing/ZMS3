@@ -1,7 +1,6 @@
 *.egg-info/
 *.pyc
-Products/zms/plugins/www/zms-all.min.js
-Products/zms/plugins/www/i18n/*.js
+plugins/www/zms-all.min.js
+plugins/www/i18n/*.js
 overrides.zcml
-.vscode
-.devcontainer
+docker/variants/*/instance/*
