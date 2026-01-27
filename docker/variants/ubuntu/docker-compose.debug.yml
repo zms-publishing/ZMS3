@@ -55,6 +55,6 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/.devcontainer/start_zeo.sh &
+      ${SRC_DIR}/docker/variants/ubuntu/start_zeo.sh &
       sleep infinity
       "

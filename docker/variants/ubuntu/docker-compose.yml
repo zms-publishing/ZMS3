@@ -18,7 +18,7 @@ x-instance-common: &instance_common
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${SRC_DIR}/.devcontainer/start_instance.sh &&
+      ${SRC_DIR}/docker/variants/ubuntu/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -69,7 +69,7 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/.devcontainer/start_zeo.sh &
+      ${SRC_DIR}/docker/variants/ubuntu/start_zeo.sh &
       sleep infinity
       "
 

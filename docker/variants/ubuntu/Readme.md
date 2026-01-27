@@ -45,7 +45,7 @@ To create the Docker constructs, the following configuration files are required;
 
 ## Docker-Image using Ubuntu 20.04
 
-The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation, in short: 
+The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation, in short: 
 
 
 ```yml
@@ -121,7 +121,7 @@ RUN ./pip install Pillow
 RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
 ```
 
-This example code actually just shows the most important installation steps. Our [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/Dockerfile) will install some components (memcache, VSCode-Server, MariaDB etc.) 
+This example code actually just shows the most important installation steps. Our [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) will install some components (memcache, VSCode-Server, MariaDB etc.) 
 This container image forms the basis for the containers that perform the mount-binding to the host file system and start the application.
 
 ## Run Zope/ZMS in the Docker Container
@@ -131,7 +131,7 @@ Only one Zope instance now runs in a container - monotonously on port 8080. The 
 1. HTTP_PORT 
 2. READ_ONLY
 
-These environment variables are defined by the docker-compose file and processed by the shell-script that starts the Zope instance: `start_instance.sh` (.devcontainer/start_instance.sh)
+These environment variables are defined by the docker-compose file and processed by the shell-script that starts the Zope instance: `start_instance.sh` (docker/variants/ubuntu/start_instance.sh)
 
 ```yml
 x-instance-common: &instance_common
@@ -154,7 +154,7 @@ x-instance-common: &instance_common
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${SRC_DIR}/.devcontainer/start_instance.sh &&
+      ${SRC_DIR}/docker/variants/ubuntu/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -205,7 +205,7 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/.devcontainer/start_zeo.sh &
+      ${SRC_DIR}/docker/variants/ubuntu/start_zeo.sh &
       sleep infinity
       "
 ```
@@ -266,7 +266,7 @@ To create an instance-specific `zope.conf` file, a text template is used, which 
 1. READ_ONLY: Set to true to start Zope in read-only mode.
 2. HTTP_PORT: The container port on which the Zope port is mapped to.
 
-The template shown below is processed using the following shell script call (.devcontainer/start_instance.sh)
+The template shown below is processed using the following shell script call (docker/variants/ubuntu/start_instance.sh)
 
 ```sh
 envsubst '$HTTP_PORT $READ_ONLY' < "${INSTANCE_DIR}/etc/zope.conf.tmpl" > "${INSTANCE_DIR}/etc/zope_$HTTP_PORT.conf"
@@ -337,16 +337,16 @@ instancehome $INSTANCE_HOME
 
 ## Coordinated start process
 
-In the _docker-compose_ file any service section (derived from the _instance_common_-template)  will call the [_start_instance_-script](https://github.com/zms-publishing/ZMS3/blob/main/.devcontainer/start_instance.sh):
+In the _docker-compose_ file any service section (derived from the _instance_common_-template)  will call the [_start_instance_-script](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/start_instance.sh):
 
 ```sh
-${SRC_DIR}/.devcontainer/start_instance.sh
+${SRC_DIR}/docker/variants/ubuntu/start_instance.sh
 ```
 
 The script contains some waiting-loops to make sure for any Zope-instance that ZEO has started and the ZODB-connection is available and a report about the starting process is sent to the console:
 
 ```sh
-zope@dev: ~/src/ZMS3/.devcontainer$ docker compose -f docker-compose.yml up
+zope@dev: ~/src/ZMS3/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
 
 ✔ Image zms3:base
 ✔ Network devcontainer_zms_network
@@ -387,7 +387,7 @@ instance3-1  | Zope started on port 8080 and publishing on 8087
 The debug-Container (having VSCode-Server) starts only ZEO and not Zope. This will be done manually with the VSCode-Python-Debugger:
 
 ```sh
-zope@dev: ~/src/ZMS3/.devcontainer$ docker compose -f docker-compose.yml up
+zope@dev: ~/src/ZMS3/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
 ```
 
 The VSCode-GUI will appear in the web-browser on port 8888 and the launch-name for debugging will be "Docker: ZMS3-Py2".After launching Zope will be published on port 8080.

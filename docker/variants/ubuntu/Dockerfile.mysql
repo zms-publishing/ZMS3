@@ -1,4 +1,4 @@
-# File: .devcontainer/Dockerfile.mysql
+# File: docker/variants/ubuntu/Dockerfile.mysql
 
 # 1. Use the official MariaDB image
 FROM mariadb:10.8.2
@@ -24,7 +24,7 @@ CMD ["mysqld"]
 #    docker network create zms_network
 #
 # 2. Build the image:
-#    docker build -t custom-mariadb -f .devcontainer/Dockerfile.mysql .
+#    docker build -t custom-mariadb -f docker/variants/ubuntu/Dockerfile.mysql .
 #
 # 3. Run the container on the zms_network:
 #    docker run -d \
