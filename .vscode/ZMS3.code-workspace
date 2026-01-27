@@ -1,0 +1,41 @@
+// IMPORTANT NOTE: 
+// For debugging Zope2-Python2 you need to use an older VSCode version (e.g. 1.62.3)
+// because the newer versions do not support Python2 debugging anymore.
+// Please use the docker-files to setup a proper development environment.
+// The docker files for evaluation can be found here: .devcontainer/
+// while the productive dockerfiles can be found in the ./docker-directory.
+//
+{
+	"folders": [
+		{
+			"name": "ZMS3-src",
+			"path": "../"
+		},
+		{
+			"name": "ZMS3-instance",
+			"path": "/home/zope/instance/zms3_dev"
+		}
+	],
+	"settings": {
+		"window.zoomLevel": 0,
+		"editor.minimap.enabled": false,
+		"editor.renderWhitespace": "all",
+		"editor.insertSpaces": false,
+		"editor.renderControlCharacters": false,
+		"editor.tabSize": 4,
+		"workbench.iconTheme": "vs-minimal",
+		"files.associations": {
+			"*.zpt": "html",
+			"*.zcml": "xml",
+			"css_*": "css"
+		},
+		"files.exclude": {
+			"**/site-packages/**":true,
+			"*.pyc": true,
+			"*.egg*":true
+		},
+		"files.eol": "\n",
+		"files.autoSave": "afterDelay",
+		"python.linting.enabled": true
+	}
+}
