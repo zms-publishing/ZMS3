@@ -85,31 +85,36 @@ RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
 EOR
 
 # Copy in and install zms last, to maximize layer caching
-# Needs to happen before instance initialization as the instance cannot be loaded otherwise to generate the initial user
+# Needs to happen before instance initialization as the instance cannot be loaded
+# otherwise to generate the initial user
+# Not quite sure why the source needs to land in `src/Products/zms` - the setup.py
+# file declares it to be in src. But this works…
 COPY --chown=zope:zope . src/Products/zms
 RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
     $PIP_INSTALL --editable ./src/[dev]
 EOR
 
 # Create Zope Instance
-# We do this, to make it easy to evaluate zms without having to create an initial zodb outside the container and map it inside.
+# We do this, to make it easy to evaluate zms without having to create an initial zodb
+# outside the container and map it inside.
 # However: mkzopeinstance creates a file inituser in the top level of the deployment
-# This file is read on the first startup of zope, and creates the actual initial user in the zodb
-# consuming that file. Therefore we must be very cautious to ensuret that this file itself is _not_
-# part of the docker image. zconsole triggers that same startup behaviour.
+# This file is read on the first startup of zope, and creates the actual initial user
+# in the zodb consuming that file. Therefore we must be very cautious to ensuret that
+# this file itself is _not_ part of the docker image. zconsole triggers that same
+# startup behaviour.
 RUN <<EOR
     set -ex
     mkdir cache Extensions Products customizing import
     mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
-    # echo | zopectl --configure etc/zope.conf debug
+    # consume inituser file
+    echo | zopectl --configure etc/zope.conf debug
 EOR
 
 # TODO Copy in base configuration files
-# ARG BUILD_DIR=docker/base
-# COPY --chown=zope:zope $BUILD_DIR/zope.ini etc/zope.ini
-# COPY --chown=zope:zope $BUILD_DIR/zope.conf etc/zope.conf
-# COPY --chown=zope:zope $BUILD_DIR/zeo.conf etc/zeo.conf
-# COPY ./var .
+ARG BUILD_DIR=docker/base
+COPY --chown=zope:zope $BUILD_DIR/zope.ini etc/zope.ini
+COPY --chown=zope:zope $BUILD_DIR/zope.conf etc/zope.conf
+COPY --chown=zope:zope $BUILD_DIR/zeo.conf etc/zeo.conf
 
 EXPOSE 80
 
@@ -117,16 +122,6 @@ EXPOSE 80
 # ENTRYPOINT ["/bin/sh -c"]
 # ENTRYPOINT ["bash", "-c", "sleep infinity"]
 # CMD ["$INSTANCE_HOME/bin/zopectl","fg"]
-# CMD ["$INSTANCE_HOME/bin/runzope","-X","debug-mode=on"]cd
+# CMD ["$INSTANCE_HOME/bin/runzope","-X","debug-mode=on"]
 
-# # Configure Zope Instance
-# ARG BUILD_DIR=docker
-# COPY --chown=zope:zope $BUILD_DIR/zope.conf etc/zope.conf
-
-
-# # consider if we need the test code to be in the container to run
-# # in github actions or similar circumstances
-# # locally it is mapped into the container via bindmounts
-# # COPY --chown=zope:zope selenium_tests test_output tests ./
-
-# CMD ["runwsgi", "--verbose", "etc/zope.ini", "http_port=80"]
+CMD ["bin/runzope", "-X", "debug-mode=on", "http_port=80"]
