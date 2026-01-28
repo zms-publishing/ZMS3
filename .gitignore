@@ -4,3 +4,4 @@ plugins/www/zms-all.min.js
 plugins/www/i18n/*.js
 overrides.zcml
 docker/variants/*/instance/*
+docker/zope/var/*
