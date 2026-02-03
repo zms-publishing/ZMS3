@@ -112,7 +112,6 @@ EOR
 
 # TODO Copy in base configuration files
 ARG BUILD_DIR=docker/base
-COPY --chown=zope:zope $BUILD_DIR/zope.ini etc/zope.ini
 COPY --chown=zope:zope $BUILD_DIR/zope.conf etc/zope.conf
 COPY --chown=zope:zope $BUILD_DIR/zeo.conf etc/zeo.conf
 
