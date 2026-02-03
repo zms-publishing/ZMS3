@@ -124,4 +124,4 @@ EXPOSE 80
 # CMD ["$INSTANCE_HOME/bin/zopectl","fg"]
 # CMD ["$INSTANCE_HOME/bin/runzope","-X","debug-mode=on"]
 
-CMD ["bin/runzope", "-X", "debug-mode=on", "http_port=80"]
+CMD ["bin/runzope", "-X", "debug-mode=on"]

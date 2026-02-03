@@ -23,7 +23,7 @@
 		"editor.insertSpaces": false,
 		"editor.renderControlCharacters": false,
 		"editor.tabSize": 4,
-		"workbench.iconTheme": "vs-minimal",
+		"workbench.iconTheme": "vs-seti",
 		"files.associations": {
 			"*.zpt": "html",
 			"*.zcml": "xml",
