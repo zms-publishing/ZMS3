@@ -28,17 +28,17 @@ USER zope
 # /// We keep this VSIX pinned to preserve Python 2 support; if you upgrade `code-server`
 # /// to 4.x, you must test the VSIX — newer Python extension releases may have dropped Py2 support.
 WORKDIR /home/zope
-RUN curl -fsSL -o ms-python-release.vsix https://github.com/microsoft/vscode-python/releases/download/2021.9.1246542782/ms-python-release.vsix
+RUN curl --fail --silent --show-error --location --output ms-python-release.vsix https://github.com/microsoft/vscode-python/releases/download/2021.9.1246542782/ms-python-release.vsix
 RUN code-server --install-extension ms-python-release.vsix  --user-data-dir /home/zope/.local/share/code-server
 
 # Start VScode-Server
 CMD ["code-server", \
-     "--bind-addr", "0.0.0.0:8888", \
-     "--disable-telemetry", \
-     "--disable-update-check", \
-     "--user-data-dir", "/home/zope/.local/share/code-server", \
-     "--auth", "none", \
-     "/home/zope"]
+    "--bind-addr", "0.0.0.0:8888", \
+    "--disable-telemetry", \
+    "--disable-update-check", \
+    "--user-data-dir", "/home/zope/.local/share/code-server", \
+    "--auth", "none", \
+    "/home/zope"]
 
 # NOTE: Port 80 is inherited from base image and cannot be unexposed via Dockerfile.
 # To prevent publishing port 80, omit it from docker run -p or docker-compose ports mapping.
@@ -48,4 +48,3 @@ EXPOSE 8888
 EXPOSE 8085
 # Provided for Debugger-Zope-Instance
 EXPOSE 8086
-
