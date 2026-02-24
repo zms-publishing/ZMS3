@@ -1,4 +1,4 @@
-FROM zms3:base
+FROM ghcr.io/zms-publishing/zms3:latest
 
 # Image name: zms3:debug
 LABEL org.opencontainers.image.title="zms3:debug"
