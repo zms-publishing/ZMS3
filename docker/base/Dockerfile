@@ -78,9 +78,9 @@ COPY --chown=zope:zope version.txt src/version.txt
 COPY --chown=zope:zope requirements*.txt setup.py README.rst src/
 RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
     $PIP_INSTALL --upgrade pip wheel setuptools
-    $PIP_INSTALL --requirements requirements.txt
+    $PIP_INSTALL --requirement src/requirements.txt
     $PIP_INSTALL --requirement src/requirements-pluggableauth.txt
-    $PIP_INSTALL --requirements requirements-extra.txt
+    $PIP_INSTALL --requirement src/requirements-extra.txt
     $PIP_INSTALL ./src/
 EOR
 
