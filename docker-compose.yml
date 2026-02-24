@@ -5,11 +5,12 @@ services:
       dockerfile: ./docker/base/Dockerfile
     image: localhost/zope:3-latest
     stop_grace_period: 1s # SIGKILL after 1s, as zope is always taking the full 10 seconds
-    # command: runwsgi --debug --verbose etc/zope.ini debug-mode=on http_port=80
     ports:
       - 80:80
     environment:
       - HTTP_PORT=80
+    # runzope does not support envsubst directly, so we use bash to execute the command and perform the variable substitution before running zope. This allows us to dynamically configure the HTTP port based on the environment variable.
+    command: bash -c "runzope -X debug-mode=on --configure <( envsubst '$\HTTP_PORT' < etc/zope.conf )"
     volumes:
       - ./docker/zope/etc/:/home/zope/etc/
       - ./docker/zope/var/:/home/zope/var/
@@ -19,8 +20,6 @@ services:
       - ./tests:/home/zope/tests
       - ./test_output:/home/zope/test_output
       - ./selenium_tests:/home/zope/selenium_tests
-    # runzope does not support envsubst directly, so we use bash to execute the command and perform the variable substitution before running zope. This allows us to dynamically configure the HTTP port based on the environment variable.
-    command: bash -c "runzope -X debug-mode=on --configure <( envsubst '$\HTTP_PORT' < etc/zope.conf )"
     develop:
       watch:
         # sync+restart
