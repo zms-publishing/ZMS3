@@ -77,6 +77,7 @@ ARG PIP_INSTALL="pip install --cache-dir $PIP_CACHE_DIR"
 COPY --chown=zope:zope version.txt src/version.txt
 COPY --chown=zope:zope requirements*.txt setup.py README.rst src/
 RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
+    set -xe
     $PIP_INSTALL --upgrade pip wheel setuptools
     $PIP_INSTALL --requirement src/requirements.txt
     $PIP_INSTALL --requirement src/requirements-pluggableauth.txt
