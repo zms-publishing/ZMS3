@@ -50,7 +50,7 @@ EOR
 USER zope
 WORKDIR /home/zope/
 
-# Configure git for user
+# Configure git for zms integrated push
 RUN <<EOR
     git config --global user.email "zmsbot@container"
     git config --global user.name "zmsbot"
