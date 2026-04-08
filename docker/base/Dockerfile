@@ -83,6 +83,8 @@ RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
     $PIP_INSTALL --requirement src/requirements.txt
     $PIP_INSTALL --requirement src/requirements-pluggableauth.txt
     $PIP_INSTALL --requirement src/requirements-extra.txt
+    # Force reinstall mysqlclient to link against MariaDB
+    $PIP_INSTALL --force-reinstall --no-cache-dir mysqlclient==1.4.6
     $PIP_INSTALL ./src/
 EOR
 
