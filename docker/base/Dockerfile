@@ -74,6 +74,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_CACHE_DIR=/home/zope/venv/cache
 ARG PIP_INSTALL="pip install --cache-dir $PIP_CACHE_DIR"
 
+COPY --chown=zope:zope docker/base/run-zope.sh bin/run-zope.sh
 COPY --chown=zope:zope version.txt src/version.txt
 COPY --chown=zope:zope requirements*.txt setup.py README.rst src/
 RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
@@ -116,7 +117,6 @@ ARG BUILD_DIR=docker/base
 COPY --chown=zope:zope $BUILD_DIR/zope.conf etc/zope.conf
 COPY --chown=zope:zope $BUILD_DIR/zeo.conf etc/zeo.conf
 
-EXPOSE 80
 
 # Finally Start Zope by Script
 # ENTRYPOINT ["/bin/sh -c"]
@@ -124,4 +124,5 @@ EXPOSE 80
 # CMD ["$INSTANCE_HOME/bin/zopectl","fg"]
 # CMD ["$INSTANCE_HOME/bin/runzope","-X","debug-mode=on"]
 
-CMD ["bin/runzope", "-X", "debug-mode=on"]
+ENV HTTP_PORT=${HTTP_PORT:-80}
+CMD ["bin/run-zope.sh"]
