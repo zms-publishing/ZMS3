@@ -4,9 +4,9 @@
 
 Hint: It should be noted that the LTS support for Python2 expired in 2020 and its use should be limited to a protected intranet environment._
 
-## Data Organization in Folders ./venv and ./instance
+## Data Organization
 
-The Zope/ZMS installation is usually carried out in a virtual Python environment (venv). The following data organization is suggested for container operation. The `venv` folders are those of the virtual Python environment, while the Zope instance is stored in the `instance` folder:
+The Zope/ZMS installation is usually carried out in a virtual Python environment (venv). The following data organization is suggested for container operation. The `venv` folders are those of the virtual Python environment, while the Zope instance is stored in the `/home/zope` folder:
 
 ```txt
 /home/zope/venv
@@ -17,7 +17,7 @@ The Zope/ZMS installation is usually carried out in a virtual Python environment
   /share
   /src
 
-/home/zope/instance
+/home/zope
   /bin
   /etc
   /Extensions
@@ -55,7 +55,7 @@ FROM ubuntu:20.04
 LABEL org.opencontainers.image.title="zms3:base"
 
 # ############################
-ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
+ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope)
 ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
 ARG IS_DEBUG=$(IS_DEBUG;default:false)
 ARG UID=$(UID;default:1000)
@@ -149,7 +149,7 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/:${INSTANCE_DIR}/:rw
+    - .:${INSTANCE_DIR}/:rw
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
   command: >
     bash -c "
@@ -237,8 +237,8 @@ These pathes are applied to the runzeo-script as well.
 
 ```sh
 #! /bin/sh
-INSTANCE_HOME="/home/zope/instance"
-CONFIG_FILE="/home/zope/instance/etc/zope.conf"
+INSTANCE_HOME="/home/zope"
+CONFIG_FILE="/home/zope/etc/zope.conf"
 ZOPE_RUN="/home/zope/venv/bin/runzope"
 export INSTANCE_HOME
 exec "$ZOPE_RUN" -C "$CONFIG_FILE" "$@"
@@ -250,7 +250,7 @@ exec "$ZOPE_RUN" -C "$CONFIG_FILE" "$@"
 #! /bin/sh
 #!/bin/sh
 # ZEO instance start script
-INSTANCE_HOME="/home/zope/instance"
+INSTANCE_HOME="/home/zope"
 PYTHON="/home/zope/venv/bin/python"
 ZODB3_HOME="/home/zope/venv/lib/python2.7/site-packages"
 CONFIG_FILE="$INSTANCE_HOME/etc/zeo.conf"
@@ -272,7 +272,7 @@ The template shown below is processed using the following shell script call (doc
 envsubst '$HTTP_PORT $READ_ONLY' < "${INSTANCE_DIR}/etc/zope.conf.tmpl" > "${INSTANCE_DIR}/etc/zope_$HTTP_PORT.conf"
 ```
 
-The Zope path variables are fixed within the zope.conf template because only a single Zope instance runs under `/home/zope/instance` within a container:
+The Zope path variables are fixed within the zope.conf template because only a single Zope instance runs under `/home/zope` within a container:
 
 ```xml
 # Template fpr zope.conf
@@ -280,7 +280,7 @@ The Zope path variables are fixed within the zope.conf template because only a s
 %define HTTP_PORT $HTTP_PORT
 
 # Zope configuration variables
-%define INSTANCE_HOME /home/zope/instance
+%define INSTANCE_HOME /home/zope
 %define VIRTUAL_ENV /home/zope/venv
 %import ZEO
 

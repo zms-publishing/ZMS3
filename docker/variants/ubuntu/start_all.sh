@@ -5,7 +5,7 @@
 # It also creates a MySQL test database and a user with privileges.
 # -----------------------------------------------------------------
 
-INSTANCE="/home/zope/instance"
+INSTANCE="/home/zope"
 VENV="/home/zope/venv"
 
 # Set up environment

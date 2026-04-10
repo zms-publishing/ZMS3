@@ -13,8 +13,19 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/:${INSTANCE_DIR}/:rw
+    # Mounting the instance directory allows to persist changes to the Zope instance configuration and data
+    - /home/zope/instance/zms3_dev/etc:${INSTANCE_DIR}/etc:rw
+    - /home/zope/instance/zms3_dev/var:${INSTANCE_DIR}/var:rw
+    - /home/zope/instance/zms3_dev/var:${INSTANCE_DIR}/log:rw
+    # To share external methods between Zope/ZEO/Docker clients folder needs to be mounted
+    - /home/zope/instance/zms3_dev/Extensions:${INSTANCE_DIR}/Extensions:rw
+    # Vendor folders
+    - /home/zope/src/fonts:${INSTANCE_DIR}/vendor/fonts:rw
+    - /home/zope/src/unify:${INSTANCE_DIR}/vendor/unify:rw
+    # Source code
     - ${SRC_MOUNT}/:${SRC_DIR}/:rw
+    - /home/zope/instance/zms3_dev/customizing:${INSTANCE_DIR}/customizing:rw
+    - /home/zope/instance/zms3_dev/customizing/overrides.zcml:/home/zope/venv/lib/python2.7/site-packages/Products/zms/overrides.zcml:rw
 
   ### HINT: VScode-Server will be started in the container automatically
   ### and can be accessed via the browser at http://localhost:8888
@@ -23,7 +34,7 @@ x-instance-common: &instance_common
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      code-server --bind-addr 0.0.0.0:8888 --disable-telemetry --disable-update-check --user-data-dir /home/zope/.local/share/code-server --auth none ${INSTANCE_DIR}/.vscode/Docker.code-workspace
+      code-server --bind-addr 0.0.0.0:8888 --disable-telemetry --disable-update-check --user-data-dir /home/zope/.local/share/code-server --auth none ${INSTANCE_DIR}/src/ZMS3/.vscode/Docker.code-workspace
     "
 
   networks:

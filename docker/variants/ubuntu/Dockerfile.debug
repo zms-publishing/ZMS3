@@ -1,4 +1,4 @@
-FROM zms3:base
+FROM zms3:ubuntu
 
 # Image name: zms3:debug
 LABEL org.opencontainers.image.title="zms3:debug"
@@ -6,8 +6,8 @@ LABEL org.opencontainers.image.title="zms3:debug"
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
-ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
-ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
+ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope)
+ARG VENV_DIR=$(VENV_DIR;default:/home/zope/venv)
 ARG IS_DEBUG=true
 ARG UID=$(UID;default:1000)
 ARG GID=$(GID;default:1000)
@@ -23,7 +23,7 @@ USER root
 # https://copilot.microsoft.com/shares/zTrKFY3Jc7ucLYUs7bkge
 # https://copilot.microsoft.com/shares/cfz7tHiKiEKhhu1osK3NQ
 # https://copilot.microsoft.com/shares/JWQQogrAxdTgMdAcMQnno
-RUN curl -fsSL https://code-server.dev/install.sh | bash -s -- --version $CODE_SERVER_VERSION
+RUN curl -fSL --progress-bar https://code-server.dev/install.sh | bash -s -- --version $CODE_SERVER_VERSION
 
 
 # ------------------------------

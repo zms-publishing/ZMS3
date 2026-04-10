@@ -1,5 +1,12 @@
+### #############################################################################
+### Docker Compose configuration for ZMS3 on Ubuntu
+### #############################################################################
+### IMPORTANT: This file creates a basic multi-instanstance setup for ZMS3. 
+### For debugging purposes, use `docker-compose.debug.yml` 
+### file instead, which refers to a copy of production data.
+### #############################################################################
 x-instance-common: &instance_common
-  image: zms3:base
+  image: zms3:ubuntu
   build:
     context: .
     dockerfile: ./Dockerfile

@@ -1,16 +1,16 @@
 FROM ubuntu:20.04
 
-# Image name: zms3:base
-LABEL org.opencontainers.image.title="zms3:base"
+# Image name: zms3:ubuntu
+LABEL org.opencontainers.image.title="zms3:ubuntu"
 
 # Get environment variables from docker-compose.yml:
 # So, image file must be created with docker-compose build
 # ############################
-ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope/instance)
-ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
-ARG IS_DEBUG=$(IS_DEBUG;default:false)
-ARG UID=$(UID;default:1000)
-ARG GID=$(GID;default:1000)
+ARG INSTANCE_DIR=/home/zope
+ARG VENV_DIR=/home/zope/venv
+ARG IS_DEBUG=false
+ARG UID=1000
+ARG GID=1000
 # ############################
 
 # Non-interactive installs and default timezone to avoid interactive prompts

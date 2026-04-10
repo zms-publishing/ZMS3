@@ -21,7 +21,7 @@ else
   echo "READ_ONLY is set to $READ_ONLY"
 fi
 
-INSTANCE_DIR="/home/zope/instance"
+INSTANCE_DIR="/home/zope"
 VENV_DIR="/home/zope/venv"
 
 # Set up environment
