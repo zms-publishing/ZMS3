@@ -57,7 +57,9 @@ RUN <<EOR
 EOR
 
 # Provide ZEO health check script
-COPY --chown=zope:zope docker/base/zeo_health_check.py /home/zope/bin/zeo_health_check.py
+COPY --chown=zope:zope docker/base/zeo_health_check.py bin/zeo_health_check.py
+# generic run script
+COPY --chown=zope:zope docker/base/run-zope.sh bin/run-zope.sh
 
 ARG INSTANCE_DIR=/home/zope/
 ENV VIRTUAL_ENV=/home/zope/venv
@@ -74,7 +76,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_CACHE_DIR=/home/zope/venv/cache
 ARG PIP_INSTALL="pip install --cache-dir $PIP_CACHE_DIR"
 
-COPY --chown=zope:zope docker/base/run-zope.sh bin/run-zope.sh
 COPY --chown=zope:zope version.txt src/version.txt
 COPY --chown=zope:zope requirements*.txt setup.py README.rst src/
 RUN --mount=type=cache,uid=$UID,target=$PIP_CACHE_DIR,sharing=locked <<EOR
