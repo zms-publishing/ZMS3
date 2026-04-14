@@ -22,5 +22,6 @@ try:
     print("OK")
     sys.exit(0)
 except Exception as e:
-    print("FAIL:", e, file=sys.stderr)
+    sys.stderr.write("FAIL: %s\n" % e)
+
     sys.exit(1)
