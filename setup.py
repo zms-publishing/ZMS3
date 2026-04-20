@@ -45,7 +45,7 @@ INSTALL_REQUIRES_CONCRETE = [
   'five.globalrequest==1.0',
   'five.localsitemanager==2.0.5',
   'initgroups==2.13.0',
-  'mechanize==0.2.5',
+  'mechanize==0.4.6',
   'Missing==3.1',
   'MultiMapping==3.0',
   'nt-svcutils==2.13.0',
