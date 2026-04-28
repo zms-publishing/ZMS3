@@ -110,8 +110,8 @@ RUN if [ "$IS_DEBUG" = "true" ]; then \
 
 USER zope
 # Create Zope Instance
-ENV INSTANCE_DIR=${INSTANCE_DIR}
-ENV VIRTUAL_ENV=${VENV_DIR}
+ENV INSTANCE_DIR=${INSTANCE_DIR:-/home/zope}
+ENV VIRTUAL_ENV=${VENV_DIR:-/home/zope/venv}
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN virtualenv --python=python2 $VIRTUAL_ENV
 WORKDIR $VIRTUAL_ENV/bin
