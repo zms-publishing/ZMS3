@@ -346,7 +346,7 @@ ${SRC_DIR}/docker/variants/ubuntu/start_instance.sh
 The script contains some waiting-loops to make sure for any Zope-instance that ZEO has started and the ZODB-connection is available and a report about the starting process is sent to the console:
 
 ```sh
-zope@dev: ~/src/ZMS3/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
+zope@dev: ~/src/zms/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
 
 ✔ Image zms3:base
 ✔ Network devcontainer_zms_network
@@ -387,7 +387,7 @@ instance3-1  | Zope started on port 8080 and publishing on 8087
 The debug-Container (having VSCode-Server) starts only ZEO and not Zope. This will be done manually with the VSCode-Python-Debugger:
 
 ```sh
-zope@dev: ~/src/ZMS3/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
+zope@dev: ~/src/zms/docker/variants/ubuntu$ docker compose -f docker-compose.yml up
 ```
 
 The VSCode-GUI will appear in the web-browser on port 8888 and the launch-name for debugging will be "Docker: ZMS3-Py2".After launching Zope will be published on port 8080.

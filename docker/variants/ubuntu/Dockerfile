@@ -118,6 +118,7 @@ WORKDIR $VIRTUAL_ENV/bin
 RUN bash -c "source activate"
 
 RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
+# Do not use editable install here: Zope product discovery expects a real Products path!
 RUN ./pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
 RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements-extra.txt
 

@@ -12,6 +12,7 @@ x-instance-common: &instance_common
     dockerfile: ./Dockerfile
     args:
       - INSTANCE_DIR=${INSTANCE_DIR}
+      - INSTANCE_MOUNT=${INSTANCE_MOUNT}
       - VENV_DIR=${VENV_DIR}
       - IS_DEBUG=false
       - UID=${UID}
@@ -20,12 +21,23 @@ x-instance-common: &instance_common
     - zeo
   user: zope
   volumes:
-    - ./instance/:${INSTANCE_DIR}/:rw
-    - ${SRC_MOUNT}/:${SRC_DIR}/:rw
+    # Mounting the instance directory allows to persist changes 
+    # to the Zope instance configuration and data
+    - ${INSTANCE_MOUNT}/bin:${INSTANCE_DIR}/bin:rw
+    - ${INSTANCE_MOUNT}/etc:${INSTANCE_DIR}/etc:rw
+    - ${INSTANCE_MOUNT}/var:${INSTANCE_DIR}/var:rw
+    - ${INSTANCE_MOUNT}/customizing:${INSTANCE_DIR}/customizing:rw
+    - ${INSTANCE_MOUNT}/Extensions:${INSTANCE_DIR}/Extensions:rw
+    # Vendor folders
+    - /home/zope/src/fonts:${INSTANCE_DIR}/vendor/fonts:rw
+    - /home/zope/src/unify:${INSTANCE_DIR}/vendor/unify:rw
+    # Source code
+    - ${INSTANCE_MOUNT}/customizing/overrides.zcml:${VENV_DIR}/lib/python2.7/site-packages/Products/zms/overrides.zcml:rw
+
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${SRC_DIR}/docker/variants/ubuntu/start_instance.sh &&
+      ${INSTANCE_DIR}/bin/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -76,7 +88,7 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/docker/variants/ubuntu/start_zeo.sh &
+      ${INSTANCE_DIR}/bin/start_zeo.sh &
       sleep infinity
       "
 
