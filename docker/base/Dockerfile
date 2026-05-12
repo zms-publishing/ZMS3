@@ -64,7 +64,7 @@ COPY --chown=zope:zope docker/base/run-zope.sh bin/run-zope.sh
 ARG INSTANCE_DIR=/home/zope/
 ENV VIRTUAL_ENV=/home/zope/venv
 
-# Create Zope Instance
+# Create Virtual Environment for Zope
 ENV INSTANCE_DIR=${INSTANCE_DIR}
 RUN <<EOR
     virtualenv --python=python2 $VIRTUAL_ENV
