@@ -11,13 +11,22 @@ The Zope/ZMS installation is usually carried out in a virtual Python environment
 ```txt
 /home/zope
   /bin
+    start_instance.sh
+    start_zeo.sh
   /etc
+    site.zcml
+    zeo.conf
+    zope.conf.tmpl
   /customizing
+    overrides.zcml
   /Extensions
   /import
   /Products
   /var
     /log
+    /mediafolder
+    Data.fs
+    zeosocket
   /venv
     /bin
     /etc
@@ -48,6 +57,23 @@ To create the Docker constructs, the following configuration files are utilized:
 
 The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation. 
 
+## Environment-Variabes are set by .env-File
+
+```yml
+# User and group IDs
+UID=1000
+GID=1000
+
+# Zope/ZMS paths
+HOME_DIR=/home/zope
+VENV_DIR=${HOME_DIR}/venv
+
+INSTANCE_DIR=${HOME_DIR}
+INSTANCE_MOUNT=${HOME_DIR}/instance/zms3_dev
+
+SRC_DIR=${VENV_DIR}/src
+SRC_MOUNT=${INSTANCE_MOUNT}/src
+```
 
 ## Run Zope/ZMS in the Docker Container
 
