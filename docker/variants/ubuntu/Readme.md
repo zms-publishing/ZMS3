@@ -9,22 +9,23 @@ Hint: It should be noted that the LTS support for Python2 expired in 2020 and it
 The Zope/ZMS installation is usually carried out in a virtual Python environment (venv). The following data organization is suggested for container operation. The `venv` folders are those of the virtual Python environment, while the Zope instance is stored in the `/home/zope` folder:
 
 ```txt
-/home/zope/venv
-  /bin
-  /etc
-  /inlude
-  /lib
-  /share
-  /src
-
 /home/zope
   /bin
   /etc
+  /customizing
   /Extensions
   /import
-  /log
   /Products
   /var
+    /log
+  /venv
+    /bin
+    /etc
+    /inlude
+    /lib
+    /share
+    /src
+
 ```
 
 In practice, however, a real world system can be located elsewhere in the file tree. The relevant paths for starting a Zope instance are basically only two, namely:
@@ -37,92 +38,16 @@ In practice, however, a real world system can be located elsewhere in the file t
 
 The “in-place dockerization” approach now consists of providing only the Python2 runtime environment via a Docker image and making the entire database (as it is, “in-place”) accessible to the running container as a mount-bind. This means that the Py2-Zope app server running in the container accesses the host file system _from the container_ or publishes “upstream” from the container to the web server (e.g. nginx) via the port defined in container-zope.conf. This in turn can run in its own container or on the host server.
 
-To create the Docker constructs, the following configuration files are required; these are placed in the folder in which the Zope instances are located: 
+To create the Docker constructs, the following configuration files are utilized: 
 
-1. **Image**, e.g.: `/home/zope/venv/instances/Dockerfile`
-2. **Container**, e.g: `/home/zope/venv/instances/docker-compose`
+1. **Image**: [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile)
+2. **Container**: [docker-compose](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/docker-compose.yml)
 
 
 ## Docker-Image using Ubuntu 20.04
 
-The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation, in short: 
+The Docker image is based on Ubuntu 20.04 which still allows the additional installation of Python2. Zope 2.13.29 and ZMS3 are installed from github and any Python modules that may need to be extended for specific projects from pypi. For the sake of traceability, the virtual Python in the container will be installed in the path hierarchy `/home/zope/venv/`. The [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) starts with a section for arguments (usually given by an [.env-file](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/.env)), then installing the Libraries that are needed for compiling Python-Libraries and the ZMS/Zope-installation. 
 
-
-```yml
-FROM ubuntu:20.04
-
-# Image name: zms3:base
-LABEL org.opencontainers.image.title="zms3:base"
-
-# ############################
-ARG INSTANCE_DIR=$(INSTANCE_DIR;default:/home/zope)
-ARG VENV_DIR=$(INSTANCE_DIR;default:/home/zope/venv)
-ARG IS_DEBUG=$(IS_DEBUG;default:false)
-ARG UID=$(UID;default:1000)
-ARG GID=$(GID;default:1000)
-# ############################
-
-RUN apt-get update
-
-RUN apt-get install -y ca-certificates
-# COPY zerts-pem/* /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-RUN apt-get -y upgrade
-
-RUN apt-get install -y bash
-RUN apt-get install -y wget
-RUN apt-get install -y curl
-RUN apt-get install -y --no-install-recommends gettext-base 
-RUN apt-get install -y lsof netcat inetutils-ping nano
-RUN apt-get install -y build-essential
-RUN apt-get install -y git
-RUN apt-get install -y python2 python2-dev
-# Install pip for Python 2 (pip 20.3) since Ubuntu 20.04 does not ship python2-pip
-RUN curl -sS https://bootstrap.pypa.io/pip/2.7/get-pip.py -o /tmp/get-pip.py && \
-	python2 /tmp/get-pip.py pip==20.3 && \
-	rm /tmp/get-pip.py
-# Install virtualenv for creating Python2 virtual environments
-RUN python2 -m pip install virtualenv
-RUN apt-get install -y libsasl2-dev
-RUN apt-get install -y libldap2-dev
-RUN apt-get install -y libssl-dev
-RUN apt-get install -y libsqlite3-dev
-
-
-# Set host's UID/GID to allow sharing of production files as bind mounts
-RUN groupadd --gid $GID zope
-RUN adduser --disabled-password --uid $UID --gid $GID zope
-
-USER zope
-# Create Zope Instance
-ENV INSTANCE_DIR=${INSTANCE_DIR}
-ENV VIRTUAL_ENV=${VENV_DIR}
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN virtualenv --python=python2 $VIRTUAL_ENV
-WORKDIR $VIRTUAL_ENV/bin
-RUN bash -c "source activate"
-
-RUN ./pip install -r https://raw.githubusercontent.com/zms-publishing/zms3/master/requirements.txt
-RUN ./pip install git+https://github.com/zms-publishing/ZMS3.git#egg=ZMS
-RUN ./pip install Products.PluginRegistry==1.4
-RUN ./pip install Products.LDAPUserFolder==2.27
-RUN ./pip install Products.PluggableAuthService==1.11.0
-RUN ./pip install Products.LDAPMultiPlugins==1.14
-RUN ./pip install Products.ZSQLMethods==2.13.4
-RUN ./pip install Products.ZSQLiteDA==0.6.1
-RUN ./pip install mysqlclient==1.4.6
-RUN ./pip install --no-deps Products.ZMySQLDA==4.11
-RUN ./pip install Products.SQLAlchemyDA
-RUN ./pip install --no-deps Products.mcdutils==2.0
-RUN ./pip install SQLAlchemy
-RUN ./pip install Pillow
-
-# Create Zope Instance
-RUN ./mkzopeinstance --dir ${INSTANCE_DIR} --user admin:admin
-```
-
-This example code actually just shows the most important installation steps. Our [Dockerfile](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/Dockerfile) will install some components (memcache, VSCode-Server, MariaDB etc.) 
-This container image forms the basis for the containers that perform the mount-binding to the host file system and start the application.
 
 ## Run Zope/ZMS in the Docker Container
 
@@ -154,7 +79,7 @@ x-instance-common: &instance_common
   command: >
     bash -c "
       memcached -u zope -m 64 -p 11211 &
-      ${SRC_DIR}/docker/variants/ubuntu/start_instance.sh &&
+      ${INSTANCE_DIR}/bin/start_instance.sh &&
       sleep infinity
     "
   networks:
@@ -169,33 +94,36 @@ services:
   instance1:
     <<: *instance_common
     environment:
-      - PYTHONUNBUFFERED="1"
-      - SOFTWARE_HOME="${VENV_DIR}/bin"
-      - PYTHON="${VENV_DIR}bin/python"
-      - HTTP_PORT=8085
-      - READ_ONLY=true
+      - INSTANCE_DIR=${INSTANCE_DIR}
+      - INSTANCE_MOUNT=${INSTANCE_MOUNT}
+      - VENV_DIR=${VENV_DIR}
+      - IS_DEBUG=true
+      - UID=${UID}
+      - GID=${GID}
     ports:
       - "8085:8080"
 
   instance2:
     <<: *instance_common
     environment:
-      - PYTHONUNBUFFERED="1"
-      - SOFTWARE_HOME="${VENV_DIR}/bin"
-      - PYTHON="${VENV_DIR}bin/python"
-      - HTTP_PORT=8086
-      - READ_ONLY=false
+      - INSTANCE_DIR=${INSTANCE_DIR}
+      - INSTANCE_MOUNT=${INSTANCE_MOUNT}
+      - VENV_DIR=${VENV_DIR}
+      - IS_DEBUG=false
+      - UID=${UID}
+      - GID=${GID}
     ports:
       - "8086:8080"
 
   instance3:
     <<: *instance_common
     environment:
-      - PYTHONUNBUFFERED="1"
-      - SOFTWARE_HOME="${VENV_DIR}/bin"
-      - PYTHON="${VENV_DIR}bin/python"
-      - HTTP_PORT=8087
-      - READ_ONLY=false
+      - INSTANCE_DIR=${INSTANCE_DIR}
+      - INSTANCE_MOUNT=${INSTANCE_MOUNT}
+      - VENV_DIR=${VENV_DIR}
+      - IS_DEBUG=false
+      - UID=${UID}
+      - GID=${GID}
     ports:
       - "8087:8080"
 
@@ -205,7 +133,7 @@ services:
     depends_on: []
     command: >
       bash -c "
-      ${SRC_DIR}/docker/variants/ubuntu/start_zeo.sh &
+      ${INSTANCE_DIR}/bin/start_zeo.sh &
       sleep infinity
       "
 ```
@@ -221,16 +149,16 @@ By copying and adapting the following block, you can create new Zope instances i
       - PYTHONUNBUFFERED="1"
       - SOFTWARE_HOME="${VENV_DIR}/bin"
       - PYTHON="${VENV_DIR}bin/python"
-      - HTTP_PORT=8085
-      - READ_ONLY=true
+      - HTTP_PORT=8087
+      - READ_ONLY=false
     ports:
-      - "8085:8080"
+      - "8087:8080"
 ```
 
 
 ## Container-Consistent Zope Configuration 
 
-As the conf files used by the container originate from the host FS, they must correspond to the path situation *within* the container. As only one single Zope instance runs in each container under the same path `/home/zope/instance` using the virtual Python from `/home/zope/venv`, the runzope file is always the same.
+As the conf files used by the container originate from the host FS, they must correspond to the path situation *within* the container. As only one single Zope instance runs in each container under the same path `/home/zope/` using the virtual Python from `/home/zope/venv`, the runzope file is always the same.
 These pathes are applied to the runzeo-script as well.
 
 ### $INSTANCE/bin/runzope
@@ -272,12 +200,17 @@ The template shown below is processed using the following shell script call (doc
 envsubst '$HTTP_PORT $READ_ONLY' < "${INSTANCE_DIR}/etc/zope.conf.tmpl" > "${INSTANCE_DIR}/etc/zope_$HTTP_PORT.conf"
 ```
 
-The Zope path variables are fixed within the zope.conf template because only a single Zope instance runs under `/home/zope` within a container:
+The Zope path variables are fixed within the [zope.conf template](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/instance/etc/zope.conf.tmpl) because only a single Zope instance runs under `/home/zope` within a container:
 
 ```xml
-# Template fpr zope.conf
+
+# Environment variable substitution:
+# Created at $CONF_TS
+# - READ_ONLY: Set to true to start Zope in read-only mode.
+# - HTTP_PORT: The container port on which the Zope port is mapped to.
 %define READ_ONLY $READ_ONLY
 %define HTTP_PORT $HTTP_PORT
+
 
 # Zope configuration variables
 %define INSTANCE_HOME /home/zope
@@ -319,28 +252,29 @@ instancehome $INSTANCE_HOME
 </zodb_db>
 
 <eventlog>
-	level info
-	<logfile>
-		path $INSTANCE_HOME/log/event_$HTTP_PORT.log
-		level info
-	</logfile>
+  level info
+  <logfile>
+    path $INSTANCE_HOME/var/log/event_$HTTP_PORT.log
+    level info
+  </logfile>
 </eventlog>
 
 <logger access>
-	level WARN
-	<logfile>
-		path $INSTANCE_HOME/log/Z2_$HTTP_PORT.log
-		format %(message)s
-	</logfile>
+  level WARN
+  <logfile>
+    path $INSTANCE_HOME/var/log/Z2_$HTTP_PORT.log
+    format %(message)s
+  </logfile>
 </logger>
+
 ```
 
 ## Coordinated start process
 
-In the _docker-compose_ file any service section (derived from the _instance_common_-template)  will call the [_start_instance_-script](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/start_instance.sh):
+In the _docker-compose_ file any service section (derived from the _instance_common_-template)  will call the [_start_instance_-script](https://github.com/zms-publishing/ZMS3/blob/main/docker/variants/ubuntu/instance/bin/start_instance.sh):
 
 ```sh
-${SRC_DIR}/docker/variants/ubuntu/start_instance.sh
+${SRC_DIR}/docker/variants/ubuntu/instance/bin/start_instance.sh
 ```
 
 The script contains some waiting-loops to make sure for any Zope-instance that ZEO has started and the ZODB-connection is available and a report about the starting process is sent to the console:
