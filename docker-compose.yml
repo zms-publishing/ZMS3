@@ -60,7 +60,6 @@ services:
     command: code-server --bind-addr 0.0.0.0:8080 --auth none  /home/zope
     ports:
       - 8080:8080 # VSCode-Server
-      - 5678:5678 # debugpy (vscode remote debugger)
       - 8085:8085 # Running Default Zope-Server on ZEO
       - 8086:8086 # Provided for Debugger-Zope-Instance
     volumes:
