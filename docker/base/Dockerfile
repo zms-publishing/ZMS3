@@ -23,7 +23,7 @@ RUN \
     apt-get install --yes ca-certificates
     update-ca-certificates
 
-    apt-get install --yes bash git curl lsof netcat inetutils-ping nano iproute2
+    apt-get install --yes bash sudo git curl lsof netcat inetutils-ping nano iproute2
     apt-get install --yes --no-install-recommends gettext-base
     apt-get install --yes build-essential
     apt-get install --yes python2 python2-dev
