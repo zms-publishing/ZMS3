@@ -1,82 +1,105 @@
-# -*- coding: utf-8 -*-
-################################################################################
-# zmssqldb.py
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-################################################################################
+"""
+zmssqldb.py - Relational Database Content Type for ZMS
+
+The ZMSSqlDb class provides a comprehensive abstraction layer for managing relational
+database-backed content in ZMS. It enables direct database access through configured
+database adapters (supporting both traditional ZRDB and SQLAlchemy-based connections),
+executes parameterized SQL queries with proper escaping, and marshals result sets as
+Python objects for use in ZMS templates and Python scripts.
+
+Key Capabilities:
+  - B{Database Connectivity}: Maintains connections to multiple database backends
+    (MySQL, PostgreSQL, Oracle, SQLite) via Zope database adapters (DA).
+  - B{Schema Reflection}: Automatically discovers and introspects database schemas,
+    creating entity models from table and column metadata. Supports custom entity
+    definitions stored in persistent XML models.
+  - B{Query Execution}: Provides high-level query methods (C{query()}, C{execute()})
+    with automatic parameter substitution, type-based SQL quoting, and result
+    normalization into column/record dictionaries.
+  - B{CRUD Operations}: Implements record-set management through C{recordSet_Insert()},
+    C{recordSet_Update()}, C{recordSet_Delete()} with support for:
+      - Auto-incrementing and timestamp columns
+      - Foreign-key references with optional lazy loading
+      - Single and multi-select relationships
+      - Intersection table synchronization
+      - Blob (file/image) storage with filesystem persistence
+  - B{Filtering and Sorting}: Builds dynamic WHERE and ORDER BY clauses from user input,
+    with table-level filter expressions and per-column operators (LIKE, =, NULL, etc.).
+  - B{Configuration UI}: Provides ZMI forms to:
+      - Select and configure database connections
+      - Define custom entity interfaces and column stereotypes
+      - Set access control rules (insert, update, delete, select)
+      - Import/export model definitions as XML
+  - B{Model Persistence}: Stores schema customizations (labels, stereotypes, validation)
+    in a persistent C{model_xml} attribute, allowing schema extensions beyond physical
+    database structure.
+
+Integration Points:
+  - Used by ZMS content types to expose database records as queryable content
+  - Integrates with ZMS authentication/authorization framework
+  - Supports inter-ZMS communication via HTTP blob transfer
+  - Extends C{zmscustom.ZMSCustom} for full ZMS content management features
+
+License: GNU General Public License v2 or later,
+Organization: ZMS Publishing
+"""
 
 # Imports.
 from AccessControl import ClassSecurityInfo
+from AccessControl.class_init import InitializeClass
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
-import Globals
 import copy
-import os
-import urllib
+import re
 import time
 import zExceptions
 # Product Imports.
-from zmscustom import ZMSCustom
-import standard
-import _confmanager
-import _fileutil
-import _globals
+from Products.zms import _fileutil
+from Products.zms import _globals
+from Products.zms import standard
+from Products.zms import zmscustom
+from Products.zms import zopeutil
 
-
-################################################################################
-################################################################################
-###
-###   Constructor
-###
-################################################################################
-################################################################################
 manage_addZMSSqlDbForm = PageTemplateFile('manage_addzmssqldbform', globals()) 
+
+
 def manage_addZMSSqlDb(self, lang, _sort_id, REQUEST, RESPONSE):
-  """ manage_addZMSSqlDb """
+  """
+  Create a new SQL database content object in the current container.
+
+  @param self: Container that receives the SQL database object.
+  @type self: OFS.ObjectManager.ObjectManager
+  @param lang: Active content language.
+  @type lang: str
+  @param _sort_id: Sort position after which the new object is inserted.
+  @type _sort_id: int
+  @param REQUEST: Current request containing add-form values.
+  @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+  @param RESPONSE: Response used for redirect handling.
+  @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+  """
   
-  ##### Create ####
-  id_prefix = standard.id_prefix(REQUEST.get('id_prefix','e'))
+  id_prefix = standard.id_prefix(REQUEST.get('id_prefix', 'e'))
   new_id = self.getNewId(id_prefix)
   obj = ZMSSqlDb(new_id,_sort_id+1)
   self._setObject(obj.id, obj)
   
   obj = getattr(self,obj.id)
-  ##### Object State ####
   obj.setObjStateNew(REQUEST)
-  ##### Init Properties ####
   obj.manage_changeProperties(lang,REQUEST,RESPONSE)
-  ##### VersionManager ####
   obj.onChangeObj(REQUEST)
   
-  ##### Normalize Sort-IDs ####
   self.normalizeSortIds(id_prefix)
   
   # Return with message.
   if REQUEST.RESPONSE:
-    message = self.getZMILangStr('MSG_INSERTED')%obj.display_type(REQUEST)
-    REQUEST.RESPONSE.redirect('%s/%s/manage_main?lang=%s&manage_tabs_message=%s'%(self.absolute_url(),obj.id,lang,urllib.quote(message)))
+    message = self.getZMILangStr('MSG_INSERTED')%obj.display_type()
+    REQUEST.RESPONSE.redirect('%s/%s/manage_main?lang=%s&manage_tabs_message=%s'%(self.absolute_url(), obj.id, lang, standard.url_quote(message)))
 
 
-################################################################################
-################################################################################
-###   
-###   Class
-###   
-################################################################################
-################################################################################
-
-class ZMSSqlDb(ZMSCustom):
+class ZMSSqlDb(zmscustom.ZMSCustom):
+    """
+    Custom ZMS content type that exposes relational database backed records.
+    """
 
     # Create a SecurityInfo for this class. We will use this
     # in the rest of our class definition to make security
@@ -98,6 +121,7 @@ class ZMSSqlDb(ZMSCustom):
     # Management Permissions.
     # -----------------------
     __authorPermissions__ = (
+        'preview_html', 'preview_top_html',
         'manage','manage_main','manage_main_iframe','manage_workspace',
         'manage_moveObjUp','manage_moveObjDown','manage_moveObjToPos',
         'manage_cutObjects','manage_copyObjects','manage_pasteObjs',
@@ -140,65 +164,87 @@ class ZMSSqlDb(ZMSCustom):
       'checkbox':1,
       'password':1,
       'richtext':1,
+      'string':1,
       'text':1,
       'time':1,
       'url':1,
     }
 
-
-    ############################################################################
-    ###
-    ###   CONSTRUCTOR
-    ###
-    ############################################################################
-
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.filteredChildNodes:
-    # --------------------------------------------------------------------------
     def filteredChildNodes(self, REQUEST={}, meta_types=None): 
+      """
+      Return an empty list because SQL database objects do not expose child nodes.
+
+      @param REQUEST: Optional request context.
+      @type REQUEST: dict
+      @param meta_types: Ignored meta-type selector.
+      @type meta_types: object
+      @return: Always an empty list.
+      @rtype: list
+      """
       return []
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getModelContainer:
-    # --------------------------------------------------------------------------
     def getModelContainer( self):
+      """
+      Return the Zope object that stores the serialized SQL model definition.
+
+      @return: DTML method containing the SQL model XML.
+      @rtype: object
+      """
       id = 'sqlmodel.xml'
-      if id not in self.objectIds(['DTML Method']):
-        model_xml =  getattr(self,'model_xml','<list>\n</list>')
-        self.manage_addDTMLMethod( id, 'SQL-Model (XML)', model_xml)
-      return getattr( self, id)
+      container = zopeutil.getObject(self,id)
+      if container is None:
+        model_xml =  getattr(self, 'model_xml', standard.str_json([]))
+        container = zopeutil.addObject(self,'DTML Method',id,'SQL-Model (XML)',model_xml)
+      return container
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getModel:
-    # --------------------------------------------------------------------------
     def getModel(self):
+      """
+      Return the parsed SQL model and refresh the cached copy when needed.
+
+      @return: Parsed SQL model definition.
+      @rtype: list
+      """
       container = self.getModelContainer()
-      container_xml = container.raw
+      container_xml = zopeutil.readData(container)
       model_xml =  getattr(self,'model_xml',None)
       if model_xml is None:
-        model_xml = '<list>\n</list>'
+        model_xml = standard.str_json([])
         self.model_xml = model_xml
         self.model = []
       if container_xml != model_xml:
         self.model_xml = container_xml
-        self.model = self.parseXmlString(self.model_xml)
+        self.model = standard.parseXmlString(self.model_xml)
       return self.model
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.setModel:
-    # --------------------------------------------------------------------------
     def setModel(self, newModel):
+      """
+      Replace the persisted SQL model definition.
+
+      @param newModel: Serialized SQL model payload.
+      @type newModel: str
+      """
       container = self.getModelContainer()
-      container.manage_edit( title=container.title, data=newModel)
+      id = container.id()
+      zopeutil.removeObject(self,id)
+      zopeutil.addObject(self,'DTML Method',id,'SQL-Model (XML)',newModel)
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.record_encode__:
-    # --------------------------------------------------------------------------
     def record_encode__(self, cols, record, encoding='utf-8'):
+      """
+      Decode byte values in a database row according to the given encoding.
+
+      @param cols: Column descriptors for the row.
+      @type cols: list
+      @param record: Raw database record.
+      @type record: dict
+      @param encoding: Text encoding used for byte strings.
+      @type encoding: str
+      @return: Normalized row dictionary.
+      @rtype: dict
+      """
       charset = getattr(self,'charset','utf-8')
       row = {}
       for col in cols:
@@ -215,45 +261,39 @@ class ZMSSqlDb(ZMSCustom):
       return row
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getDA:
-    #
-    #  Return Database Adapter (DA).
-    # --------------------------------------------------------------------------
     def getDA(self):
+      """
+      Return the configured database adapter object.
+
+      @return: Database adapter referenced by C{connection_id}, or C{None}.
+      @rtype: object
+      """
       da = None
       conn_id = getattr( self, "connection_id", None)
       if conn_id is not None:
-        da = getattr(self,conn_id,None)
-        if da is not None:
-          if da.meta_type == 'Z MySQL Database Connection':
-            # Try to re-connect if not connected.
-            try: 
-              dbc = da._v_database_connection 
-            except AttributeError: 
-              da.connect(da.connection_string) 
-              dbc = da._v_database_connection
-            # Try to set character-set to utf-8.
-            try:
-              dbc.query('SET NAMES utf8') 
-              dbc.query('SET CHARACTER SET utf8')
-            except:
-              pass
+        da = getattr(self, conn_id, None)
       return da
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getDA:
-    #
-    #  Return quoted value of table-column.
-    # --------------------------------------------------------------------------
     def sql_quote__(self, tablename, columnname, v):
+      """
+      Quote a value according to the declared type of a table column.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param columnname: Column identifier.
+      @type columnname: str
+      @param v: Raw value to quote.
+      @type v: object
+      @return: SQL literal suitable for inline substitution.
+      @rtype: str
+      """
       entities = self.getEntities()
-      entity = filter(lambda x: x['id'].upper() == tablename.upper(), entities)[0]
-      col = (filter(lambda x: x['id'].upper() == columnname.upper(), entity['columns'])+[{'type':'string'}])[0]
-      if col.get('nullable') and v in ['',None]:
+      entity = [x for x in entities if x['id'].upper()==tablename.upper()][0]
+      col = ([x for x in entity['columns'] if x['id'].upper()==columnname.upper()]+[{'type':'string'}])[0]
+      if col.get('nullable') and v in ['', None]:
         return "NULL"
-      elif col['type'] in ['int']:
+      elif col['type'] in ['int','long']:
         try:
           return str(int(str(v)))
         except:
@@ -265,74 +305,93 @@ class ZMSSqlDb(ZMSCustom):
           return "NULL"
       elif col['type'] in ['date','datetime','time']:
         try:
-          d = self.parseLangFmtDate(v)
+          d = standard.parseLangFmtDate(v)
           if d is None:
             raise zExceptions.InternalError
-          return "'%s'"%self.getLangFmtDate(d,'eng','%s_FMT'%col['type'].upper())
+          return "'%s'"%self.getLangFmtDate(d, 'eng', '%s_FMT'%col['type'].upper())
         except:
           return "NULL"
       else:
-        v = unicode(str(v),'utf-8').encode(getattr(self,'charset','utf-8'))
         if v.find("\'") >= 0: 
           v=''.join(v.split("\'"))
         return "'%s'"%v
 
 
-    """
-    Makes all changes made since the previous commit/rollback permanent and 
-    releases any database locks currently held by the Connection object.
-    """
     def commit(self):
+      """
+      Commit the current database transaction.
+
+      Makes all changes made since the previous commit or rollback permanent and
+      releases the database locks currently held by the connection object.
+      """
       da = self.getDA()
-      dbc = da._v_database_connection
+      dbc = da
+      if not da.meta_type.startswith('SQLAlchemyDA'):
+        dbc = da._v_database_connection
       conn = dbc.getconn(False)
       conn.commit()
 
 
-    """
-    Undoes all changes made in the current transaction and releases any database
-    locks currently held by this Connection object.
-    """
     def rollback(self):
+      """
+      Roll back the current database transaction.
+
+      Undo all changes made in the current transaction and release the database
+      locks currently held by the connection object.
+      """
       da = self.getDA()
-      dbc = da._v_database_connection
+      dbc = da
+      if not da.meta_type.startswith('SQLAlchemyDA'):
+        dbc = da._v_database_connection
       conn = dbc.getconn(False)
       conn.rollback()
 
 
-    """
-    Execute sql-statement.
-    Supports parameter-markers of python DB API.
-    
-    @param sql: The sql-statement
-    @type sql: C{str}
-    @param params: The values for the parameter-markers.
-    @type params: C{tuple}
-    @param max_rows: The maximum number of rows (default: 0, unlimited)
-    @type max_rows: C{str}
-    """
     def execute(self, sql, params=(), max_rows=0, encoding=None):
+      """
+      Execute an SQL statement using the configured database adapter.
+
+      Supports parameter markers of the Python DB API.
+
+      @param sql: SQL statement.
+      @type sql: str
+      @param params: Values for the parameter markers.
+      @type params: tuple
+      @param max_rows: Maximum number of rows to return, or C{0} for unlimited.
+      @type max_rows: int
+      @param encoding: Optional text encoding applied to byte columns.
+      @type encoding: str
+      @return: Raw or normalized query result depending on the adapter.
+      @rtype: object
+      """
       da = self.getDA()
-      dbc = da._v_database_connection
-      c = getattr(dbc,"execute",None)
-      if c is not None:
-        result = dbc.execute(sql,params,max_rows)
+      dbc = da
+      if not da.meta_type.startswith('SQLAlchemyDA'):
+        dbc = da._v_database_connection
+      c = getattr(da, "execute", None)
+      # Avoid recursion: only use DA's execute if it's not this instance's execute method
+      if c is not None and getattr(c, '__func__', c) != getattr(self.execute, '__func__', self.execute):
+          # Execute via DA (preferred, for Core / Raw SQL).
+          result = c(sql, params, max_rows)
       else:
-        result = dbc.query(self.substitute_params(sql,params),max_rows)
+          # Execute via Database Connection (fallback, for ZRDB-based DAs).
+          result = dbc.query(self.substitute_params(sql, params), max_rows)
       if encoding:
-        result = self.assemble_query_result(result,encoding)
+          result = self.assemble_query_result(result, encoding)
       return result
 
 
-    """
-    Substitute parameter-markers.
-    
-    @param sql: The sql-statement
-    @type sql: C{str}
-    @param params: The values for the parameter-markers.
-    @type params: C{tuple}
-    """
     def substitute_params(self, sql, params=()):
+      """
+      Substitute positional parameter markers with quoted SQL literals.
+
+      @param sql: SQL statement containing C{?} placeholders.
+      @type sql: str
+      @param params: Values for the placeholders.
+      @type params: tuple
+      @return: SQL statement with substituted literals.
+      @rtype: str
+      """
       nsl = [int,float]
       try:
         from psycopg2.extensions import Binary
@@ -348,24 +407,28 @@ class ZMSSqlDb(ZMSCustom):
           i = str(i)
         else:
           i = str(i)
-          i = i.replace('\'','\'\'')
+          i = i.replace('\'', '\'\'')
           i = '\'%s\''%i
         l.append(i)
       sql = sql%tuple(l)
       return sql
 
 
-    """
-    Assemble query-result.
-    
-    @return: Dictionary: columns C{list}, records C{list}.
-    @rtype: C{dict}
-    """
     def assemble_query_result(self, res, encoding=None):
-      from cStringIO import StringIO
+      """
+      Normalize a database query result into ZMS column and record structures.
+
+      @param res: Raw adapter result.
+      @type res: object
+      @param encoding: Optional text encoding applied to byte columns.
+      @type encoding: str
+      @return: Dictionary with C{columns} and C{records} lists.
+      @rtype: dict
+      """
+      from io import StringIO
       from Shared.DC.ZRDB.Results import Results
       from Shared.DC.ZRDB import RDB
-      if type(res) is str:
+      if isinstance(res, str):
         f=StringIO()
         f.write(res)
         f.seek(0)
@@ -379,10 +442,10 @@ class ZMSSqlDb(ZMSCustom):
         for s in colName.split('_'):
           colLabel += s.capitalize()
         try:
-          colType = {'i':'int','n':'float','t':'string','s':'string','d':'datetime','l':'string'}[result_column['type']]
+          colType = {'i':'int','n':'float','t':'string','s':'string','d':'datetime','l':'int'}.get(result_column['type'],'string')
         except:
-          colType = result_column.get('type',None)
-          standard.writeError(self,'[query]: Column ' + colName + ' has unknown type ' + str(colType) + '!')
+          colType = result_column.get('type', 'string')
+          standard.writeDebug(self, '[query]: Column ' + colName + ' has unknown type ' + str(colType) + '!')
         column = {}
         column['id'] = colName
         column['key'] = colName
@@ -392,122 +455,223 @@ class ZMSSqlDb(ZMSCustom):
         column['sort'] = 1
         columns.append(column)
       if encoding:
-        result = map(lambda x: self.record_encode__(columns,x,encoding), result)
+        result = [self.record_encode__(columns, x, encoding) for x in result]
       return {'columns':columns,'records':result}
 
 
-    """
-    Execute select-statement.
-    
-    @param sql: The select-statement
-    @type sql: C{str}
-    @param max_rows: The maximum number of rows (default: 0, unlimited)
-    @type max_rows: C{str}
-    @return: Dictionary: columns C{list}, records C{list}.
-    @rtype: C{dict}
-    """
     def query(self, sql, max_rows=0, encoding=None):
-      standard.writeLog( self, '[query]: sql=%s, max_rows=%i'%(sql,max_rows))
+      """
+      Execute a select statement and normalize the result for ZMS forms.
+
+      @param sql: Select statement.
+      @type sql: str
+      @param max_rows: Maximum number of rows to return, or C{0} for unlimited.
+      @type max_rows: int
+      @param encoding: Optional text encoding applied to byte columns.
+      @type encoding: str
+      @return: Dictionary with C{columns} and C{records} lists.
+      @rtype: dict
+      """
+      standard.writeLog( self, '[query]: sql=%s, max_rows=%i'%(sql, max_rows))
       da = self.getDA()
-      dbc = da._v_database_connection
+      dbc = da
+      if not da.meta_type.startswith('SQLAlchemyDA'):
+        dbc = da._v_database_connection
       if da.meta_type == 'Z SQLite Database Connection': sql = str(sql)
-      return self.assemble_query_result(dbc.query(sql,max_rows),encoding)
+      return self.assemble_query_result(dbc.query(sql, max_rows), encoding)
 
 
-    """
-    Execute modify-statement.
-    @param sql: The modify-statement
-    @type sql: C{str}
-    @return: Number of affected rows.
-    @rtype: C{int}
-    """
     def executeQuery(self, sql):
-      from cStringIO import StringIO
+      """
+      Execute an SQL modifying statement and return the affected row count.
+
+      @param sql: SQL modification statement.
+      @type sql: str
+      @return: Number of affected rows.
+      @rtype: int
+      """
+      from io import StringIO
       from Shared.DC.ZRDB.Results import Results
       from Shared.DC.ZRDB import RDB
       standard.writeBlock( self, '[executeQuery]: sql=%s'%sql)
       result = []
-      if self.getConfProperty('ZMSSqlDb.execute',1)==1:
+      if self.getConfProperty('ZMSSqlDb.execute', 1)==1:
         da = self.getDA()
-        dbc = da._v_database_connection
+        dbc = da
+        if not da.meta_type.startswith('SQLAlchemyDA'):
+          dbc = da._v_database_connection
         res = dbc.query(sql)
-        if type(res) is str:
+        if isinstance(res, str):
           f=StringIO()
           f.write(res)
           f.seek(0)
           result=RDB.File(f)
         else:
           result=Results(res)
-      return len(result)
+      try:
+        result = len(result)
+      except:
+        result = 0
+      return result
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getEntityPK:
-    #
-    #  Returns primary key.
-    # --------------------------------------------------------------------------
     def getEntityPK(self, tableName):
+      """
+      Return the primary-key column name of an entity.
+
+      @param tableName: Entity name.
+      @type tableName: str
+      @return: Primary-key column identifier.
+      @rtype: str
+      """
       columns = self.getEntity( tableName)['columns']
       # @todo
       pk = columns[0]['id']
       return pk
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getEntityRecordHandler
-    # --------------------------------------------------------------------------
-    def getEntityRecordHandler(self, tableName, stereotypes=['*']):
-      class EntityRecordHandler:
+    def getEntityRecordHandler(self, tableName, stereotypes=None, colNames=None):
+      """
+      Build a helper that post-processes rows for export and display.
+
+      @param tableName: Entity name.
+      @type tableName: str
+      @param stereotypes: Column stereotypes to keep or resolve.
+      @type stereotypes: list
+      @param colNames: Optional whitelist of exported column names.
+      @type colNames: list
+      @return: Record handler instance.
+      @rtype: object
+      """
+      if stereotypes is None:
+        stereotypes = ['*']
+      selected_col_names = list(colNames) if colNames else []
+
+      class EntityRecordHandler(object):
         def __init__(self, parent, tableName):
           self.parent = parent 
           self.tableName = tableName
         handle_record__roles__ = None
         def handle_record(self, r):
           context = self.parent
+          primary_key = context.getEntityPK(self.tableName)
+          include_columns = list(selected_col_names)
+          if include_columns and not standard.operator_contains(include_columns, primary_key, ignorecase=True):
+            include_columns.append(primary_key)
           d = {}
-          for k in r.keys():
-            value = r[k]
+          row_data = r
+          if len(include_columns) > 0:
+            row_data = {k: r[k] for k in r if standard.operator_contains(include_columns, k, ignorecase=True)}
+          for k in row_data:
+            value = row_data[k]
             try:
-              column = context.getEntityColumn(self.tableName,k,r)
-              if '*' in stereotypes or len(filter(lambda x:column.has_key(x),stereotypes)) > 0:
-                value =  column.get('value',value)
-                if column.has_key('options'):
+              column = context.getEntityColumn(self.tableName, k, row_data)
+              if '*' in stereotypes or len([x for x in stereotypes if x in column]) > 0:
+                value =  column.get('value', value)
+                if 'options' in column:
                   o = column['options']
                   v = value
                   if v:
                     value = []
-                    if type(v) is not list:
+                    if not isinstance(v, list):
                       v = [v]
                     for i in v:
-                      l = filter(lambda x:str(x[0])==str(i), o)
+                      l = [x for x in o if str(x[0])==str(i)]
                       if len(l) > 0:
-                        value.append(str(l[0][1]))
+                        value .append(l[0][1])
                     value = ', '.join(value)
             except:
-              standard.writeError( context, '[getEntityRecordHandler]: can\'t %s'%k)
+              standard.writeError( self, '[getEntityRecordHandler]: can\'t %s'%k)
             d[k] = value
-          primary_key = context.getEntityPK(tableName)
-          rowid = context.operator_getitem(d,primary_key,ignorecase=True)
+          rowid = standard.operator_getitem(row_data, primary_key, ignorecase=True)
           d['__id__'] = rowid
           d['params'] = {'rowid':rowid}
           return d
-      return EntityRecordHandler(self,tableName)
+      return EntityRecordHandler(self, tableName)
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getEntityColumn:
-    # --------------------------------------------------------------------------
+    def getEntityDetailsGridContext(self, request):
+      """
+      Build the full rendering context for C{manage_zmi_details_grid}.
+
+      This moves detail-grid preparation logic from TAL into Python so the
+      template focuses on markup only.
+
+      @param request: Current request.
+      @type request: ZPublisher.HTTPRequest.HTTPRequest
+      @return: Context dictionary used by C{zmi_details_grid.zpt}.
+      @rtype: dict
+      """
+      entity = self.getEntity(request['qentity'])
+      primary_key = self.getEntityPK(entity['id']).lower()
+      column = {'id': request['qcolumn']}
+      qentitypkval = request['qentitypkval']
+      row = {primary_key: qentitypkval}
+      meta_obj_attr = self.getEntityColumn(entity['id'], column['id'], row)
+      el_name = meta_obj_attr['id']
+      el_label = meta_obj_attr['label']
+      details = self.getEntity(meta_obj_attr['details']['tablename'])
+      detail_columns = [
+        x for x in details['columns']
+        if not x.get('pk') and not x.get('fk', {}).get('tablename') == entity['id']
+      ]
+      meta_obj_attrs = [self.getEntityColumn(details['id'], x['id']) for x in detail_columns]
+      for item in meta_obj_attrs:
+        item['name'] = item['label']
+      meta_obj_attr_ids = [x['id'] for x in meta_obj_attrs]
+
+      lang = request.get('lang', '')
+      form_action = request['URL']
+      url_params = {
+        'lang': lang,
+        'qentity': request['qentity'],
+        'qcolumn': request['qcolumn'],
+        'qentitypk': request['qentitypk'],
+        'qentitypkval': request['qentitypkval'],
+        'qsize': request.get('qsize', 10),
+      }
+
+      return {
+        'entity': entity,
+        'primary_key': primary_key,
+        'column': column,
+        'qentitypkval': qentitypkval,
+        'metaObjAttr': meta_obj_attr,
+        'elName': el_name,
+        'elLabel': el_label,
+        'details': details,
+        'records': meta_obj_attr.get('value'),
+        'metaObjAttrs': meta_obj_attrs,
+        'metaObjAttrIds': meta_obj_attr_ids,
+        'record_handler': self.getEntityRecordHandler(details['id']),
+        'form_action': form_action,
+        'url_params': url_params
+      }
+
+
     def getEntityColumn(self, tableName, columnName, row=None):
+      """
+      Return a column descriptor with metadata and value for a given table column.
+
+      @param tableName: Entity name.
+      @type tableName: str
+      @param columnName: Column name.
+      @type columnName: str
+      @param row: Optional row data for value extraction.
+      @type row: dict
+      @return: Column descriptor with metadata and value.
+      @rtype: dict
+      """
       column = {}
       try:
         request = self.REQUEST
-        lang = request.get('lang',self.getPrimaryLanguage())
+        lang = standard.nvl(request.get('lang'), self.getPrimaryLanguage())
         encoding = getattr(self,'charset','utf-8')
         qcharset = self.REQUEST.get('qcharset','utf-8')
         entity = self.getEntity(tableName)
         primary_key = self.getEntityPK(tableName)
         columns = entity['columns']
-        column = copy.deepcopy(filter(lambda x: x['id'].upper() == columnName.upper(), columns)[0])
+        column = copy.deepcopy([x for x in columns if x['id'].upper()==columnName.upper()][0])
         column['id'] = column['id'].lower()
         column['label'] = self.getLangStr(column['label'],lang)
         # Checkbox
@@ -524,8 +688,8 @@ class ZMSSqlDb(ZMSCustom):
           value = None
           column['type'] = stereotype['type']
           if row is not None:
-            rowid = self.sql_quote__(tableName,primary_key,self.operator_getitem(row,primary_key,ignorecase=True))
-            class BlobWrapper:
+            rowid = self.sql_quote__(tableName, primary_key, standard.operator_getitem(row, primary_key, ignorecase=True))
+            class BlobWrapper(object):
               def __init__(self, tableName, columnName, rowid, blob):
                 self.tableName = tableName
                 self.columnName = columnName
@@ -558,113 +722,119 @@ class ZMSSqlDb(ZMSCustom):
           column['value'] = value
         # Text
         stereotype = column.get('text')
-        if stereotype not in ['',None]:
+        if stereotype not in ['', None]:
           column['type'] = 'text'
         # Richtext
         stereotype = column.get('richtext')
-        if stereotype not in ['',None]:
+        if stereotype not in ['', None]:
           column['type'] = 'richtext'
+        # String
+        stereotype = column.get('string')
+        if stereotype not in ['', None]:
+          column['type'] = 'string'
         # Select
         stereotype = column.get('fk')
-        if type(stereotype) is dict:
+        if isinstance(stereotype, dict):
           value = None
           options = []
           if row is not None:
-            value = self.operator_getitem(row,columnName,ignorecase=True)
+            value = standard.operator_getitem(row, columnName, ignorecase=True)
             # Select.MySQLSet
-            if stereotype.has_key('mysqlset'):
-              for r in self.query( 'DESCRIBE %s %s'%(tableName,columnName))['records']:
-                rtype = r['type']
-                for i in rtype[rtype.find('(')+1:rtype.rfind(')')].replace('\'','').split(','):
-                  options.append([i,i])
+            if 'mysqlset' in stereotype:
+              rtype = column['description']
+              for i in rtype[rtype.find('(')+1:rtype.rfind(')')].replace('\'', '').split(','):
+                options.append([i, i])
             # Select.Options
-            elif stereotype.has_key('options'):
+            elif 'options' in stereotype:
               options.extend(stereotype['options'])
             # Select.Fk
-            elif stereotype.has_key('tablename'):
+            elif 'tablename' in stereotype:
               sql = []
-              sql.append( 'SELECT ' + stereotype['fieldname'] + ' AS qkey, ' + stereotype['displayfield'] + ' AS qvalue FROM ' + stereotype['tablename'])
-              if stereotype.has_key('lazy'):
+              sql.append( 'SELECT ' + stereotype['fieldname'] + ' AS qkey, ' + stereotype['displayfield'] + ' AS qvalue ')
+              sql.append( 'FROM ' + stereotype['tablename'])
+              sql.append( 'WHERE (1=1) ')
+              # Table-Filter
+              tabledef = self.getEntity(stereotype['tablename'])
+              tablefilter = standard.dt_exec(self, tabledef.get('filter', ''))
+              if tablefilter:
+                sql.append('AND (%s) '%tablefilter)
+              # Lazy
+              if 'lazy' in stereotype:
                 where = ['1=0']
                 v = value
                 if v:
-                  if type(v) is not list:
+                  if not isinstance(v, list):
                     v = [v]
                   for i in v:
-                    where.append( stereotype['fieldname'] + '=' + self.sql_quote__(stereotype['tablename'],stereotype['fieldname'],i))
-                sql.append( 'WHERE ' + ' OR '.join(where))
-              sql.append( 'ORDER BY ' + str(stereotype.get('sort',2)))
+                    where.append( stereotype['fieldname'] + '=' + self.sql_quote__(stereotype['tablename'], stereotype['fieldname'], i))
+                sql.append( 'AND (' + ' OR '.join(where) + ') ')
+              sql.append( 'ORDER BY ' + str(stereotype.get('sort', 2)))
               column['valuesql'] = '\n'.join(sql)
               for r in self.query('\n'.join(sql))['records']:
                 qkey = r['qkey']
                 qvalue = r['qvalue']
-                try:
-                  qkey =unicode(qkey,qcharset).encode('utf-8')
-                  qvalue = unicode(qvalue,qcharset).encode('utf-8')
-                except:
-                  pass
                 options.append([qkey,qvalue])
           column['value'] = value
           column['options'] = options
         
         # Multiselect
         stereotype = column.get('multiselect')
-        if type(stereotype) is dict:
+        if isinstance(stereotype, dict):
           value = []
           options = []
           src = None
           dst = None
-          if stereotype.has_key('tablename') and stereotype.has_key('fk'):
+          if 'tablename' in stereotype and 'fk' in stereotype:
             intersection = self.getEntity(stereotype['tablename'])
-            intersection_fk = filter(lambda x:type(x.get('fk')) is dict and x['fk'].has_key('tablename'),intersection['columns'])
+            intersection_fk = [x for x in intersection['columns'] if isinstance(x.get('fk'), dict) and 'tablename' in x['fk']]
             column['intersection_fk'] = intersection_fk
-            src = filter(lambda x:x['id'].upper()==stereotype['fk'].upper() and x['fk']['tablename'].upper()==tableName.upper(),intersection_fk)[0]
-            dst = filter(lambda x:x['id'].upper()!=stereotype['fk'].upper() or x['fk']['tablename'].upper()!=tableName.upper(),intersection_fk)[0]
-            #if dst is None: dst = (filter(lambda x:x['fk'].has_key('options'),intersection_fk)+[None])[0]
-            #if dst is None: dst = (filter(lambda x:x['fk'].has_key('tablename') and (x['fk']['tablename'].upper()!=tableName.upper() or x['fk'].get('fieldname','').upper()!=primary_key.upper()),intersection_fk)+[None])[0]
+            src = [x for x in intersection_fk if x['id'].upper()==stereotype['fk'].upper() and x['fk']['tablename'].upper()==tableName.upper()][0]
+            dst = [x for x in intersection_fk if x['id'].upper()!=stereotype['fk'].upper() or x['fk']['tablename'].upper()!=tableName.upper()][0]
           # Multiselect.Selected
           if src is not None and dst is not None and row is not None:
-            sql = '' \
-              + 'SELECT ' + dst['id'] + ' AS dst_id ' \
-              + 'FROM ' + intersection['id'] + ' ' \
-              + 'WHERE ' + src['id'] + '=' + self.sql_quote__(tableName,primary_key,self.operator_getitem(row,primary_key,ignorecase=True))
-            column['valuesql'] = sql
-            for r in self.query(sql)['records']:
+            sql = []
+            sql.append('SELECT ' + dst['id'] + ' AS dst_id')
+            sql.append('FROM ' + intersection['id'])
+            sql.append('WHERE ' + src['id'] + '=' + self.sql_quote__(tableName, primary_key, standard.operator_getitem(row, primary_key, ignorecase=True)))
+            column['valuesql'] = '\n'.join(sql)
+            for r in self.query('\n'.join(sql))['records']:
               value.append(r['dst_id'])
           # Multiselect.MySQLSet
-          if stereotype.has_key('mysqlset'):
+          if 'mysqlset' in stereotype:
             if row is not None:
-              value = standard.nvl(self.operator_getitem(row,columnName,ignorecase=True),'').split(',')
-              for r in self.query( 'DESCRIBE %s %s'%(tableName,columnName))['records']:
-                rtype = r['type']
-                for i in rtype[rtype.find('(')+1:rtype.rfind(')')].replace('\'','').split(','):
-                  options.append([i,i])
+              value = standard.nvl(standard.operator_getitem(row, columnName, ignorecase=True), '').split(',')
+              for r in self.query( 'DESCRIBE %s %s'%(tableName, columnName),encoding='utf-8')['records']:
+                rtype = standard.operator_getitem(r, 'type', ignorecase=True)
+                for i in rtype[rtype.find('(')+1:rtype.rfind(')')].replace('\'', '').split(','):
+                  options.append([i, i])
           # Multiselect.Options
-          elif dst is not None and dst['fk'].has_key('options'):
+          elif dst is not None and 'options' in dst['fk']:
             options.extend(dst['fk']['options'])
           # Multiselect.Fk
-          elif dst is not None and dst['fk'].has_key('tablename'):
+          elif dst is not None and 'tablename' in dst['fk']:
             sql = []
             sql.append('SELECT ' + dst['fk']['fieldname'] + ' AS qkey, ' + dst['fk']['displayfield'] + ' AS qvalue')
             sql.append('FROM ' + dst['fk']['tablename'])
-            if stereotype.has_key('lazy') and row is not None:
+            sql.append( 'WHERE (1=1) ')
+            # Table-Filter
+            tabledef = self.getEntity(dst['fk']['tablename'])
+            tablefilter = standard.dt_exec(self, tabledef.get('filter', ''))
+            if tablefilter:
+              sql.append('AND (%s) '%tablefilter)
+            # Lazy
+            if 'lazy' in stereotype and row is not None:
               where = ['1=0']
               v = value
               if v:
-                if type(v) is not list:
+                if not isinstance(v, list):
                   v = [v]
                 for i in v:
-                  where.append( dst['fk']['fieldname'] + '=' + self.sql_quote__(dst['fk']['tablename'],dst['fk']['fieldname'],i))
-              sql.append( 'WHERE ' + ' OR '.join(where))
+                  where.append( dst['fk']['fieldname'] + '=' + self.sql_quote__(dst['fk']['tablename'], dst['fk']['fieldname'], i))
+              sql.append( 'AND (' + ' OR '.join(where) + ') ')
             column['valuesql'] = '\n'.join(sql)
             for r in self.query('\n'.join(sql))['records']:
               qkey = r['qkey']
               qvalue = r['qvalue']
-              try:
-                qkey =unicode(qkey,qcharset).encode('utf-8')
-                qvalue = unicode(qvalue,qcharset).encode('utf-8')
-              except:
-                pass
               options.append([qkey,qvalue])
           column['src'] = src
           column['dst'] = dst
@@ -673,76 +843,72 @@ class ZMSSqlDb(ZMSCustom):
         
         # Details
         stereotype = column.get('details')
-        if type(stereotype) is dict:
+        if isinstance(stereotype, dict):
           details = self.getEntity(stereotype['tablename'])
           # Details.Intersection
           if details['type']=='intersection':
             if row:
-              ldst = filter(lambda x:x.get('fk') is not None and x['fk'].has_key('tablename') and x['fk']['tablename']!=tableName,details['columns'])
+              ldst = [x for x in details['columns'] if x.get('fk') is not None and 'tablename' in x['fk'] and x['fk']['tablename']!=tableName]
               columns = []
               joins = []
-              for x in map(lambda x:x['id'],filter(lambda x:x.get('datatype','?')!='?',details['columns'])):
+              dst = {}
+              for x in [x['id'] for x in details['columns'] if x.get('datatype', '?')!='?']:
                 columns.append(x)
-                fdst = filter(lambda dst:x==dst['id'],ldst)
+                fdst = [x for x in ldst if x==dst.get('id')]
                 if fdst:
                   dst = fdst[0]
                   fktablename = dst['fk']['tablename']
                   fkfieldname = dst['fk']['fieldname']
                   fkdisplayfield = dst['fk']['displayfield']
                   if fkdisplayfield.upper().find('%s.'%fktablename.upper())<0:
-                    fkdisplayfield = '%s.%s'%(fktablename,fkdisplayfield)
-                  columns.append('%s AS %s_label'%(fkdisplayfield,x))
-                  joins.append('LEFT OUTER JOIN '+fktablename+' ON '+x+'=%s.%s '%(fktablename,fkfieldname))
-              sql = '' \
-                + 'SELECT '+', '.join(columns)+' ' \
-                + 'FROM '+stereotype['tablename']+' ' \
-                + '\n'.join(joins) \
-                + 'WHERE '+stereotype['fk']+'=' + self.sql_quote__(tableName,primary_key,self.operator_getitem(row,primary_key,ignorecase=True)) 
-              column['valuesql'] = sql
+                    fkdisplayfield = '%s.%s'%(fktablename, fkdisplayfield)
+                  columns.append('%s AS %s_label'%(fkdisplayfield, x))
+                  joins.append('LEFT OUTER JOIN ' + fktablename + ' ON ' + x + '=%s.%s '%(fktablename, fkfieldname))
+              sql = []
+              sql.append('SELECT ' + ', '.join(columns))
+              sql.append('FROM ' + stereotype['tablename'])
+              sql.extend(joins)
+              sql.append('WHERE ' + stereotype['fk'] + '=' + self.sql_quote__(tableName, primary_key, standard.operator_getitem(row, primary_key, ignorecase=True))) 
+              column['valuesql'] = '\n'.join(sql)
               column['value'] = []
               try:
-                records = self.query(sql,encoding=encoding)['records']
+                records = self.query('\n'.join(sql), encoding=encoding)['records']
                 column['value'] = records
               except:
-                column['error'] = standard.writeError(self,'can\'t get value')
+                column['error'] = standard.writeError(self, 'can\'t get value')
           # Details.Table
           else:
             if row:
-              sql = '' \
-                + 'SELECT * ' \
-                + 'FROM '+stereotype['tablename']+' ' \
-                + 'WHERE '+stereotype['fk']+'='+self.sql_quote__(tableName,primary_key,self.operator_getitem(row,primary_key,ignorecase=True))
-              column['valuesql'] = sql
+              sql = []
+              sql.append('SELECT *')
+              sql.append('FROM ' + stereotype['tablename'])
+              sql.append('WHERE ' + stereotype['fk'] + '=' + self.sql_quote__(tableName, primary_key, standard.operator_getitem(row, primary_key, ignorecase=True)))
+              column['valuesql'] = '\n'.join(sql)
               column['value'] = []
               try:
-                records = self.query(sql,encoding=encoding)['records']
+                records = self.query('\n'.join(sql), encoding=encoding)['records']
                 column['value'] = records
               except:
-                column['error'] = standard.writeError(self,'can\'t get value')
+                column['error'] = standard.writeError(self, 'can\'t get value')
         
         # Multimultiselect
         stereotype = column.get('multimultiselect')
-        if type(stereotype) is dict:
-          items = stereotype.get('tables',[])
+        if isinstance(stereotype, dict):
+          items = stereotype.get('tables', [])
           for item in items:
             if item.get('lazy'):
               pass
             else:
               options = []
-              sql = '' \
-                + 'SELECT ' + item['fieldname'] + ' AS qkey, ' + item['displayfield'] + ' AS qvalue ' \
-                + 'FROM ' + item['tablename'] + ' ' \
-                + 'ORDER BY ' + item['displayfield']
-              for r in self.query(sql)['records']:
+              sql = []
+              sql.append('SELECT ' + item['fieldname'] + ' AS qkey, ' + item['displayfield'] + ' AS qvalue ')
+              sql.append('FROM ' + item['tablename'])
+              sql.append('ORDER BY ' + item['displayfield'])
+              for r in self.query('\n'.join(sql))['records']:
                 qkey = r['qkey']
                 qvalue = r['qvalue']
-                try:
-                  qkey =unicode(qkey,qcharset).encode('utf-8')
-                  qvalue = unicode(qvalue,qcharset).encode('utf-8')
-                except:
-                  pass
-                options.append([qkey,qvalue])
-              stereotype['options'] = stereotype.get('options',{})
+                options.append([qkey, qvalue])
+              stereotype['options'] = stereotype.get('options', {})
               stereotype['options'][item['tablename']] = options
           value = []
           if row:
@@ -769,7 +935,7 @@ class ZMSSqlDb(ZMSCustom):
               sql.append(' LEFT JOIN '.join(['']+leftjoins))
             if outerjoins:
               sql.append(' LEFT OUTER JOIN '.join(['']+outerjoins))
-            sql.append(' WHERE ' + stereotype['tablename'] + '.' + stereotype['fk'] + '=' + self.sql_quote__(tableName,primary_key,self.operator_getitem(row,primary_key,ignorecase=True)))
+            sql.append(' WHERE ' + stereotype['tablename'] + '.' + stereotype['fk'] + '=' + self.sql_quote__(tableName, primary_key, standard.operator_getitem(row, primary_key, ignorecase=True)))
             column['valuesql'] = '\n'.join(sql)
             for r in self.query('\n'.join(sql))['records']:
               v = []
@@ -781,11 +947,6 @@ class ZMSSqlDb(ZMSCustom):
                 if r['fk%i'%i]:
                   qkey = str(r['fk%i'%i])
                   qvalue = str(r['displayfield%i'%i])
-                  try:
-                    qkey =unicode(qkey,qcharset).encode('utf-8')
-                    qvalue = unicode(qvalue,qcharset).encode('utf-8')
-                  except:
-                    pass
                 v.append(qkey)
                 l.append(qvalue)
               value.append(('|'.join(v),' | '.join(l)))
@@ -793,21 +954,158 @@ class ZMSSqlDb(ZMSCustom):
         
         return column
       except:
-        return standard.writeError(self,'[getEntityColumn]: can\'t %s.%s (%s)'%(tableName,columnName,str(column)))
+        return standard.writeError(self,'[getEntityColumn]: can\'t %s.%s (%s)'%(tableName, columnName, str(column)))
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.getEntity:
-    # --------------------------------------------------------------------------
     def getEntity(self, tableName):
+      """
+      Return an entity descriptor with metadata and columns for a given table.
+      @param tableName: Entity name.
+      @type tableName: str
+      @return: Entity descriptor with metadata and columns.
+      @rtype: dict
+      """
       entities = self.getEntities()
-      return filter(lambda x: x['id'].upper() == tableName.upper(), entities)[0]
+      return [x for x in entities if x['id'].upper()==tableName.upper()][0]
+
+
+    def getEntityTarget(self, sourceTableName, targetTableName):
+      """
+      Resolve the effective target entity for relation-like stereotypes.
+
+      If the referenced entity is an intersection table, return the opposite
+      foreign-key target. Otherwise return the referenced entity itself.
+
+      @param sourceTableName: Source entity name.
+      @type sourceTableName: str
+      @param targetTableName: Referenced entity or intersection table name.
+      @type targetTableName: str
+      @return: Resolved target entity descriptor.
+      @rtype: dict
+      """
+      entity = self.getEntity(targetTableName)
+      if entity.get('type') != 'intersection':
+        return entity
+      target_columns = [
+        x for x in entity.get('columns', [])
+        if isinstance(x.get('fk'), dict) and \
+           x['fk'].get('tablename') and \
+           x['fk']['tablename'].upper() != sourceTableName.upper()
+      ]
+      if len(target_columns) > 0:
+        return self.getEntity(target_columns[0]['fk']['tablename'])
+      return entity
+
+
+    def getEntitiesSQLAlchemyDA(self):
+      """
+      Return a list of entity descriptors by reflecting the database schema via SQLAlchemy.
+
+      @return: List of entity descriptors.
+      @rtype: list
+      """
+      from sqlalchemy import create_engine
+      from sqlalchemy import inspect
+      from sqlalchemy import MetaData
+      from sqlalchemy import Table
+      da = self.getDA()
+      dsn = da.getProperty('dsn')
+      engine = create_engine(dsn)
+      # Create a MetaData instance
+      metadata = MetaData()
+      # reflect db schema to MetaData
+      metadata.reflect(bind=engine)
+      entities = []
+      for tablename in metadata.tables:
+        table = metadata.tables[tablename]
+        cols = []
+        for column in table.columns:
+          colName = str(column.name)
+          colDescr = str(column.type)
+          colType = 'string'
+          colSize = None
+          if colDescr.find('INT') >= 0:
+            colType = 'int'
+          elif colDescr.find('DATE') >= 0:
+            colType = 'date'
+            if colDescr.find('TIME') >= 0:
+              colType = 'datetime'
+          elif colDescr.find('CLOB') >= 0:
+            colType = 'text'
+          elif colDescr.find('CHAR') >= 0 or \
+               colDescr.find('STRING') >= 0:
+            colSize = 255
+            i = colDescr.find('(')
+            if i >= 0:
+              j = colDescr.find(')')
+              if j >= 0:
+                try:
+                  colSize = int(colDescr[i+1:j])
+                except:
+                  pass
+            if colSize > 255:
+              colType = 'text'
+            else:
+              colType = 'string'
+          elif colDescr.find('SET') >= 0:
+            colType = 'mysqlset'
+            colDescr = 'SET(%s)'%(','.join(list(column.type.values)))
+          col = {}
+          col['index'] = int(col.get('index', len(cols)))
+          col["id"] = colName
+          col["key"] = colName
+          col['label'] = ' '.join([x.capitalize() for x in colName.split('_')]).strip()
+          col["type"] = colType
+          col['description'] = colDescr.strip()
+          col['name'] = col['label']
+          col['mandatory'] = colDescr.find('NOT NULL') > 0
+          col['sort'] = 1
+          col['nullable'] = not col['mandatory']
+          # Add Column.
+          cols.append(col)
+        if len(cols) > 0:
+          entity = {}
+          entity['id'] = tablename
+          entity['type'] = 'table'
+          entity['label'] = ' '.join([x.capitalize() for x in tablename.split('_')]).strip()
+          entity['sort_id'] = entity['label'].upper()
+          entity['columns'] = standard.sort_list(cols, 'index')
+          # Add Table.
+          entities.append(entity)
+      return entities
 
 
     # --------------------------------------------------------------------------
     #  ZMSSqlDb.getEntities:
     # --------------------------------------------------------------------------
     def getEntities(self):
+      """
+      Retrieve and process a comprehensive list of entity descriptors from the database.
+
+      This method performs the following operations:
+        1. Attempts to return a cached result from the HTTP request buffer
+        2. Fetches entities from custom connection-specific methods (if defined)
+        3. Falls back to SQLAlchemy-based entity retrieval if available
+        4. Builds entities from database table browsers with column metadata
+        5. Merges custom entities and properties from the data model configuration
+        6. Applies sorting and default values to all entities and columns
+        7. Caches and returns the final entity list
+
+      The method handles multiple database connection types (SQLite, Oracle, etc.) and 
+      parses column type information from database descriptions. It supports custom 
+      entity definitions through model configuration files and merges database-introspected 
+      data with user-defined model properties.
+
+      @return: List of entity descriptors, each containing:
+           - id: Entity identifier
+           - type: Entity type (e.g., 'table')
+           - label: Human-readable entity name
+           - sort_id: Uppercase label for sorting
+           - columns: List of column descriptors with type, size, and custom properties
+           - interface: Optional interface specification
+           - not_found: Flag indicating if entity exists only in model (custom entity)
+      @rtype: list of dict
+      """
 
       #-- [ReqBuff]: Fetch buffered value from Http-Request.
       REQUEST = self.REQUEST
@@ -817,12 +1115,13 @@ class ZMSSqlDb(ZMSCustom):
       
       entities = []
       da = self.getDA()
-      if da is None: return entities
+      if da is None:
+        return []
       
       tableBrwsrs = da.tpValues()
       
       # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-      # +- ENTITES
+      # +- ENTITIES
       # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
       
       #-- for custom entities please refer to $ZMS_HOME/conf/db/getEntities.Oracle.py
@@ -830,12 +1129,26 @@ class ZMSSqlDb(ZMSCustom):
       if method is not None:
         entities = method( self, REQUEST)
       
+      #-- retrieve entities from sqlalchemy
+      if len( entities) == 0 and da.meta_type.startswith('SQLAlchemyDA'):
+        try:
+          entities = self.getEntitiesSQLAlchemyDA()
+        except Exception:
+          standard.writeError(
+            self,
+            '[getEntities]: SQLAlchemy entity reflection failed for connection_id=%s' % getattr(self, 'connection_id', ''),
+          )
+          return []
+      
       #-- retrieve entities from table-browsers
       if len( entities) == 0:
+        p = re.compile(getattr(self,'table_filter',r'(.*?)'))
+        # The pattern matches digits in parenthesis.To get the digits use .group(1).
+        size_p = re.compile(r'\(\s*?([0-9]+)\s*?\)')
         for tableBrwsr in tableBrwsrs:
-          tableName = str(getattr(tableBrwsr,'Name',getattr(tableBrwsr,'name',None))())
-          tableType = str(getattr(tableBrwsr,'Type',getattr(tableBrwsr,'type',None))())
-          if tableType.upper() == 'TABLE':
+          tableName = str(getattr(tableBrwsr,'Name',getattr(tableBrwsr, 'name', None))())
+          tableType = str(getattr(tableBrwsr,'Type',getattr(tableBrwsr, 'type', None))())
+          if tableType.upper() == 'TABLE' and p.match(tableName):
             
             # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
             # +- COLUMNS
@@ -845,7 +1158,7 @@ class ZMSSqlDb(ZMSCustom):
               columnBrwsrs = []
               if da.meta_type == 'Z SQLite Database Connection':
                 for columnBrwsr in tableBrwsr.tpValues():
-                  desc = getattr(columnBrwsr,'Description',getattr(columnBrwsr,'description',None))().upper()
+                  desc = getattr(columnBrwsr,'Description',getattr(columnBrwsr, 'description', None))().upper()
                   desc = desc[desc.find("(")+1:desc.rfind(")")]
                   for cc in desc.split(","):
                     c = ''
@@ -855,7 +1168,7 @@ class ZMSSqlDb(ZMSCustom):
                       l = l.strip()
                       if len(l) > 0:
                         c += l + ' '
-                    cl = filter(lambda x: len(x.strip()) > 0, c.split(' '))
+                    cl = [x for x in c.split(' ') if x.strip()]
                     if len(cl) >= 2:
                       cid = cl[0]
                       if cid.startswith('"') and cid.endswith('"'):
@@ -880,30 +1193,28 @@ class ZMSSqlDb(ZMSCustom):
                 colSize = None
                 if colDescr.find('INT') >= 0:
                   colType = 'int'
-                elif colDescr.find('DATE') >= 0 or \
-                     colDescr.find('TIME') >= 0:
-                  colType = 'datetime'
+                elif colDescr.find('DATE') >= 0:
+                  colType = 'date'
+                  if colDescr.find('TIME') >= 0:
+                    colType = 'datetime'
                 elif colDescr.find('CLOB') >= 0:
                   colType = 'text'
                 elif colDescr.find('CHAR') >= 0 or \
                      colDescr.find('STRING') >= 0:
                   colSize = 255
-                  i = colDescr.find('(')
-                  if i >= 0:
-                    j = colDescr.find(')')
-                    if j >= 0:
-                      colSize = int(colDescr[i+1:j])
+                  match = size_p.search(colDescr)
+                  if match:
+                     colSize = int(match.group(1))
                   if colSize > 255:
                     colType = 'text'
                   else:
                     colType = 'string'
-                colId = unicode(colId).encode('utf-8')
                 col = {}
                 col['key'] = colId
                 col['description'] = colDescr.strip()
                 col['id'] = col['key']
-                col['index'] = int(col.get('index',len(cols)))
-                col['label'] = ' '.join( map( lambda x: x.capitalize(), colId.split('_'))).strip()
+                col['index'] = int(col.get('index', len(cols)))
+                col['label'] = ' '.join([x.capitalize() for x in colId.split('_')]).strip()
                 col['name'] = col['label']
                 col['mandatory'] = colDescr.find('NOT NULL') > 0
                 col['type'] = colType
@@ -912,7 +1223,7 @@ class ZMSSqlDb(ZMSCustom):
                 # Add Column.
                 cols.append(col)
             except:
-              standard.writeError(self,'[getEntities]')
+              standard.writeError(self, '[getEntities]')
             
             # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
             # +- TABLE
@@ -921,7 +1232,7 @@ class ZMSSqlDb(ZMSCustom):
               entity = {}
               entity['id'] = tableName
               entity['type'] = 'table'
-              entity['label'] = ' '.join( map( lambda x: x.capitalize(), tableName.split('_'))).strip()
+              entity['label'] = ' '.join([x.capitalize() for x in tableName.split('_')]).strip()
               entity['sort_id'] = entity['label'].upper()
               entity['columns'] = standard.sort_list(cols,'index')
               # Add Table.
@@ -938,31 +1249,32 @@ class ZMSSqlDb(ZMSCustom):
         for col in entity['columns']:
           colName = col['id'].upper()
           # Set custom column-properties
-          for modelTable in filter(lambda x: x['id'].upper() == tableName.upper(), model):
-            for modelTableCol in filter(lambda x: x['id'].upper() == colName, modelTable.get('columns',[])):
-              for modelTableColProp in filter(lambda x: x not in ['id'], modelTableCol.keys()):
+          for modelTable in [x for x in model if x['id'].upper()==tableName.upper()]:
+            for modelTableCol in [x for x in modelTable.get('columns', []) if x['id'].upper()==colName]:
+              for modelTableColProp in [x for x in modelTableCol if x not in ['id']]:
                 col[modelTableColProp] = modelTableCol[modelTableColProp]
           cols.append(col)
           colNames.append(colName)
         # Add custom columns
-        for modelTable in filter(lambda x: x['id'].upper() == tableName.upper(), model):
-          tableInterface = modelTable.get('interface',tableInterface)
-          for modelTableCol in filter(lambda x: x['id'].upper() not in colNames, modelTable.get('columns',[])):
+        for modelTable in [x for x in model if x['id'].upper()==tableName.upper()]:
+          tableInterface = modelTable.get('interface', tableInterface)
+          for modelTableCol in [x for x in modelTable.get('columns', []) if x['id'].upper() not in colNames]:
             col = modelTableCol
             col['id'] = col.get('id','?')
+            col['name'] = col.get('id','?')
             col['index'] = int(col.get('index',len(cols)))
             col['type'] = col.get('type','?')
             col['key'] = col.get('key',col.get('id'))
             col['label'] = col.get('label',col.get('id'))
-            col['stereotypes'] = standard.intersection_list( self.valid_types.keys(), col.keys())
-            col['not_found'] = col.get('description') is None and len(col.get('stereotypes',[]))==0
+            col['stereotypes'] = standard.intersection_list( list(self.valid_types), list(col))
+            col['not_found'] = col.get('description') is None and len(col.get('stereotypes', []))==0
             cols.insert(col['index'], col)
             colNames.append(col['id'].upper())
         entity['interface'] = tableInterface
-        entity['columns'] = standard.sort_list(cols,'index')
+        entity['columns'] = standard.sort_list(cols, 'index')
         # Set custom table-properties
-        for modelTable in filter(lambda x: x['id'].upper() ==tableName.upper(), model):
-          for modelTableProp in filter(lambda x: x not in ['columns'], modelTable.keys()):
+        for modelTable in [x for x in model if x['id'].upper()==tableName.upper()]:
+          for modelTableProp in [x for x in modelTable if x not in ['columns']]:
             entity[modelTableProp] = modelTable[modelTableProp]
             entity['sort_id'] = entity['label'].upper()
         # Add
@@ -971,13 +1283,13 @@ class ZMSSqlDb(ZMSCustom):
       #-- Custom entities.
       for entity in model:
         tableName = entity['id']
-        if entity.has_key('not_found'):
+        if 'not_found' in entity:
           del entity['not_found']
-        if tableName.upper() not in map( lambda x: x['id'].upper(), entities):
+        if tableName.upper() not in [x['id'].upper() for x in entities]:
           cols = entity.get('columns',[])
           entity['id'] = tableName
           entity['type'] = entity.get('type','table')
-          entity['label'] = entity.get('label',' '.join( map( lambda x: x.capitalize(), tableName.split('_'))).strip())
+          entity['label'] = entity.get('label',' '.join([x.capitalize() for x in tableName.split('_')]).strip())
           entity['sort_id'] = entity['label'].upper()
           entity['columns'] = standard.sort_list(cols,'index')
           # Add Table.
@@ -986,30 +1298,31 @@ class ZMSSqlDb(ZMSCustom):
       
       #-- Sort entities
       s.sort()
-      entities = map(lambda x: x[1], s)
+      entities = [x[1] for x in s]
       
       #-- Defaults
       for entity in entities:
         for column in entity['columns']:
-          #column['id'] = column['id'].lower()
           column['multilang'] = False
-          column['datatype'] = column.get('type','?')
+          column['datatype'] = column.get('type', '?')
           column['datatype_key'] = _globals.datatype_key(column['datatype'])
       
       #-- [ReqBuff]: Returns value and stores it in buffer of Http-Request.
       return self.storeReqBuff( reqBuffId, entities)
 
-
-    ############################################################################
-    ###
-    ###   RecordSet
-    ###
-    ############################################################################
-
-    """
-    @rtype: C{string}
-    """
     def recordSet_Select(self, tablename, select=None, where=None):
+      """
+      Build the base select statement for a record-set query.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param select: Optional explicit select clause.
+      @type select: str
+      @param where: Optional initial where clause.
+      @type where: str
+      @return: SQL select statement.
+      @rtype: str
+      """
       tabledef = self.getEntity(tablename)
       tablecols = tabledef['columns']
       selectClause = []
@@ -1030,11 +1343,11 @@ class ZMSSqlDb(ZMSCustom):
             fk_fieldname = tablecol['fk']['fieldname']
             if fk_fieldname.upper().find(fk_tablename.upper()+'.') < 0:
               fk_fieldname = fk_tablename+'.'+fk_fieldname
-            fk_fieldname = standard.re_sub( fk_tablename+'\.', fk_tablename_alias+'.', fk_fieldname, ignorecase=True)
+            fk_fieldname = standard.re_sub( fk_tablename+r'\.', fk_tablename_alias+'.', fk_fieldname, ignorecase=True)
             fk_displayfield = tablecol['fk']['displayfield']
             if fk_displayfield.upper().find(fk_tablename.upper()+'.') < 0:
               fk_displayfield = fk_tablename+'.'+fk_displayfield
-            fk_displayfield = standard.re_sub( fk_tablename+'\.', fk_tablename_alias+'.', fk_displayfield, ignorecase=True)
+            fk_displayfield = standard.re_sub( fk_tablename+r'\.', fk_tablename_alias+'.', fk_displayfield, ignorecase=True)
             selectClause.append( '%s AS %s'%(fk_displayfield,tablecol['id']))
             fromClause.append( 'LEFT JOIN %s %s %s ON %s.%s=%s'%(fk_tablename,table_AS,fk_tablename_alias,tablename,tablecol['id'],fk_fieldname))
           elif tablecol.get('type','?') != '?':
@@ -1047,32 +1360,31 @@ class ZMSSqlDb(ZMSCustom):
       return ''.join(sqlStatement)
 
 
-    """
-    Initializes record-set.
-    
-    @param REQUEST: the triggering request
-    @type REQUEST: ZPublisher.HTTPRequest
-    @rtype: C{None}
-    """
     def recordSet_Init(self, REQUEST):
-      tabledefs = filter( lambda x: not x.get('not_found'), self.getEntities())
+      """
+      Initialize record-set request state for listing and filtering.
+
+      @param REQUEST: Triggering request.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      """
+      tabledefs = [x for x in self.getEntities() if not x.get('not_found')]
       tablename = standard.get_session_value(self,'qentity_%s'%self.id)
       #-- Sanity check.
       standard.set_session_value(self,'qentity_%s'%self.id,'')
       REQUEST.set('primary_key','')
       REQUEST.set('grid_cols',[])
       sqlStatement = REQUEST.get('sqlStatement',[])
-      if type(sqlStatement) is not list:
+      if not isinstance(sqlStatement, list):
         sqlStatement = []
       if len(tabledefs) > 0:
-        if tablename not in map( lambda x: x['id'], tabledefs):
+        if tablename not in [x['id'] for x in tabledefs]:
           tablename = tabledefs[0]['id']
-        tablename = REQUEST.form.get('qentity',tablename)
-        tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+        tablename = REQUEST.form.get('qentity', tablename)
+        tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
         sqlStatement.append( self.recordSet_Select( tablename))
         tablecols = tabledef['columns']
         # Primary Key.
-        primary_key = map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))
+        primary_key = [x['id'] for x in tablecols if x.get('pk', 0)==1]
         primary_key.append(None)
         #-- Set environment.
         standard.set_session_value(self,'qentity_%s'%self.id,tablename)
@@ -1083,57 +1395,77 @@ class ZMSSqlDb(ZMSCustom):
       REQUEST.set('sqlStatement',sqlStatement)
 
 
-    """
-    Assemble filter for where-clause
-    
-    @param l list of columns to filter
-    @return: expression
-    @rtype: C{string}
-    """
     def assembleFilter(self, l):
+      """
+      Assemble the SQL filter expression for a where clause.
+
+      @param l: Filter descriptors for columns and operators.
+      @type l: list
+      @return: SQL expression joined with C{AND}.
+      @rtype: str
+      """
       sql = []
       for d in l:
         tablename     = d['tablename']
         columnname    = d['columnname']
-        qualifiedname = d.get('qualifiedname',columnname)
+        qualifiedname = d.get('qualifiedname', columnname)
         op            = d['op']
         value         = d['value']
         if op in [ 'NULL', 'NOT NULL']:
-          sqlStatement.append('%s IS %s'%(qualifiedname,op))
+          sql.append('%s IS %s'%(qualifiedname, op))
         elif value != '':
-          if op in ['LIKE']:
+          if op == '':
+            op = '='
+          elif op in ['LIKE']:
             if not value.endswith('%'):
               value += '%'
             name = 'LOWER(%s)'%qualifiedname
-          sql.append('%s %s %s '%(qualifiedname,op,self.sql_quote__(tablename,columnname,value)))
+          sql.append('%s %s %s '%(qualifiedname, op, self.sql_quote__(tablename, columnname, value)))
       return ' AND '.join(sql)
 
 
-    """
-    Filter record-set by appending where clause to sql-statement.
-    
-    @param REQUEST: the triggering request
-    @type REQUEST: ZPublisher.HTTPRequest
-    @rtype: C{None}
-    """
     def recordSet_Filter(self, REQUEST):
-      sqlStatement = REQUEST.get('sqlStatement',[])
+      """
+      Apply persisted and submitted filters to the current record-set query.
+
+      @param REQUEST: Triggering request.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      """
+      sqlStatement = REQUEST.get('sqlStatement', [])
       # init filter from request.
+      index = 0
       for filterIndex in range(100):
-        for filterStereotype in ['attr','op','value']:
-          requestkey = 'filter%s%i'%(filterStereotype,filterIndex)
-          sessionkey = '%s_%s'%(requestkey,self.id)
-          requestvalue = REQUEST.form.get(requestkey,standard.get_session_value(self,sessionkey,''))
-          if REQUEST.get('btn','')==self.getZMILangStr('BTN_RESET'):
-            requestvalue = ''
-          REQUEST.set(requestkey,requestvalue)
-          standard.set_session_value(self,sessionkey,requestvalue)
-      standard.set_session_value(self,'qfilters_%s'%self.id,REQUEST.form.get('qfilters',standard.get_session_value(self,'qfilters_%s'%self.id,1)))
+        for filterStereotype in ['attr', 'op', 'value']:
+          requestkey = 'filter%s%i'%(filterStereotype, filterIndex)
+          sessionkey = '%s_%s'%(requestkey, self.id)
+          if REQUEST.get('btn') is None:
+            # get value from session 
+            requestvalue = standard.get_session_value(self, sessionkey, '')
+            # set request-value
+            REQUEST.set(requestkey, requestvalue)
+          else:
+            # reset session-value
+            standard.set_session_value(self, sessionkey, '')
+            # get value from request
+            requestvalue = REQUEST.form.get(requestkey, '')
+            # reset value
+            if REQUEST.get('btn') == 'BTN_RESET':
+              requestvalue = ''
+            # set request-/session-values for new index
+            requestkey = 'filter%s%i'%(filterStereotype, index)
+            sessionkey = '%s_%s'%(requestkey, self.id)
+            REQUEST.set(requestkey, requestvalue)
+            standard.set_session_value(self, sessionkey, requestvalue)
+            # increase index
+            if filterStereotype == 'value' and requestvalue != '':
+              index += 1
+      REQUEST.set('qfilters', index + 1)
+      standard.set_session_value(self,'qfilters_%s'%self.id, index + 1)
       # apply filter
       tablename = standard.get_session_value(self,'qentity_%s'%self.id)
-      tabledefs = filter( lambda x: not x.get('not_found'), self.getEntities())
+      tabledefs = [x for x in self.getEntities() if not x.get('not_found')]
       if len(tabledefs) > 0:
-        tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+        tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
         tablecols = tabledef['columns']
         l = []
         for filterIndex in range(100):
@@ -1146,13 +1478,13 @@ class ZMSSqlDb(ZMSCustom):
             for tablecol in tablecols:
               if tablecol.get('fk') and tablecol['fk'].get('tablename'):
                 fk_tablename = tablecol['fk']['tablename']
-                fk_tablename_counter[fk_tablename] = fk_tablename_counter.get(fk_tablename,0)+1
+                fk_tablename_counter[fk_tablename] = fk_tablename_counter.get(fk_tablename, 0)+1
                 fk_tablename_alias = '%s%i'%(fk_tablename,fk_tablename_counter[fk_tablename])
                 fk_displayfield = tablecol['fk']['displayfield']
                 if fk_displayfield.find(fk_tablename+'.') < 0:
                   fk_displayfield = fk_tablename+'.'+fk_displayfield
                 coltable = fk_tablename
-                colname = standard.re_sub( fk_tablename+'\.', fk_tablename_alias+'.', fk_displayfield, ignorecase=True)
+                colname = standard.re_sub( fk_tablename+r'\.', fk_tablename_alias+'.', fk_displayfield, ignorecase=True)
                 qualifiedname = colname
                 if sessionop == '':
                   sessionop = 'LIKE'
@@ -1183,28 +1515,28 @@ class ZMSSqlDb(ZMSCustom):
           else:
             sqlStatement.append('AND ')
           sqlStatement.append('(%s) '%tablefilter)
-      REQUEST.set('sqlStatement',sqlStatement)
+      REQUEST.set('sqlStatement', sqlStatement)
 
 
-    """
-    Sort record-set by appending order-by clause to sql-statement.
-    
-    @param REQUEST: the triggering request
-    @type REQUEST: ZPublisher.HTTPRequest
-    @rtype: C{None}
-    """
     def recordSet_Sort(self, REQUEST):
+      """
+      Apply order-by clauses to the current record-set query.
+
+      @param REQUEST: Triggering request.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      """
       tablename = standard.get_session_value(self,'qentity_%s'%self.id)
-      tabledefs = filter( lambda x: not x.get('not_found'), self.getEntities())
+      tabledefs = [x for x in self.getEntities() if not x.get('not_found')]
       #-- Sanity check.
       qorder = REQUEST.get('qorder',standard.get_session_value(self,'qorder_%s'%self.id,''))
       qorderdir = REQUEST.get('qorderdir',standard.get_session_value(self,'qorderdir_%s'%self.id,'asc'))
       sqlStatement = REQUEST.get('sqlStatement',[])
       if len(tabledefs) > 0:
-        tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+        tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
         tablecols = tabledef['columns']
+        colNames = [x['id'] for x in tablecols]
         #-- ORDER BY
-        if qorder == '' or not qorder.lower() in map(lambda x: x['id'].lower(), tablecols):
+        if qorder == '' or not standard.operator_contains(colNames,qorder,ignorecase=True):
           for col in tablecols:
             if col.get('hide',0) != 1:
               qorder = '%s.%s'%(tablename,col['id'])
@@ -1220,26 +1552,28 @@ class ZMSSqlDb(ZMSCustom):
       standard.set_session_value(self,'qorderdir_%s'%self.id,qorderdir)
 
 
-    ############################################################################
-    ###
-    ###   Actions
-    ###
-    ############################################################################
+    def getFk(self, tablename, id, name, value, createIfNotExists=True):
+      """
+      Resolve or create a referenced row for a foreign-key relation.
 
-    """
-    Get reference for foreign-key relation.
-    
-    @param tablename: Name of the SQL-Table.
-    @type tablename: C{string}
-    @return: ID of the row that was inserted.
-    @rtype: int
-    """
-    def getFk(self, tablename, id, name, value, createIfNotExists=1):
-      self.writeBlock('[getFk]: tablename=%s, id=%s, name=%s, value=%s, createIfNotExists=%s'%(tablename,id,name,str(value),str(createIfNotExists)))
+      @param tablename: Name of the SQL table.
+      @type tablename: str
+      @param id: Foreign-key column id.
+      @type id: str
+      @param name: Display column used for lookup.
+      @type name: str
+      @param value: Submitted foreign-key value.
+      @type value: object
+      @param createIfNotExists: Create a new referenced row when no match exists.
+      @type createIfNotExists: bool
+      @return: Referenced row id.
+      @rtype: int
+      """
+      standard.writeBlock(self,'[getFk]: tablename=%s, id=%s, name=%s, value=%s, createIfNotExists=%s'%(tablename,id,name,str(value),str(createIfNotExists)))
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       
       # Find existing row-id.
       sqlStatement = []
@@ -1263,7 +1597,7 @@ class ZMSSqlDb(ZMSCustom):
         if tablecol.get('auto'):
           new_id = 0
           try:
-            rs = self.query('SELECT MAX(%s) AS max_id FROM %s'%(primary_key,tablename))['records']
+            rs = self.query('SELECT MAX(%s) AS max_id FROM %s'%(primary_key, tablename))['records']
             if len(rs) == 1:
               new_id = int(rs[0]['max_id'])+1
           except:
@@ -1274,9 +1608,9 @@ class ZMSSqlDb(ZMSCustom):
         # Assemble sql-statement
         sqlStatement = []
         sqlStatement.append( 'INSERT INTO %s ('%tablename)
-        sqlStatement.append( ', '.join(map(lambda x: x['id'], c)))
+        sqlStatement.append( ', '.join([x['id'] for x in c]))
         sqlStatement.append( ') VALUES (')
-        sqlStatement.append( ', '.join(map(lambda x: x['value'], c)))
+        sqlStatement.append( ', '.join([x['value'] for x in c]))
         sqlStatement.append( ')')
         sqlStatement = ' '.join(sqlStatement)
         try:
@@ -1285,11 +1619,11 @@ class ZMSSqlDb(ZMSCustom):
           raise zExceptions.InternalError(standard.writeError( self, '[createFk]: can\'t insert row - sqlStatement=' + sqlStatement))
         
         # Return with row-id.
-        rowid = (filter(lambda x: x['id']==primary_key, c)+[{'value':None}])[0]['value']
+        rowid = ([x for x in c if x['id']==primary_key]+[{'value':None}])[0]['value']
         if rowid is None:
           sqlStatement = []
-          sqlStatement.append( 'SELECT %s AS value FROM %s WHERE '%(primary_key,tablename))
-          sqlStatement.append( ' AND '.join(map( lambda x: x['id']+'='+x['value'], filter( lambda x: x['value'].upper()!='NULL', c))))
+          sqlStatement.append( 'SELECT %s AS value FROM %s WHERE '%(primary_key, tablename))
+          sqlStatement.append( ' AND '.join([x['id']+'='+x['value'] for x in c if x['value'].upper()!='NULL']))
           sqlStatement = ' '.join(sqlStatement)
           try:
             for r in self.query( sqlStatement)['records']:
@@ -1300,17 +1634,20 @@ class ZMSSqlDb(ZMSCustom):
       return rowid
 
 
-    """
-    Insert row into record-set.
-    @param tablename: Name of the SQL-Table.
-    @type tablename: C{string}
-    @param values: Columns (id/value) to be inserted.
-    @type values: C{dict}
-    @return: ID of the row that was inserted.
-    @rtype: C{any}
-    """
     def recordSet_Insert(self, tablename, values={}, update_intersections=False):
-      standard.triggerEvent(self.getParentNode(),'%s%sBeforeInsert'%(self.id,tablename.capitalize()))
+      """
+      Insert a new row into the selected record-set table.
+
+      @param tablename: Name of the SQL table.
+      @type tablename: str
+      @param values: Column values to insert.
+      @type values: dict
+      @param update_intersections: Update related intersection tables afterwards.
+      @type update_intersections: bool
+      @return: Primary-key value of the inserted row.
+      @rtype: object
+      """
+      standard.triggerEvent(self.getParentNode(), '%s%sBeforeInsert'%(self.id, tablename.capitalize()))
       REQUEST = self.REQUEST
       auth_user = REQUEST.get('AUTHENTICATED_USER')
       lang = REQUEST['lang']
@@ -1318,18 +1655,18 @@ class ZMSSqlDb(ZMSCustom):
       if tablename is None:
         raise zExceptions.InternalError("[recordSet_Insert]: tablename must not be None!")
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       
       # Get columns to insert
       blobs = {}
       c = []
       for tablecol in tablecols:
         id = tablecol['id']
-        consumed = id in REQUEST.get('qexcludeids',[])
+        consumed = id in REQUEST.get('qexcludeids', [])
         if not consumed and tablecol.get('password'):
-          if values.has_key(id):
+          if id in values:
             value = values.get(id)
             if value != '' and value != '******':
               c.append({'id':id,'value':value})
@@ -1337,11 +1674,11 @@ class ZMSSqlDb(ZMSCustom):
         if not consumed and tablecol.get('auto'):
           if tablecol.get('auto') in ['insert','update']:
             if tablecol.get('type') in ['date','datetime']:
-              c.append({'id':id,'value':self.getLangFmtDate(time.time(),lang,'%s_FMT'%tablecol['type'].upper())})
-            elif tablecol.get('type') in ['int']:
+              c.append({'id':id,'value':self.getLangFmtDate(time.time(), lang, '%s_FMT'%tablecol['type'].upper())})
+            elif tablecol.get('type') in ['int','long']:
               new_id = 0
               try:
-                rs = self.query('SELECT MAX(%s) AS max_id FROM %s'%(id,tablename))['records']
+                rs = self.query('SELECT MAX(%s) AS max_id FROM %s'%(id, tablename))['records']
                 if len(rs) == 1:
                   new_id = int(rs[0]['max_id'])+1
               except:
@@ -1351,12 +1688,12 @@ class ZMSSqlDb(ZMSCustom):
         if not consumed and tablecol.get('blob'):
           value = None
           blob = tablecol.get('blob')
-          if values.get('blob_%s'%id,None) is not None and values.get('blob_%s'%id).filename:
+          if values.get('blob_%s'%id, None) is not None and values.get('blob_%s'%id).filename:
             # Process blobs later...
             blobs['blob_%s'%id] = values['blob_%s'%id]
           consumed = True
         if not consumed and tablecol.get('fk') and tablecol.get('fk').get('editable'):
-          if values.has_key(id):
+          if id in values:
             fk_tablename = tablecol.get('fk').get('tablename')
             fk_fieldname = tablecol.get('fk').get('fieldname')
             fk_displayfield = tablecol.get('fk').get('displayfield')
@@ -1372,17 +1709,17 @@ class ZMSSqlDb(ZMSCustom):
           (not tablecol.get('details')) and \
           (not tablecol.get('multiselect') or tablecol.get('multiselect').get('custom') or tablecol.get('multiselect').get('mysqlset')) and \
           (not tablecol.get('multimultiselect')):
-          value = values.get(id,values.get(id.lower(),values.get(id.upper(),'')))
-          if type(value) is list:
+          value = standard.operator_getitem(values, id, '', ignorecase=True)
+          if isinstance(value, list):
             value = ','.join(value)
           c.append({'id':id,'value':value})
       # Assemble sql-statement
-      c = filter(lambda x: self.sql_quote__(tablename,x['id'],x['value'])!='NULL', c)
+      c = [x for x in c if self.sql_quote__(tablename, x['id'], x['value'])!='NULL']
       sqlStatement = []
       sqlStatement.append( 'INSERT INTO %s ('%tablename)
-      sqlStatement.append( ', '.join(map(lambda x: x['id'], c)))
+      sqlStatement.append( ', '.join([x['id'] for x in c]))
       sqlStatement.append( ') VALUES (')
-      sqlStatement.append( ', '.join(map(lambda x: self.sql_quote__(tablename,x['id'],x['value']), c)))
+      sqlStatement.append( ', '.join([self.sql_quote__(tablename, x['id'], x['value']) for x in c]))
       sqlStatement.append( ')')
       sqlStatement = ' '.join(sqlStatement)
       try:
@@ -1395,11 +1732,11 @@ class ZMSSqlDb(ZMSCustom):
       except:
         raise zExceptions.InternalError(standard.writeError( self, '[recordSet_Insert]: can\'t insert row - sqlStatement=' + sqlStatement))
       # Return with row-id.
-      rowid = (filter(lambda x: x['id']==primary_key, c)+[{'value':None}])[0]['value']
+      rowid = ([x for x in c if x['id']==primary_key]+[{'value':None}])[0]['value']
       if rowid is None:
         sqlStatement = []
-        sqlStatement.append( 'SELECT %s AS value FROM %s WHERE '%(primary_key,tablename))
-        sqlStatement.append( ' AND '.join(map( lambda x: x['id']+'='+self.sql_quote__(tablename,x['id'],x['value']), filter( lambda x: self.sql_quote__(tablename,x['id'],x['value']).upper()!='NULL', c))))
+        sqlStatement.append( 'SELECT %s AS value FROM %s WHERE '%(primary_key, tablename))
+        sqlStatement.append( ' AND '.join([x['id']+'='+self.sql_quote__(tablename, x['id'], x['value']) for x in c if self.sql_quote__(tablename, x['id'], x['value']).upper()!='NULL']))
         sqlStatement = ' '.join(sqlStatement)
         try:
           for r in self.query( sqlStatement)['records']:
@@ -1412,23 +1749,28 @@ class ZMSSqlDb(ZMSCustom):
       # Process blobs now.
       if blobs:
         self.recordSet_Update(tablename, rowid, blobs)
-      standard.triggerEvent(self.getParentNode(),'%s%sAfterInsert'%(self.id,tablename.capitalize()))
+      standard.triggerEvent(self.getParentNode(), '%s%sAfterInsert'%(self.id, tablename.capitalize()))
       return rowid
 
 
-    """
-    Update row in table.
-    @param tablename: Name of the SQL-Table.
-    @type tablename: C{string}
-    @param rowid: ID of the row to be updated.
-    @type rowid: C{any}
-    @param values: Columns (id/value) to be updated.
-    @type values: C{dict}
-    @return: ID of the row that was updated.
-    @rtype: C{any}
-    """
     def recordSet_Update(self, tablename, rowid, values={}, old_values={}, update_intersections=False):
-      standard.triggerEvent(self.getParentNode(),'%s%sBeforeUpdate'%(self.id,tablename.capitalize()))
+      """
+      Update an existing row in the selected record-set table.
+
+      @param tablename: Name of the SQL table.
+      @type tablename: str
+      @param rowid: Primary-key value of the row to update.
+      @type rowid: object
+      @param values: New column values.
+      @type values: dict
+      @param old_values: Optional previous values used for change detection.
+      @type old_values: dict
+      @param update_intersections: Update related intersection tables afterwards.
+      @type update_intersections: bool
+      @return: Primary-key value of the updated row.
+      @rtype: object
+      """
+      standard.triggerEvent(self.getParentNode(), '%s%sBeforeUpdate'%(self.id, tablename.capitalize()))
       REQUEST = self.REQUEST
       auth_user = REQUEST.get('AUTHENTICATED_USER')
       lang = REQUEST['lang']
@@ -1436,13 +1778,13 @@ class ZMSSqlDb(ZMSCustom):
       if tablename is None:
         raise "[recordSet_Update]: tablename must not be None!"
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       # Get old.
       sqlStatement = []
       sqlStatement.append( 'SELECT * FROM %s '%tablename)
-      sqlStatement.append( 'WHERE %s=%s '%(primary_key,self.sql_quote__(tablename,primary_key,rowid)))
+      sqlStatement.append( 'WHERE %s=%s '%(primary_key, self.sql_quote__(tablename, primary_key, rowid)))
       sqlStatement = ' '.join(sqlStatement)
       try:
         old = self.query( sqlStatement)['records'][0]
@@ -1452,39 +1794,39 @@ class ZMSSqlDb(ZMSCustom):
       c = []
       for tablecol in tablecols:
         id = tablecol['id']
-        consumed = id in REQUEST.get('qexcludeids',[])
+        consumed = id in REQUEST.get('qexcludeids', [])
         if not consumed and tablecol.get('password'):
-          if values.has_key(id):
+          if id in values:
             value = values.get(id)
             if value != '' and value != '******':
               c.append({'id':id,'value':value})
           consumed = True
         if not consumed and tablecol.get('auto'):
           if tablecol.get('auto') in ['update']:
-            if tablecol.get('type') in ['date','datetime']:
-              c.append({'id':id,'value':self.getLangFmtDate(time.time(),lang,'%s_FMT'%tablecol['type'].upper())})
+            if tablecol.get('type') in ['date', 'datetime']:
+              c.append({'id':id,'value':self.getLangFmtDate(time.time(), lang, '%s_FMT'%tablecol['type'].upper())})
           consumed = True
         if not consumed and tablecol.get('blob'):
           blob = tablecol.get('blob')
-          remote = blob.get('remote')
-          if values.get('delete_blob_%s'%id,None):
+          remote = blob.get('remote', None)
+          if values.get('delete_blob_%s'%id, None):
             if remote is None:
-              value = self._delete_blob(tablename=tablename,id=id,rowid=rowid)
+              value = self._delete_blob(tablename=tablename, id=id, rowid=rowid)
             else:
-              value = self.http_import(self.url_append_params(remote+'/delete_blob',{'auth_user':blob.get('auth_user',auth_user.getId()),'tablename':tablename,'id':id,'rowid':rowid}),method='POST')
+              value = self.http_import(standard.url_append_params(remote+'/delete_blob', {'auth_user':blob.get('auth_user', auth_user.getId()),'tablename':tablename,'id':id,'rowid':rowid}), method='POST')
             c.append({'id':id,'value':value})
-          elif values.get('blob_%s'%id,None) is not None and values.get('blob_%s'%id).filename:
-            data = values.get('blob_%s'%id,None)
+          elif values.get('blob_%s'%id, None) is not None and values.get('blob_%s'%id).filename:
+            data = values.get('blob_%s'%id, None)
             file = self.FileFromData( data, data.filename)
             if remote is None:
-              value = self._set_blob(tablename=tablename,id=id,rowid=rowid,file=file)
+              value = self._set_blob(tablename=tablename, id=id, rowid=rowid, file=file)
             else:
               xml = file.toXml()
-              value = self.http_import(self.url_append_params(remote+'/set_blob',{'auth_user':blob.get('auth_user',auth_user.getId()),'tablename':tablename,'id':id,'rowid':rowid,'xml':xml}),method='POST')
+              value = self.http_import(standard.url_append_params(remote+'/set_blob', {'auth_user':blob.get('auth_user', auth_user.getId()),'tablename':tablename,'id':id,'rowid':rowid,'xml':xml}), method='POST')
             c.append({'id':id,'value':value})
           consumed = True
         if not consumed and tablecol.get('fk') and tablecol.get('fk').get('editable'):
-          if values.has_key(id):
+          if id in values:
             fk_tablename = tablecol.get('fk').get('tablename')
             fk_fieldname = tablecol.get('fk').get('fieldname')
             fk_displayfield = tablecol.get('fk').get('displayfield')
@@ -1493,27 +1835,27 @@ class ZMSSqlDb(ZMSCustom):
               value = None
             else:
               value = self.getFk( fk_tablename, fk_fieldname, fk_displayfield, value)
-            if value != old_values.get(id,old[id]):
+            if value != old_values.get(id, old[id]):
               c.append({'id':id,'value':value})
           consumed = True
         if not consumed and \
            (not tablecol.get('details')) and \
            (not tablecol.get('multiselect') or tablecol.get('multiselect').get('custom') or tablecol.get('multiselect').get('mysqlset')) and \
            (not tablecol.get('multimultiselect')):
-          if values.has_key(id) and values.get(id) != old_values.get(id,old[id]):
+          if id in values and values.get(id) != old_values.get(id, old[id]):
             value = values.get(id)
             if value == '' and tablecol.get('nullable'):
               value = None
-            elif type(value) is list:
+            elif isinstance(value, list):
               value = ','.join(value)
-            if value != old_values.get(id,old[id]):
+            if value != old_values.get(id, old[id]):
               c.append({'id':id,'value':value})
       # Assemble sql-statement
       if len(c) > 0:
         sqlStatement = []
         sqlStatement.append( 'UPDATE %s SET '%tablename)
-        sqlStatement.append( ', '.join(map(lambda x: x['id']+'='+self.sql_quote__(tablename,x['id'],x['value']), c)))
-        sqlStatement.append( 'WHERE %s=%s '%(primary_key,self.sql_quote__(tablename,primary_key,rowid)))
+        sqlStatement.append( ', '.join([x['id']+'='+self.sql_quote__(tablename, x['id'], x['value']) for x in  c]))
+        sqlStatement.append( 'WHERE %s=%s '%(primary_key, self.sql_quote__(tablename, primary_key, rowid)))
         sqlStatement = ' '.join(sqlStatement)
         try:
           if da.meta_type == 'Z MySQL Database Connection':
@@ -1528,37 +1870,38 @@ class ZMSSqlDb(ZMSCustom):
       if update_intersections:
         self.recordSet_UpdateIntersections(tablename, rowid, values)
       # Return with row-id.
-      standard.triggerEvent(self.getParentNode(),'%s%sAfterUpdate'%(self.id,tablename.capitalize()))
+      standard.triggerEvent(self.getParentNode(), '%s%sAfterUpdate'%(self.id, tablename.capitalize()))
       return rowid
 
 
-    """
-    Update row-intersections in table.
-    @param tablename: Name of the SQL-Table.
-    @type tablename: C{string}
-    @param rowid: ID of the row to be updated.
-    @type rowid: C{any}
-    @param values: Columns (id/value) to be updated.
-    @type values: C{dict}
-    """
     def recordSet_UpdateIntersections(self, tablename, rowid, values={}):
+      """
+      Synchronize intersection tables for multi-select style columns.
+
+      @param tablename: Name of the SQL table.
+      @type tablename: str
+      @param rowid: Primary-key value of the parent row.
+      @type rowid: object
+      @param values: Submitted column values.
+      @type values: dict
+      """
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      pk = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      pk = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       for tablecol in tablecols:
         id = tablecol['id']
-        column = self.getEntityColumn(tablename,id,row={})
+        column = self.getEntityColumn(tablename, id, row={})
         
         # Multiselect
         if tablecol.get('multiselect'):
           stereotype = tablecol['multiselect']
           # Multiselect.MySQLSet
-          if stereotype.has_key('mysqlset'):
+          if 'mysqlset' in stereotype:
             v = values.get(id)
-            if type(v) is list:
+            if isinstance(v, list):
               v = '\'%s\''%(','.join(v))
-            elif type(v) is str:
+            elif isinstance(v, str):
               v = '\'%s\''%v
             else:
               v = 'NULL'
@@ -1568,16 +1911,16 @@ class ZMSSqlDb(ZMSCustom):
             sql.append('WHERE %s=%s'%(pk,self.sql_quote__(tablename,pk,rowid)))
             self.executeQuery('\n'.join(sql))
           # Multiselect.FK
-          elif stereotype.has_key('tablename'):
+          elif 'tablename' in stereotype:
             sql = []
             sql.append('DELETE FROM %s'%stereotype['tablename'])
-            sql.append('WHERE %s=%s'%(stereotype['fk'],self.sql_quote__(tablename,pk,rowid)))
+            sql.append('WHERE %s=%s'%(stereotype['fk'], self.sql_quote__(tablename, pk, rowid)))
             self.executeQuery('\n'.join(sql))
-            for v in standard.nvl(values.get(id),[]):
+            for v in standard.nvl(values.get(id), []):
               sql = []
-              c = [(column['src']['id'],rowid),(column['dst']['id'],v)]
-              sql.append('INSERT INTO %s (%s)'%(stereotype['tablename'],' , '.join(map(lambda x:x[0],c))))
-              sql.append('VALUES (%s)'%(' , '.join(map(lambda x:self.sql_quote__(stereotype['tablename'],x[0],x[1]),c))))
+              c = [(column['src']['id'], rowid), (column['dst']['id'], v)]
+              sql.append('INSERT INTO %s (%s)'%(stereotype['tablename'], ' , '.join([x[0] for x in c])))
+              sql.append('VALUES (%s)'%(' , '.join([self.sql_quote__(stereotype['tablename'], x[0], x[1]) for x in c])))
               self.executeQuery('\n'.join(sql))
 
         # Multimultiselect
@@ -1594,21 +1937,21 @@ class ZMSSqlDb(ZMSCustom):
             for item in items:
               i = items.index(item)
               c.append((item['fk'],v.split('|')[i]))
-            sql.append('INSERT INTO %s (%s)'%(stereotype['tablename'],' , '.join(map(lambda x:x[0],c))))
-            sql.append('VALUES (%s)'%(' , '.join(map(lambda x:self.sql_quote__(stereotype['tablename'],x[0],x[1]),c))))
+            sql.append('INSERT INTO %s (%s)'%(stereotype['tablename'],' , '.join([x[0] for x in c])))
+            sql.append('VALUES (%s)'%(' , '.join([self.sql_quote__(stereotype['tablename'], x[0], x[1]) for x in c])))
             self.executeQuery('\n'.join(sql))
 
 
-    """
-    Delete row from table.
-    @param tablename: Name of the SQL-Table.
-    @type tablename: C{string}
-    @param rowid: ID of the row to be deleted.
-    @type rowid: C{any}
-    @rtype: C{None}
-    """
     def recordSet_Delete(self, tablename, rowid):
-      standard.triggerEvent(self.getParentNode(),'%s%sBeforeDelete'%(self.id,tablename.capitalize()))
+      """
+      Delete a row from the selected record-set table.
+
+      @param tablename: Name of the SQL table.
+      @type tablename: str
+      @param rowid: Primary-key value of the row to delete.
+      @type rowid: object
+      """
+      standard.triggerEvent(self.getParentNode(), '%s%sBeforeDelete'%(self.id, tablename.capitalize()))
       REQUEST = self.REQUEST
       auth_user = REQUEST.get('AUTHENTICATED_USER')      
       lang = REQUEST['lang']
@@ -1616,18 +1959,9 @@ class ZMSSqlDb(ZMSCustom):
       if tablename is None:
         raise zExceptions.InternalError("[recordSet_Delete]: tablename must not be None!")
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
-      for tablecol in tablecols:
-        id = tablecol['id']
-        if tablecol.get('blob'):
-          blob = tablecol.get('blob')
-          remote = blob.get('remote')
-          if remote is None:
-            value = self._delete_blob(tablename=tablename,id=id,rowid=rowid)
-          else:
-            value = self.http_import(self.url_append_params(remote+'/delete_blob',{'auth_user':blob.get('auth_user',auth_user.getId()),'tablename':tablename,'id':id,'rowid':rowid}),method='POST')
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       # Assemble sql-statement
       sqlStatement = []
       sqlStatement.append( 'DELETE FROM %s '%tablename)
@@ -1644,69 +1978,98 @@ class ZMSSqlDb(ZMSCustom):
         raise zExceptions.InternalError(standard.writeError( self, '[recordSet_Delete]: can\'t delete row - sqlStatement=' + sqlStatement))
       standard.triggerEvent(self.getParentNode(),'%s%sAfterDelete'%(self.id,tablename.capitalize()))
 
-
-    ############################################################################
-    ###
-    ###   Blob (remote)
-    ###
-    ############################################################################
-
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.delete_blob:
-    # --------------------------------------------------------------------------
     def _delete_blob( self, tablename, id, rowid):
+      """
+      Delete the file referenced by a blob column and return its replacement value.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Primary-key value of the affected row.
+      @type rowid: object
+      @return: Replacement column value after deletion.
+      @rtype: object
+      """
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       column = self.getEntityColumn( tablename, id)
       blob = column['blob']
       path = blob['path']
       # Assemble sql-statement
       sqlStatement = []
       sqlStatement.append( 'SELECT '+id+' AS v FROM %s '%tablename)
-      sqlStatement.append( 'WHERE %s=%s '%(primary_key,self.sql_quote__(tablename,primary_key,rowid)))
+      sqlStatement.append( 'WHERE %s=%s '%(primary_key, self.sql_quote__(tablename, primary_key, rowid)))
       sqlStatement = ' '.join(sqlStatement)
-      # Remove old file from server-fs
       try:
         for r in self.query( sqlStatement)['records']:
-          oldfilename = r['v']
-          standard.writeBlock( self, '[_delete_blob]: remove %s'%str(oldfilename))
-          if oldfilename:
-            file_path = os.path.join(path, oldfilename)
-            if os.path.isfile(file_path):
-              standard.writeBlock( self, '[_delete_blob]: remove %s'%file_path)
-              os.remove(file_path) # never remove a folder, this once removed the containing folder thus removing all other blobs with them
+          filename = r['v']
+          try:
+            standard.localfs_remove(path+filename)
+          except: pass
+          value = ''
+          if column.get('nullable'):
+            value = None
+          else:
+            value = self.sql_quote__(tablename,id,value)
+          return value
       except:
-        raise zExceptions.InternalError(standard.writeError( self, '[_delete_blob]: can\'t delete blob - sqlStatement=' + sqlStatement))
-      value = None
-      if not column.get('nullable'):
-        value = self.sql_quote__(tablename,id,'')
-      return value
+        raise zExceptions.InternalError(standard.writeError( self, '[get_blob]: can\'t delete blob - sqlStatement=' + sqlStatement))
+
 
     def delete_blob( self, auth_user, tablename, id, rowid, REQUEST=None, RESPONSE=None):
-      """ ZMSSqlDb.delete_blob """
+      """
+      Delete a blob after authorizing the remote caller.
+
+      @param auth_user: User id to authorize.
+      @type auth_user: str
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Primary-key value of the affected row.
+      @type rowid: object
+      @param REQUEST: Optional request context.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Optional response context.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Replacement value returned by C{_delete_blob}.
+      @rtype: object
+      """
       user = self.findUser( auth_user)
       if user is None:
         raise zExceptions.Unauthorized
       return self._delete_blob( tablename=tablename, id=id, rowid=rowid)
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb._set_blob:
-    # --------------------------------------------------------------------------
     def _set_blob( self, tablename, id, rowid=None, file=None, xml=None):
+      """
+      Store blob data on the server filesystem and return the stored filename.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Optional primary-key value of the affected row.
+      @type rowid: object
+      @param file: Uploaded file object.
+      @type file: object
+      @param xml: Optional XML payload used to reconstruct the uploaded file.
+      @type xml: str
+      @return: Stored filename.
+      @rtype: str
+      """
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       column = self.getEntityColumn( tablename, id)
       blob = column['blob']
       path = blob['path']
-      # Delete old file from server-fs
-      self._delete_blob( tablename=tablename, id=id, rowid=rowid)
       if file is None and xml is not None:
-        file = self.parseXmlString( xml)
+        file = standard.parseXmlString( xml)
       # Normalize filename (crop path in local-fs)
       filename = file.filename
       i = max( filename.rfind('/'), filename.rfind('\\'))
@@ -1718,108 +2081,179 @@ class ZMSSqlDb(ZMSCustom):
         fileext = filename[ i:]
         filename = filename[ :i]
       filename = filename + '_' + str( rowid) + fileext
+      # Update
+      oldfilename = 'None'
+      if rowid is not None:
+        # Assemble sql-statement
+        sqlStatement = []
+        sqlStatement.append( 'SELECT '+id+' AS v FROM %s '%tablename)
+        sqlStatement.append( 'WHERE %s=%s '%(primary_key, self.sql_quote__(tablename, primary_key, rowid)))
+        sqlStatement = ' '.join(sqlStatement)
+        try:
+          for r in self.query( sqlStatement)['records']:
+            oldfilename = r['v']
+        except:
+          raise zExceptions.InternalError(standard.writeError( self, '[set_blob]: can\'t set blob - sqlStatement=' + sqlStatement))
+      # Remove old file from server-fs
+      try:
+        _fileutil.remove(path+oldfilename)
+      except: pass
       # Write new file to server-fs
-      _fileutil.exportObj(file.getData(),path+filename)
+      _fileutil.exportObj(file.getData(), path+filename)
       return filename
 
     security.declareProtected('View', 'set_blob')
     def set_blob( self, auth_user, tablename, id, rowid=None, xml=None, REQUEST=None, RESPONSE=None):
-      """ ZMSSqlDb.set_blob """
+      """
+      Store a blob payload after authorizing the remote caller.
+
+      @param auth_user: User id to authorize.
+      @type auth_user: str
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Optional primary-key value of the affected row.
+      @type rowid: object
+      @param xml: Optional XML payload containing the uploaded file.
+      @type xml: str
+      @param REQUEST: Optional request context.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Optional response context.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Stored filename.
+      @rtype: str
+      """
       user = self.findUser( auth_user)
       if user is None:
         raise zExceptions.Unauthorized
       return self._set_blob( tablename=tablename, id=id, rowid=rowid, xml=xml)
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb._get_blob:
-    # --------------------------------------------------------------------------
     def _get_blob( self, tablename, id, rowid, cache='public, max-age=3600', REQUEST=None, RESPONSE=None):
+      """
+      Load a blob from the filesystem and return it as a ZMS file object.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Primary-key value of the affected row.
+      @type rowid: object
+      @param cache: Cache-Control header value for responses.
+      @type cache: str
+      @param REQUEST: Optional request context.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Optional response used to set headers.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Image or file wrapper, or C{None} when no blob exists.
+      @rtype: object
+      """
       data = ''
       tabledefs = self.getEntities()
-      tabledef = filter(lambda x: x['id'].upper() == tablename.upper(), tabledefs)[0]
+      tabledef = [x for x in tabledefs if x['id'].upper()==tablename.upper()][0]
       tablecols = tabledef['columns']
-      primary_key = (map(lambda x: x['id'], filter(lambda x: x.get('pk',0)==1, tablecols))+[tablecols[0]['id']])[0]
+      primary_key = ([x['id'] for x in tablecols if x.get('pk', 0)==1]+[tablecols[0]['id']])[0]
       column = self.getEntityColumn( tablename, id)
       blob = column['blob']
       path = blob['path']
       # Assemble sql-statement
       sqlStatement = []
       sqlStatement.append( 'SELECT '+id+' AS v FROM %s '%tablename)
-      sqlStatement.append( 'WHERE %s=%s '%(primary_key,self.sql_quote__(tablename,primary_key,rowid)))
+      sqlStatement.append( 'WHERE %s=%s '%(primary_key, self.sql_quote__(tablename, primary_key, rowid)))
       sqlStatement = ' '.join(sqlStatement)
       try:
         for r in self.query( sqlStatement)['records']:
           filename = r['v']
           if path is not None and filename is not None:
-            file_path = os.path.join(path,filename)
-            if os.path.isfile(file_path):
-              fdata, mt, enc, fsize = _fileutil.readFile(path+filename)
-              if RESPONSE is not None:
-                if REQUEST is not None and REQUEST.get('preview')=='preview':
-                  cache = 'no-cache'
-                standard.set_response_headers(filename,mt,fsize,REQUEST)
-                RESPONSE.setHeader('Cache-Control', cache)
-                RESPONSE.setHeader('Content-Encoding', enc)
-              if blob['type'] == 'image':
-                return self.ImageFromData(fdata,filename)
-              else:
-                return self.FileFromData(fdata,filename)
+            fdata, mt, enc, fsize = _fileutil.readFile(path+filename)
+            if RESPONSE is not None:
+              if REQUEST is not None and REQUEST.get('preview')=='preview':
+                cache = 'no-cache'
+              standard.set_response_headers(filename, mt, fsize, REQUEST)
+              RESPONSE.setHeader('Cache-Control', cache)
+              RESPONSE.setHeader('Content-Encoding', enc)
+            if blob['type'] == 'image':
+              return self.ImageFromData(fdata, filename)
+            else:
+              return self.FileFromData(fdata, filename)
       except:
         standard.writeError( self, '[get_blob]: can\'t get_blob - sqlStatement=' + sqlStatement)
       return None
 
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.get_blob:
-    # --------------------------------------------------------------------------
     security.declareProtected('View', 'get_blob')
     def get_blob( self, tablename, id, rowid, REQUEST=None, RESPONSE=None):
-      """ ZMSSqlDb.get_blob """
+      """
+      Return the raw data payload of a stored blob.
+
+      @param tablename: Entity name.
+      @type tablename: str
+      @param id: Blob column id.
+      @type id: str
+      @param rowid: Primary-key value of the affected row.
+      @type rowid: object
+      @param REQUEST: Optional request context.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Optional response used to set headers.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Raw blob data.
+      @rtype: bytes
+      """
       blob = self._get_blob( tablename, id, rowid, REQUEST=REQUEST, RESPONSE=RESPONSE)
       return blob.getData()
 
 
-    ############################################################################
-    ###
-    ###   Properties
-    ###
-    ############################################################################
-
-    ############################################################################
-    #  ZMSSqlDb.manage_changeProperties: 
-    #
-    #  Change Sql-Database properties.
-    ############################################################################
     def manage_changeProperties(self, lang, REQUEST=None, RESPONSE=None): 
-      """ ZMSSqlDb.manage_changeProperties """
+      """
+      Persist SQL database properties and the serialized model definition.
+
+      @param lang: Active language.
+      @type lang: str
+      @param REQUEST: Current request containing form values.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Response used for redirect handling.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Redirect response to the properties form.
+      @rtype: object
+      """
       message = ''
-      el_data = REQUEST.get('el_data','')
+      btn = REQUEST.get('btn', '')
+      el_data = REQUEST.get('el_data', '')
+      f = REQUEST.get('file')
       target = 'manage_properties'
       
-      if REQUEST.get('btn','') not in [ self.getZMILangStr('BTN_CANCEL'), self.getZMILangStr('BTN_BACK')]:
+      # Change.
+      # -------
+      if self.getZMILangStr('BTN_SAVE') or REQUEST.get('ZMS_INSERT'):
         self.connection_id = REQUEST['connection_id']
         self.charset = REQUEST['charset']
-        self.setModel(REQUEST['model'])
-        message = self.getZMILangStr('MSG_CHANGED')
+        self.table_filter = REQUEST.get('table_filter','')
+        if f and f.filename:
+          self.setModel(f.read())
+          message = self.getZMILangStr('MSG_IMPORTED')%('<i>%s</i>'%f.filename)
+        else:
+          self.setModel(REQUEST['model'])
+          message = self.getZMILangStr('MSG_CHANGED')
+      
+      elif self.getZMILangStr('BTN_CANCEL'):
+        message = ''
       
       # Return with message.
-      message = urllib.quote(message)
-      el_data = urllib.quote(el_data)
-      return RESPONSE.redirect('%s?lang=%s&manage_tabs_message=%s&el_data=%s'%(target,lang,message,el_data))
+      message = standard.url_quote(message)
+      el_data = standard.url_quote(el_data)
+      return RESPONSE.redirect('%s?lang=%s&manage_tabs_message=%s&el_data=%s'%(target, lang, message, el_data))
 
 
-    ############################################################################
-    ###
-    ###   Configuration
-    ###
-    ############################################################################
-
-    # --------------------------------------------------------------------------
-    #  ObjAttrs.ajaxGetObjOptions:
-    # --------------------------------------------------------------------------
     def ajaxGetObjOptions(self, REQUEST):
-      """ ObjAttrs.ajaxGetObjOptions """
+      """
+      Return autocomplete option labels for a configured entity column.
+
+      @param REQUEST: Current request containing entity, column, and filter values.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @return: Plain-text or JSON encoded option list.
+      @rtype: str
+      """
       tablename = REQUEST['obj_id']
       columnname = REQUEST['attr_id']
       RESPONSE = REQUEST.RESPONSE
@@ -1836,17 +2270,28 @@ class ZMSSqlDb(ZMSCustom):
       sql = 'SELECT %s AS pk, %s AS displayfield FROM %s WHERE UPPER(%s) LIKE %s ORDER BY UPPER(%s)'%(pk,columnname,tablename,columnname,self.sql_quote__(tablename,columnname,'%'+q+'%'),columnname)
       for r in self.query(sql)['records']:
         if len(l) < limit:
-          l.append(r['displayfield'])
+          v = r['displayfield']
+          if type(v) is bytes:
+            v = str(v)
+          l.append(v)
       if REQUEST.get('fmt') == 'json':
-        return self.str_json(l)
+        return self.str_json(l,encoding='utf-8')
       return '\n'.join(l)
 
-    # --------------------------------------------------------------------------
-    #  ZMSSqlDb.ajaxGetAutocompleteColumns:
-    # --------------------------------------------------------------------------
     security.declareProtected('View', 'ajaxGetAutocompleteColumns')
     def ajaxGetAutocompleteColumns(self, tableName, fmt=None, REQUEST=None):
-      """ ZMSSqlDb.ajaxGetAutocompleteColumns """
+      """
+      Return matching entity column names for autocomplete widgets.
+
+      @param tableName: Entity name.
+      @type tableName: str
+      @param fmt: Optional output format, e.g. C{'json'}.
+      @type fmt: str
+      @param REQUEST: Current request containing filter values.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @return: Plain-text or JSON encoded column list.
+      @rtype: str
+      """
       RESPONSE = REQUEST.RESPONSE
       content_type = 'text/plain; charset=utf-8'
       filename = 'ajaxGetAutocompleteColumns.txt'
@@ -1854,10 +2299,10 @@ class ZMSSqlDb(ZMSCustom):
       RESPONSE.setHeader('Content-Disposition','inline;filename="%s"'%filename)
       RESPONSE.setHeader('Cache-Control', 'no-cache')
       RESPONSE.setHeader('Pragma', 'no-cache')
-      l = map( lambda x: x['id'], filter( lambda x: x['type'] != '?', self.getEntity( tableName)['columns']))
+      l = [x['id'] for x in self.getEntity( tableName)['columns'] if x['type']!='?']
       q = REQUEST.get( 'q', '').upper()
       if q:
-        l = filter( lambda x: x.upper().find( q) >= 0, l)
+        l = [x for x in l if x.upper().find(q)>= 0]
       limit = int(REQUEST.get('limit',self.getConfProperty('ZMS.input.autocomplete.limit',15)))
       if len(l) > limit:
         l = l[:limit]
@@ -1865,23 +2310,33 @@ class ZMSSqlDb(ZMSCustom):
         return self.str_json(l)
       return '\n'.join(l)
 
-    ############################################################################
-    #  ZMSSqlDb.manage_changeConfiguration: 
-    #
-    #  Change Sql-Database configuration.
-    ############################################################################
     def manage_changeConfiguration(self, lang, btn='', key='all', REQUEST=None, RESPONSE=None):
-      """ ZMSSqlDb.manage_changeConfiguration """
+      """
+      Update SQL entity configuration and field metadata from the management UI.
+
+      @param lang: Active language.
+      @type lang: str
+      @param btn: Submitted action button id.
+      @type btn: str
+      @param key: Configuration subsection to update.
+      @type key: str
+      @param REQUEST: Current request containing submitted configuration values.
+      @type REQUEST: ZPublisher.HTTPRequest.HTTPRequest
+      @param RESPONSE: Response used for redirect handling.
+      @type RESPONSE: ZPublisher.HTTPResponse.HTTPResponse
+      @return: Redirect response back to the configuration form.
+      @rtype: object
+      """
       message = ''
       t0 = time.time()
-      id = REQUEST.get('id','')
+      id = REQUEST.get('id', '')
       target = 'manage_configuration'
       
       # Change.
       # -------
       if btn == self.getZMILangStr('BTN_SAVE'):
         model = self.getModel()
-        entities = filter( lambda x: x['id'].upper() == id.upper(), model)
+        entities = [x for x in model if x['id'].upper()==id.upper()]
         if entities:
           entity = entities[0]
         else:
@@ -1901,7 +2356,7 @@ class ZMSSqlDb(ZMSCustom):
          'select': REQUEST.get( 'access_select', []),
         }
         cols = []
-        for attr_id in REQUEST.get('attr_ids',[]):
+        for attr_id in REQUEST.get('attr_ids', []):
           col = {}
           col['id'] = REQUEST.get( 'attr_id_%s'%attr_id, attr_id).strip()
           try:
@@ -1913,20 +2368,20 @@ class ZMSSqlDb(ZMSCustom):
           except:
             col['index'] = int(REQUEST.get( 'attr_index_%s'%attr_id)[0])
           try:
-            col['hide'] = int(not REQUEST.get('attr_display_%s'%attr_id,0)==1)
+            col['hide'] = int(not REQUEST.get('attr_display_%s'%attr_id, 0)==1)
           except:
-            col['hide'] = int(not REQUEST.get('attr_display_%s'%attr_id,0)[0]==1)
-          if REQUEST.has_key( 'attr_auto_%s'%attr_id):
+            col['hide'] = int(not REQUEST.get('attr_display_%s'%attr_id, 0)[0]==1)
+          if 'attr_auto_%s'%attr_id in REQUEST:
             col['auto'] = REQUEST.get( 'attr_auto_%s'%attr_id)
-          if REQUEST.has_key( 'attr_type_%s'%attr_id):
+          if 'attr_type_%s'%attr_id in REQUEST:
             t = REQUEST.get( 'attr_type_%s'%attr_id)
-            if t in self.valid_types.keys():
+            if t in self.valid_types:
               d = copy.deepcopy( self.valid_types[ t])
               c = []
-              if type( d) is dict:
+              if isinstance(d, dict):
                 xs = 'attr_%s_'%t
                 xe = '_%s'%attr_id
-                for k in filter( lambda x: x.startswith(xs) and x.endswith(xe), REQUEST.form.keys()):
+                for k in [x for x in REQUEST.form if x.startswith(xs) and x.endswith(xe)]:
                   xk = k[len(xs):-len(xe)].split('_')
                   xv = REQUEST[k]
                   if len( xk) == 1:
@@ -1934,7 +2389,7 @@ class ZMSSqlDb(ZMSCustom):
                     if xk == 'options':
                       xv2 = []
                       for xi in xv.split('\n'):
-                        xi = xi.replace('\r','')
+                        xi = xi.replace('\r', '')
                         if xi.find('->') > 0:
                           xi0 = xi[:xi.find('->')]
                           xi1 = xi[xi.find('->')+len('->'):]
@@ -1946,31 +2401,31 @@ class ZMSSqlDb(ZMSCustom):
                       if len( xv2) > 0:
                         d[ xk] = xv2
                     else:
-                      if type( xv) is str:
+                      if isinstance(xv, str):
                         xv = xv.strip()
                         if len( xv) > 0:
                           d[ xk] = xv
-                      elif type( xv) is int:
+                      elif isinstance(xv, int):
                         if xv != 0:
                           d[ xk] = xv
                   else:
-                    if not d.has_key( xk[0]):
+                    if xk[0] not in d:
                       d[ xk[0]] = {}
                       c.append( xk[0])
-                    if not d[ xk[0]].has_key( xk[-1]):
+                    if xk[-1] not in d[ xk[0]]:
                       d[ xk[0]][ xk[-1]] = {}
-                    if type( xv) is str:
+                    if isinstance(xv, str):
                       xv = xv.strip()
                       if len( xv) > 0:
                         d[ xk[0]][ xk[-1]][ xk[1]] = xv
-                    elif type( xv) is int:
+                    elif isinstance(xv, int):
                       if xv != 0:
                         d[ xk[0]][ xk[-1]][ xk[1]] = xv
               for i in c:
-                l = d[i].values()
-                l = map( lambda x: (x.get('index',l.index(x)),x), l)
+                l = list(d[i].values())
+                l = [(x.get('index', l.index(x)),x) for x in l]
                 l.sort()
-                l = map( lambda x: x[1], l)
+                l = [x[1] for x in l]
                 for x in l:
                   if not x.get('display'):
                     x['hide'] = 1
@@ -1978,22 +2433,26 @@ class ZMSSqlDb(ZMSCustom):
                   except: pass
                   try: del x['index']
                   except: pass
-                l = filter( lambda x: len(x.keys()) > 0, l)
+                l = [x for x in l if len(x) > 0]
                 d[i] = l
-              col[ t] = d
+              col[t] = d
           cols.append( ( col['index'], col))
         cols.sort()
-        cols = map( lambda x: x[1], cols)
+        cols = [x[1] for x in cols]
         # Insert
-        attr_id = REQUEST.get('attr_id','').strip()
-        attr_label = REQUEST.get('attr_label','').strip()
-        attr_type = REQUEST.get('attr_type','').strip()
-        if attr_id and attr_label and attr_type:
-          newValue = {}
-          newValue['id'] = attr_id
-          newValue['label'] = attr_label
-          newValue['hide'] = int(not REQUEST.get('attr_display',0)==1)
-          newValue[attr_type] = {}
+        new_keys = [x for x in REQUEST.form if x.startswith('new_id_') and x[len('new_id_'):] != '']
+        for new_key in new_keys:
+          newname = new_key[len('new_id_'):]
+          attr_id = REQUEST.get('new_id_%s'%newname, '').strip()
+          attr_label = REQUEST.get('new_label_%s'%newname, '').strip()
+          attr_type = REQUEST.get('new_type_%s'%newname, '').strip()
+          if attr_id and attr_label and attr_type in self.valid_types or attr_type == '':
+            newValue = {}
+            newValue['id'] = attr_id
+            newValue['label'] = attr_label
+            newValue['hide'] = int(not REQUEST.get('new_display', 0)==1)
+            if attr_type in self.valid_types:
+              newValue[attr_type] = {}
           cols.append(newValue)
         entity['columns'] = cols
         f = self.toXmlString( model)
@@ -2005,10 +2464,10 @@ class ZMSSqlDb(ZMSCustom):
       elif btn == 'delete':
         attr_id = REQUEST['attr_id'].strip()
         model = self.getModel()
-        entities = filter( lambda x: x['id'].upper() == id.upper(), model)
+        entities = [x for x in model if x['id'].upper()==id.upper()]
         if entities:
           entity = entities[0]
-          entity['columns'] = filter( lambda x: x['id'].upper() != attr_id.upper(), entity['columns'])
+          entity['columns'] = [x for x in entity['columns'] if x['id'].upper()!=attr_id.upper()]
         f = self.toXmlString( model)
         self.setModel(f)
         message = self.getZMILangStr('MSG_CHANGED')
@@ -2029,10 +2488,10 @@ class ZMSSqlDb(ZMSCustom):
         newValue = {}
         newValue['id'] = attr_id
         newValue['label'] = REQUEST.get('attr_label').strip()
-        newValue['hide'] = int(not REQUEST.get('attr_display',0)==1)
+        newValue['hide'] = int(not REQUEST.get('attr_display', 0)==1)
         if REQUEST.get('attr_type'):
           newValue[REQUEST.get('attr_type')] = {}
-        entities = filter( lambda x: x['id'].upper() == id.upper(), model)
+        entities = [x for x in model if x['id'].upper()==id.upper()]
         if entities:
           entity = entities[0]
         else:
@@ -2052,17 +2511,17 @@ class ZMSSqlDb(ZMSCustom):
         pos = REQUEST['pos']
         attr_id = REQUEST['attr_id']
         model = self.getModel()
-        entities = filter( lambda x: x['id'].upper() == id.upper(), model)
+        entities = [x for x in model if x['id'].upper()==id.upper()]
         if entities:
           entity = entities[0]
         else:
           entity = {}
           entity['id'] = id
           entity['type'] = 'table'
-          entity['columns'] = map( lambda x: {'id':x['id']}, self.getEntity( id)['columns'])
+          entity['columns'] = [{'id':x['id']} for x in self.getEntity( id)['columns']]
           model.append( entity)
         cols = entity['columns']
-        col = filter( lambda x: x['id'].upper() == attr_id.upper(), cols)[0]
+        col = [x for x in cols if x['id'].upper()==attr_id.upper()][0]
         i = cols.index( col)
         cols.remove( col)
         cols.insert( pos, col)
@@ -2072,18 +2531,18 @@ class ZMSSqlDb(ZMSCustom):
           idx = idx + 1
         f = self.toXmlString( model)
         self.setModel(f)
-        message = self.getZMILangStr('MSG_MOVEDOBJTOPOS')%(("<i>%s</i>"%attr_id),(pos+1))
+        message = self.getZMILangStr('MSG_MOVEDOBJTOPOS')%(("<i>%s</i>"%attr_id), (pos+1))
       
       # Return with message.
-      target = self.url_append_params( target, { 'lang':lang, 'id':id, 'attr_id':REQUEST.get('attr_id','')})
+      target = standard.url_append_params( target, { 'lang':lang, 'id':id, 'attr_id':REQUEST.get('attr_id', '')})
       if len( message) > 0:
         message += ' (in '+str(int((time.time()-t0)*100.0)/100.0)+' secs.)'
-        target = self.url_append_params( target, { 'manage_tabs_message':message})
+        target = standard.url_append_params( target, { 'manage_tabs_message':message})
       return RESPONSE.redirect( target)
 
 
 # call this to initialize framework classes, which
 # does the right thing with the security assertions.
-Globals.InitializeClass(ZMSSqlDb)
+InitializeClass(ZMSSqlDb)
 
 ################################################################################

@@ -1,6 +1,7 @@
 <!-- ZMS CUSTOM FOOTER -->
 <script>
 
+	$('img[src*="DBAdapterFolder_icon.gif"]').replaceWith('<i data-title="SQLAlchemy-Database Adapter" class="icon icon-table"></i>');
 	$('img[src*="UserFolder"]').replaceWith('<i data-title="Access Control List" class="icon icon-group"></i>');
 	$('img[src*="PluggableAuthService"]').replaceWith('<i data-title="Pluggable Auth Service" class="icon icon-group"></i>');
 	$('img[src*="/p_/User_icon"]').replaceWith('<i data-title="User" class="icon icon-user"></i>');

@@ -1192,6 +1192,24 @@ def parseLangFmtDate(s):
 #
 ############################################################################
 
+security.declarePublic('operator_contains')
+def operator_contains(c, v, ignorecase=False):
+  """
+  Check if collection contains value.
+  @param c: Collection
+  @type c: C{list|set|tuple}
+  @param v: Value
+  @type v: C{any}
+  @param ignorecase: Ignore Case-Sensitivity
+  @type ignorecase: C{Bool}
+  @return: Collection contains value
+  @rtype: C{Bool}
+  """
+  if ignorecase:
+    return v.lower() in [x.lower() for x in c]
+  else:
+    return v in c
+
 security.declarePublic('operator_absattr')
 def operator_absattr(v):
   """
