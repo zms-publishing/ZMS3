@@ -245,18 +245,12 @@ class ZMSSqlDb(zmscustom.ZMSCustom):
       @return: Normalized row dictionary.
       @rtype: dict
       """
-      charset = getattr(self,'charset','utf-8')
       row = {}
       for col in cols:
         k = col['id']
         v = record[k]
-        if self.getConfProperty('ZMSSqlDb.record_encode__.k.lower'):
-          k = k.lower()
-        if v is not None and (type(v) is str or type(v) is unicode):
-          try:
-            v = unicode(v,charset).encode(encoding)
-          except:
-            row[k+'_exception'] = standard.writeError( self, '[record_encode__]: can\'t %s'%k)
+        if isinstance(v, bytes):
+          v = str(v)
         row[k] = v
       return row
 
