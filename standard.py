@@ -183,6 +183,12 @@ def set_response_headers_cache(context, request=None, cache_max_age=24*3600):
   return None
 
 
+security.declarePublic('url_quote')
+def url_quote(string, safe='/', encoding=None, errors=None):
+    from urllib import quote
+    return quote(string, safe)
+
+
 security.declarePublic('umlaut_quote')
 def umlaut_quote(s, mapping={}):
   """
