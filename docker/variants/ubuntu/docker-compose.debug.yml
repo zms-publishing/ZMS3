@@ -26,6 +26,8 @@ x-instance-common: &instance_common
     - /home/zope/src/unify:${INSTANCE_DIR}/vendor/unify:rw
     # Source code
     - ${INSTANCE_MOUNT}/customizing/overrides.zcml:${VENV_DIR}/lib/python2.7/site-packages/Products/zms/overrides.zcml:rw
+    # AFS folders
+    - /afs:/afs:rw
 
   ### HINT: VScode-Server will be started in the container automatically
   ### and can be accessed via the browser at http://localhost:8888
