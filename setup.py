@@ -65,7 +65,7 @@ INSTALL_REQUIRES_CONCRETE = [
   'Products.ZSQLMethods<3',
   'pytz==2016.4',
   'Record==3.1',
-  'RestrictedPython==3.6.0',
+  'RestrictedPython==8.3a1.dev0',
   'six==1.10.0',
   'tempstorage==3.0',
   'ThreadLock==2.13.0',
